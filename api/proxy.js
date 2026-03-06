@@ -17,7 +17,12 @@ module.exports = async (req, res) => {
   }
 
   // 2. Define the target URL from Environment Variables (Pro Practice)
-  const API_URL = process.env.TARGET_API_URL || 'https://progres.mesrs.dz/api';
+  const API_URL = process.env.TARGET_API_URL;
+
+  if (!API_URL) {
+    console.error('Missing TARGET_API_URL environment variable');
+    return res.status(500).json({ error: 'Proxy configuration error' });
+  }
 
   // Construct the full target path (/api/something -> https://progres.mesrs.dz/api/something)
   // The 'vercel.json' rewrite passes the relative path after /api/
@@ -25,14 +30,18 @@ module.exports = async (req, res) => {
   const fullUrl = `${API_URL}/${targetPath}`;
 
   try {
-    // 3. Forward the request
+    // 3. Extract the hostname for the 'host' header (Professional Cloaking)
+    const targetUrl = new URL(fullUrl);
+    const targetHost = targetUrl.hostname;
+
+    // 4. Forward the request
     const response = await axios({
       method: req.method,
       url: fullUrl,
       data: req.body,
       headers: {
         ...req.headers,
-        host: 'progres.mesrs.dz', // Required by some servers to prevent rejection
+        host: targetHost, // Dynamically extracted from env var
       },
       // Important: Don't decode the response, pass it back as-is
       responseType: 'arraybuffer',
