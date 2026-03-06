@@ -7,7 +7,7 @@ class AppConfig {
   /// Example: flutter build web --dart-define=API_URL=https://your-app.vercel.app/api
   static const String apiBaseUrl = String.fromEnvironment(
     'API_URL', 
-    defaultValue: 'https://iqamty-proxy.vercel.app/api' // Replace with your real Vercel URL
+    defaultValue: 'https://iqamty-v1.vercel.app/api' // Your live Vercel Proxy
   );
   
   // You can add more configuration constants here as the app grows
