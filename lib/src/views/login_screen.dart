@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../core/theme/colors.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -105,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 90,
                       height: 90,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Center(
@@ -214,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Register',
+                            'Log In',
                             style: textTheme.bodyLarge?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -226,6 +227,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
               ),
               
+              if (kDebugMode) ...[
+                const SizedBox(height: 30),
+                _buildDevAccessPanel(context),
+              ],
+
               const SizedBox(height: 60),
 
               // Footer
@@ -236,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontSize: 10,
                     letterSpacing: 2,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textSecondary.withOpacity(0.5),
+                    color: AppColors.textSecondary.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -244,6 +250,57 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDevAccessPanel(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            '── Dev Quick Access (Testing) ──',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _devButton(context, '👨‍🎓 Enter as Student', Colors.blue, 'student', '/'),
+          const SizedBox(height: 8),
+          _devButton(context, '🛠️  Enter as Worker', Colors.orange, 'worker', '/worker-dashboard'),
+          const SizedBox(height: 8),
+          _devButton(context, '👑  Enter as Admin', Colors.red, 'administrator', '/admin'),
+        ],
+      ),
+    );
+  }
+
+  Widget _devButton(BuildContext context, String label, Color color, String role, String route) {
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: color),
+        foregroundColor: color,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      onPressed: () async {
+        final auth = context.read<AuthProvider>();
+        auth.injectDevUser(role);
+        // Give provider a moment to notify
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (context.mounted) {
+          context.go(route);
+        }
+      },
+      child: Text(label),
     );
   }
 }

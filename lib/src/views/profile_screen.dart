@@ -25,9 +25,11 @@ class ProfileScreen extends StatelessWidget {
        }
     }
 
-    final displayName = ((student?.nomFr ?? '') + " " + (student?.prenomFr ?? '')).trim().isEmpty 
+    final safeNomFr = student?.nomFr ?? '';
+    final safePrenomFr = student?.prenomFr ?? '';
+    final displayName = '$safeNomFr $safePrenomFr'.trim().isEmpty 
         ? "No Name Found" 
-        : "${student?.nomFr ?? ''} ${student?.prenomFr ?? ''}".trim();
+        : '$safeNomFr $safePrenomFr'.trim();
 
     return Scaffold(
       appBar: AppBar(
@@ -120,7 +122,7 @@ class ProfileScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -140,7 +142,7 @@ class ProfileScreen extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(Icons.school, color: AppColors.primary, size: 24),
@@ -213,9 +215,9 @@ class ProfileScreen extends StatelessWidget {
                               style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 14),
                             ),
                             Text(
-                              ((student?.nomAr ?? '') + " " + (student?.prenomAr ?? '')).trim().isEmpty 
+                              '${student?.nomAr ?? ''} ${student?.prenomAr ?? ''}'.trim().isEmpty 
                                   ? 'لا يوجد اسم' 
-                                  : "${student?.nomAr ?? ''} ${student?.prenomAr ?? ''}".trim(),
+                                  : '${student?.nomAr ?? ''} ${student?.prenomAr ?? ''}'.trim(),
                               style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 14),
                             ),
                             const SizedBox(height: 12),
@@ -300,7 +302,7 @@ class ProfileScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.1),
+                          color: AppColors.success.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Row(
@@ -344,7 +346,7 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildActionItem(BuildContext context, IconData icon, String title, VoidCallback onTap, {bool isDestructive = false}) {
     final color = isDestructive ? AppColors.error : AppColors.textPrimary;
     final iconColor = isDestructive ? AppColors.error : AppColors.primary;
-    final bgIconColor = isDestructive ? AppColors.error.withOpacity(0.1) : AppColors.primary.withOpacity(0.1);
+    final bgIconColor = isDestructive ? AppColors.error.withValues(alpha: 0.1) : AppColors.primary.withValues(alpha: 0.1);
 
     return InkWell(
       onTap: onTap,
@@ -383,3 +385,4 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
+

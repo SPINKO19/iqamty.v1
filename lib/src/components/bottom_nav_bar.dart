@@ -87,3 +87,4 @@ class BottomNavBarScaffold extends StatelessWidget {
     );
   }
 }
+

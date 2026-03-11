@@ -14,3 +14,4 @@ class AppConfig {
   static const String appName = 'Iqamty';
   static const String appVersion = '1.0.0';
 }
+

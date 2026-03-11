@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/theme/colors.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
+import '../providers/language_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -10,10 +13,11 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
-  bool _darkModeEnabled = false;
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final languageProvider = context.watch<LanguageProvider>();
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -48,15 +52,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildSwitchRow(
                   icon: Icons.dark_mode_outlined,
                   title: 'Mode Sombre',
-                  value: _darkModeEnabled,
-                  onChanged: (val) => setState(() => _darkModeEnabled = val),
+                  value: themeProvider.themeMode == ThemeMode.dark,
+                  onChanged: (val) => themeProvider.toggleTheme(val),
                   textTheme: textTheme,
                 ),
                 const Divider(color: AppColors.borderColor, height: 1),
                 _buildDropdownRow(
                   icon: Icons.language,
                   title: 'Langue',
-                  value: 'Français',
+                  value: languageProvider.currentLocale.languageCode == 'ar' ? 'العربية' : (languageProvider.currentLocale.languageCode == 'en' ? 'English' : 'Français'),
+                  onTap: () => _showLanguagePicker(context, languageProvider),
                   textTheme: textTheme,
                 ),
               ],
@@ -149,7 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: Colors.white,
+        activeThumbColor: Colors.white,
         activeTrackColor: AppColors.primary,
         inactiveThumbColor: Colors.white,
         inactiveTrackColor: AppColors.borderColor,
@@ -161,22 +166,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     required String title,
     required String value,
+    required VoidCallback onTap,
     required TextTheme textTheme,
   }) {
-    return _buildRowBase(
-      icon: icon,
-      title: title,
-      textTheme: textTheme,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            value,
-            style: textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(width: 4),
-          const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 20),
-        ],
+    return InkWell(
+      onTap: onTap,
+      child: _buildRowBase(
+        icon: icon,
+        title: title,
+        textTheme: textTheme,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              style: textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context, LanguageProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Français'),
+              onTap: () { provider.setLocale('fr'); Navigator.pop(context); },
+            ),
+            ListTile(
+              title: const Text('English'),
+              onTap: () { provider.setLocale('en'); Navigator.pop(context); },
+            ),
+            ListTile(
+              title: const Text('العربية'),
+              onTap: () { provider.setLocale('ar'); Navigator.pop(context); },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -213,7 +248,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: AppColors.primary, size: 20),
@@ -231,3 +266,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
+

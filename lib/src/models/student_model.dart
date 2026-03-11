@@ -14,6 +14,8 @@ class Student {
   final String? residence;
   final String? bloc;
   final String? chambre;
+  final String? role;
+  final bool isBanned;
 
   Student({
     this.id,
@@ -31,6 +33,8 @@ class Student {
     this.residence,
     this.bloc,
     this.chambre,
+    this.role,
+    this.isBanned = false,
   });
 
   factory Student.fromJson(Map<String, dynamic> json, {String? residence, String? bloc, String? chambre}) {
@@ -50,6 +54,31 @@ class Student {
       residence: residence,
       bloc: bloc,
       chambre: chambre,
+      role: json['role'] as String?,
+      isBanned: json['isBanned'] == true,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      if (nin != null) 'nin': nin,
+      if (matricule != null) 'matricule': matricule,
+      if (nomAr != null) 'nomAr': nomAr,
+      if (prenomAr != null) 'prenomAr': prenomAr,
+      if (nomFr != null) 'nomFr': nomFr,
+      if (prenomFr != null) 'prenomFr': prenomFr,
+      if (moyenneBac != null) 'moyenneBac': moyenneBac,
+      if (photoEtudiant != null) 'photoEtudiant': photoEtudiant,
+      if (photo != null) 'photo': photo,
+      if (photoBase64 != null) 'photoBase64': photoBase64,
+      if (dateNaissance != null) 'dateNaissance': dateNaissance,
+      if (residence != null) 'residence': residence,
+      if (bloc != null) 'bloc': bloc,
+      if (chambre != null) 'chambre': chambre,
+      if (role != null) 'role': role,
+      'isBanned': isBanned,
+    };
+  }
 }
+
