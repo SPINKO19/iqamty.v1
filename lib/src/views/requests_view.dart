@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 
 class RequestsView extends StatelessWidget {
@@ -6,24 +8,27 @@ class RequestsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lp = context.watch<LanguageProvider>();
     return Scaffold(
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: const Text('Demandes'),
+        title: Text(lp.getText('my_requests'), style: TextStyle(color: context.appTextPrimary)),
+        backgroundColor: context.appCard,
         centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          _buildRequestType(context, 'Réparation', Icons.build_outlined, 'Plomberie, Électricité, Menuiserie'),
+          _buildRequestType(context, lp.getText('repair'), Icons.build_outlined, lp.getText('repair_subtitle')),
           const SizedBox(height: 16),
-          _buildRequestType(context, 'Nettoyage', Icons.cleaning_services_outlined, 'Chambre, Couloir, Bloc'),
+          _buildRequestType(context, lp.getText('cleaning'), Icons.cleaning_services_outlined, lp.getText('cleaning_subtitle')),
           const SizedBox(height: 16),
-          _buildRequestType(context, 'Hébergement', Icons.hotel_outlined, 'Changement de chambre, Clés'),
+          _buildRequestType(context, lp.getText('housing'), Icons.hotel_outlined, lp.getText('housing_subtitle')),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
-        label: const Text('Nouvelle Demande'),
+        label: Text(lp.getText('new_request')),
         icon: const Icon(Icons.add),
         backgroundColor: AppColors.primary,
       ),
@@ -37,31 +42,31 @@ class RequestsView extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.appCard,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.borderColor),
+          border: Border.all(color: context.appBorder),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.primary),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(14),
             ),
+            child: Icon(icon, color: Colors.white, size: 28),
+          ),
             const SizedBox(width: 20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: context.appTextPrimary)),
+                  Text(subtitle, style: TextStyle(color: context.appTextSecondary, fontSize: 12)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            Icon(Icons.chevron_right, color: context.appTextSecondary),
           ],
         ),
       ),

@@ -1,0 +1,18 @@
+﻿Launching lib\main.dart on Chrome in debug mode...
+Waiting for connection from debug service on Chrome...             38.4s
+
+Flutter run key commands.
+r Hot reload. 
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+Debug service listening on ws://127.0.0.1:57030/_-hqtHghBVU=/ws
+A Dart VM Service on Chrome is available at: http://127.0.0.1:57030/_-hqtHghBVU=
+The Flutter DevTools debugger and profiler on Chrome is available at: http://127.0.0.1:57030/_-hqtHghBVU=/devtools/?uri=ws://127.0.0.1:57030/_-hqtHghBVU=/ws
+Starting application from main method in: org-dartlang-app:/web_entrypoint.dart.
+Firebase init failed: Assertion failed: file:///C:/Users/Lenovo/AppData/Local/Pub/Cache/hosted/pub.dev/firebase_core_web-3.5.0/lib/src/firebase_core_web.dart:320:11
+options != null
+"FirebaseOptions cannot be null when creating the default app."

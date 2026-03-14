@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 
 class ChatView extends StatelessWidget {
@@ -6,9 +8,12 @@ class ChatView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lp = context.watch<LanguageProvider>();
     return Scaffold(
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: const Text('Messagerie'),
+        title: Text(lp.getText('messaging'), style: TextStyle(color: context.appTextPrimary)),
+        backgroundColor: context.appCard,
         centerTitle: true,
       ),
       body: Column(
@@ -22,7 +27,7 @@ class ChatView extends StatelessWidget {
               ],
             ),
           ),
-          _buildChatInput(),
+          _buildChatInput(context, lp),
         ],
       ),
     );
@@ -36,7 +41,8 @@ class ChatView extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
         decoration: BoxDecoration(
-          color: isAdmin ? Colors.grey[200] : AppColors.primary,
+          color: isAdmin ? context.appCard : AppColors.primary,
+          border: isAdmin ? Border.all(color: context.appBorder) : null,
           borderRadius: BorderRadius.circular(16).copyWith(
             bottomLeft: isAdmin ? Radius.zero : null,
             bottomRight: isAdmin ? null : Radius.zero,
@@ -47,12 +53,12 @@ class ChatView extends StatelessWidget {
           children: [
             Text(
               text,
-              style: TextStyle(color: isAdmin ? Colors.black : Colors.white),
+              style: TextStyle(color: isAdmin ? context.appTextPrimary : Colors.white),
             ),
             const SizedBox(height: 4),
             Text(
               time,
-              style: TextStyle(fontSize: 10, color: isAdmin ? Colors.grey : Colors.white70),
+              style: TextStyle(fontSize: 10, color: isAdmin ? context.appTextSecondary : Colors.white70),
             ),
           ],
         ),
@@ -60,12 +66,13 @@ class ChatView extends StatelessWidget {
     );
   }
 
-  Widget _buildChatInput() {
+  Widget _buildChatInput(BuildContext context, LanguageProvider lp) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
+        color: context.appCard,
+        border: Border(top: BorderSide(color: context.appBorder)),
+        boxShadow: context.isDark ? null : [
           BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -4)),
         ],
       ),
@@ -74,11 +81,13 @@ class ChatView extends StatelessWidget {
           IconButton(onPressed: () {}, icon: const Icon(Icons.add_circle_outline, color: AppColors.primary)),
           Expanded(
             child: TextField(
+              style: TextStyle(color: context.appTextPrimary),
               decoration: InputDecoration(
-                hintText: 'Écrire un message...',
+                hintText: lp.getText('write_message'),
+                hintStyle: TextStyle(color: context.appTextSecondary),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                 filled: true,
-                fillColor: AppColors.backgroundLight,
+                fillColor: context.isDark ? context.appBackground : AppColors.backgroundLight,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
             ),

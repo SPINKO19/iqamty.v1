@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 
 class WorkerDashboard extends StatelessWidget {
@@ -7,10 +9,11 @@ class WorkerDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Espace Travailleur'),
+        title: Text(lp.getText('worker_space')),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -18,25 +21,25 @@ class WorkerDashboard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildWorkerStats(),
+            _buildWorkerStats(lp),
             const SizedBox(height: 32),
-            Text('Mes Tâches Assignées', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(lp.getText('my_assigned_tasks'), style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildTaskCard('Réparation Plomberie', 'Bloc J - Chambre 414', 'Urgent', Colors.red),
+            _buildTaskCard('Réparation Plomberie', 'Bloc J - Chambre 414', lp.getText('urgent_status'), Colors.red),
             const SizedBox(height: 12),
-            _buildTaskCard('Vérification Électricité', 'Bloc A - Couloir 2', 'Nouveau', Colors.blue),
+            _buildTaskCard('Vérification Électricité', 'Bloc A - Couloir 2', lp.getText('new_status'), Colors.blue),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWorkerStats() {
+  Widget _buildWorkerStats(LanguageProvider lp) {
     return Row(
       children: [
-        _buildStatItem('À faire', '5', Colors.orange),
+        _buildStatItem(lp.getText('to_do'), '5', Colors.orange),
         const SizedBox(width: 12),
-        _buildStatItem('Terminés', '12', Colors.green),
+        _buildStatItem(lp.getText('done_tasks'), '12', Colors.green),
       ],
     );
   }

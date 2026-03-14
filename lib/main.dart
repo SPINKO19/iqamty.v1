@@ -2,11 +2,12 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/core/router.dart';
 import 'src/providers/auth_provider.dart';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'src/services/auth_service.dart';
@@ -26,8 +27,6 @@ void main() async {
 } catch (e) {
   debugPrint("Firebase init failed: $e");
 }
-  
-
   final authService = AuthService();
   final authProvider = AuthProvider(authService);
   final firestoreService = FirestoreService();
@@ -48,12 +47,26 @@ void main() async {
   );
 }
 
-class IqamtyApp extends StatelessWidget {
+class IqamtyApp extends StatefulWidget {
   const IqamtyApp({super.key});
+
+  @override
+  State<IqamtyApp> createState() => _IqamtyAppState();
+}
+
+class _IqamtyAppState extends State<IqamtyApp> {
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    _router = AppRouter.createRouter(context.read<AuthProvider>());
+  }
 
   @override
   Widget build(BuildContext context) {
     final themeMode = context.watch<ThemeProvider>().themeMode;
+    final currentLocale = context.watch<LanguageProvider>().currentLocale;
     
     return MaterialApp.router(
       title: 'Iqamty',
@@ -61,8 +74,19 @@ class IqamtyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      routerConfig: AppRouter.router,
+      locale: currentLocale,
+      localizationsDelegates: const [
+        // AppLocalizations.delegate, // Add this if you use arb files
+        ...GlobalMaterialLocalizations.delegates,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('fr'),
+        Locale('en'),
+        Locale('ar'),
+      ],
+      routerConfig: _router,
     );
   }
 }
-

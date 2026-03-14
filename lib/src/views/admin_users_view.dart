@@ -1,61 +1,172 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AdminUsersView extends StatelessWidget {
   const AdminUsersView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lp = context.watch<LanguageProvider>();
+
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Gestion des Étudiants'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        title: Text(
+          lp.getText('students_management'),
+          style: GoogleFonts.inter(color: context.appTextPrimary, fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(onPressed: () {}, icon: Icon(Icons.person_add_outlined, color: context.appTextPrimary)),
+          const SizedBox(width: 8),
+        ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
+      body: Column(
         children: [
-          const TextField(
-            decoration: InputDecoration(
-              prefixIcon: Icon(Icons.search),
-              hintText: 'Rechercher par matricule ou nom...',
-              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Row(
+              children: [
+                _buildSmallStat(context, lp.getText('total'), '1,240', Colors.blue),
+                const SizedBox(width: 12),
+                _buildSmallStat(context, lp.getText('active'), '1,180', Colors.green),
+                const SizedBox(width: 12),
+                _buildSmallStat(context, lp.getText('blocked'), '60', Colors.red),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Container(
+              decoration: BoxDecoration(
+                color: context.appCard,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.appBorder),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: TextField(
+                style: TextStyle(color: context.appTextPrimary),
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.search_rounded, color: context.appTextSecondary, size: 20),
+                  hintText: lp.getText('search_student'),
+                  hintStyle: TextStyle(color: context.appTextSecondary, fontSize: 14),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 24),
-          _buildUserTile('KHOUDIR Lynda', '202433294616', 'Bloc J / 414', false),
-          const SizedBox(height: 12),
-          _buildUserTile('BOUZIDI Ahmed', '202433294001', 'Bloc A / 102', true),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                _buildModernUserCard(context, lp, 'KHOUDIR Lynda', '202433294616', 'Bloc J • Room 414', false),
+                const SizedBox(height: 16),
+                _buildModernUserCard(context, lp, 'BOUZIDI Ahmed', '202433294001', 'Bloc A • Room 102', true),
+                const SizedBox(height: 16),
+                _buildModernUserCard(context, lp, 'MEHDI Sofiane', '202433294123', 'Bloc B • Room 205', false),
+                const SizedBox(height: 16),
+                _buildModernUserCard(context, lp, 'ZAHIRI Amine', '202433294888', 'Bloc C • Room 012', false),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildUserTile(String name, String matricule, String room, bool isBanned) {
+  Widget _buildSmallStat(BuildContext context, String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: context.appCard,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.appBorder),
+        ),
+        child: Column(
+          children: [
+            Text(value, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+            Text(label, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: context.appTextSecondary, letterSpacing: 0.5)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernUserCard(BuildContext context, LanguageProvider lp, String name, String matricule, String details, bool isBanned) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderColor),
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.appBorder),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: AppColors.backgroundLight,
-            child: Text(name[0], style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: isBanned ? Colors.grey.withValues(alpha: 0.1) : AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Center(
+              child: Text(
+                name[0].toUpperCase(),
+                style: GoogleFonts.inter(color: isBanned ? Colors.grey : AppColors.primary, fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text('$room • $matricule', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                Text(name, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary, fontSize: 15)),
+                const SizedBox(height: 4),
+                Text(details, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12)),
+                Text('ID: $matricule', style: GoogleFonts.robotoMono(color: context.appTextSecondary.withValues(alpha: 0.7), fontSize: 11)),
               ],
             ),
           ),
-          isBanned 
-            ? TextButton(onPressed: () {}, child: const Text('Débloquer', style: TextStyle(color: Colors.green)))
-            : TextButton(onPressed: () {}, child: const Text('Bloquer', style: TextStyle(color: Colors.red))),
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert_rounded, color: context.appTextSecondary),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                child: ListTile(
+                  leading: const Icon(Icons.edit_outlined, size: 20),
+                  title: Text(lp.getText('edit')),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                child: ListTile(
+                  leading: Icon(
+                    isBanned ? Icons.check_circle_outline_rounded : Icons.block_flipped,
+                    color: isBanned ? Colors.green : Colors.red,
+                    size: 20,
+                  ),
+                  title: Text(isBanned ? lp.getText('unblock') : lp.getText('block')),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
