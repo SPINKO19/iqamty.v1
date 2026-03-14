@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 
 class DocumentsView extends StatelessWidget {
@@ -6,21 +8,22 @@ class DocumentsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lp = context.watch<LanguageProvider>();
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: Text('Documents', style: TextStyle(color: context.appTextPrimary)),
+        title: Text(lp.getText('documents'), style: TextStyle(color: context.appTextPrimary)),
         backgroundColor: context.appCard,
         centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          _buildDocItem(context, 'Certificat d\'hébergement', 'PDF • 1.2 MB', Icons.picture_as_pdf, Colors.red),
+          _buildDocItem(context, lp.getText('housing_certificate'), 'PDF • 1.2 MB', Icons.picture_as_pdf, Colors.red),
           const SizedBox(height: 16),
-          _buildDocItem(context, 'Règlement intérieur', 'PDF • 3.5 MB', Icons.picture_as_pdf, Colors.red),
+          _buildDocItem(context, lp.getText('internal_rules'), 'PDF • 3.5 MB', Icons.picture_as_pdf, Colors.red),
           const SizedBox(height: 16),
-          _buildDocItem(context, 'Formulaire de départ', 'DOCX • 500 KB', Icons.description, Colors.blue),
+          _buildDocItem(context, lp.getText('departure_form'), 'DOCX • 500 KB', Icons.description, Colors.blue),
         ],
       ),
     );

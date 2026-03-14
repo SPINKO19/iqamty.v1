@@ -187,7 +187,7 @@ class AppSidebar extends StatelessWidget {
   List<dynamic> _adminItems(BuildContext context, LanguageProvider lp) {
     return [
       _NavHeaderData(lp.getText('platform')),
-      _NavItemData(Icons.dashboard_outlined, 'Admin Dashboard', '/admin'),
+      _NavItemData(Icons.dashboard_outlined, lp.getText('admin_dashboard'), '/admin'),
       
       const SizedBox(height: 16),
       _NavHeaderData(lp.getText('management')),
@@ -200,7 +200,7 @@ class AppSidebar extends StatelessWidget {
   List<dynamic> _workerItems(BuildContext context, LanguageProvider lp) {
     return [
       _NavHeaderData(lp.getText('platform')),
-      _NavItemData(Icons.build_outlined, 'Worker Dashboard', '/worker-dashboard'),
+      _NavItemData(Icons.build_outlined, lp.getText('worker_dashboard'), '/worker-dashboard'),
     ];
   }
 

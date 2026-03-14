@@ -19,11 +19,11 @@ class ForumView extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          _buildPostItem(context, 'Direction', 'Coupure d\'eau demain de 08h à 12h pour travaux.', 'Il y a 10 min', true),
+          _buildPostItem(context, lp.getText('direction'), 'Coupure d\'eau demain de 08h à 12h pour travaux.', 'Il y a 10 min', true),
           const SizedBox(height: 16),
-          _buildPollItem(context, 'Étudiant', 'Quel est votre plat préféré cette semaine ?', ['Couscous', 'Pâtes', 'Riz']),
+          _buildPollItem(context, lp, lp.getText('student'), 'Quel est votre plat préféré cette semaine ?', ['Couscous', 'Pâtes', 'Riz']),
           const SizedBox(height: 16),
-          _buildPostItem(context, 'Étudiant', 'Match de foot ce soir au terrain à 19h ! Qui vient ?', 'Il y a 1h', false),
+          _buildPostItem(context, lp.getText('student'), 'Match de foot ce soir au terrain à 19h ! Qui vient ?', 'Il y a 1h', false),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -77,7 +77,7 @@ class ForumView extends StatelessWidget {
     );
   }
 
-  Widget _buildPollItem(BuildContext context, String author, String question, List<String> options) {
+  Widget _buildPollItem(BuildContext context, LanguageProvider lp, String author, String question, List<String> options) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -94,7 +94,7 @@ class ForumView extends StatelessWidget {
               const SizedBox(width: 8),
               Text(author, style: TextStyle(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
               const Spacer(),
-              const Text('Sondage', style: TextStyle(fontSize: 10, color: Colors.amber, fontWeight: FontWeight.bold)),
+              Text(lp.getText('poll'), style: const TextStyle(fontSize: 10, color: Colors.amber, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 12),

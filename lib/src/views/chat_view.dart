@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 
 class ChatView extends StatelessWidget {
@@ -6,10 +8,11 @@ class ChatView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lp = context.watch<LanguageProvider>();
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: Text('Messagerie', style: TextStyle(color: context.appTextPrimary)),
+        title: Text(lp.getText('messaging'), style: TextStyle(color: context.appTextPrimary)),
         backgroundColor: context.appCard,
         centerTitle: true,
       ),
@@ -24,7 +27,7 @@ class ChatView extends StatelessWidget {
               ],
             ),
           ),
-          _buildChatInput(context),
+          _buildChatInput(context, lp),
         ],
       ),
     );
@@ -63,7 +66,7 @@ class ChatView extends StatelessWidget {
     );
   }
 
-  Widget _buildChatInput(BuildContext context) {
+  Widget _buildChatInput(BuildContext context, LanguageProvider lp) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -80,7 +83,7 @@ class ChatView extends StatelessWidget {
             child: TextField(
               style: TextStyle(color: context.appTextPrimary),
               decoration: InputDecoration(
-                hintText: 'Écrire un message...',
+                hintText: lp.getText('write_message'),
                 hintStyle: TextStyle(color: context.appTextSecondary),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                 filled: true,
