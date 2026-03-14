@@ -115,11 +115,18 @@ class HomeScreen extends StatelessWidget {
                     crossAxisSpacing: 16,
                     childAspectRatio: 1.5,
                     children: [
-                      _QuickActionCard(
-                        title: 'Réclamations',
-                        icon: Icons.report_problem_outlined,
-                        color: Colors.orange,
-                        onTap: () => context.go('/complaints'),
+                      StreamBuilder<List<Complaint>>(
+                        stream: firestore.getMyComplaints(student?.id?.toString() ?? ''),
+                        builder: (context, snapshot) {
+                          final count = snapshot.data?.where((c) => c.status != Status.resolved).length ?? 0;
+                          return _QuickActionCard(
+                            title: 'Réclamations',
+                            icon: Icons.report_problem_outlined,
+                            color: Colors.orange,
+                            badgeCount: count,
+                            onTap: () => context.go('/complaints'),
+                          );
+                        },
                       ),
                       _QuickActionCard(
                         title: 'Restauration',
@@ -127,11 +134,18 @@ class HomeScreen extends StatelessWidget {
                         color: Colors.green,
                         onTap: () => context.go('/dining'),
                       ),
-                      _QuickActionCard(
-                        title: 'Transport',
-                        icon: Icons.directions_bus_outlined,
-                        color: Colors.blue,
-                        onTap: () {},
+                      StreamBuilder<List<ServiceRequest>>(
+                        stream: firestore.getMyRequests(student?.id?.toString() ?? ''),
+                        builder: (context, snapshot) {
+                          final count = snapshot.data?.where((r) => r.status != 'completed').length ?? 0;
+                          return _QuickActionCard(
+                            title: 'Services',
+                            icon: Icons.electrical_services_outlined,
+                            color: Colors.blue,
+                            badgeCount: count,
+                            onTap: () {}, // Update to actual route when available
+                          );
+                        },
                       ),
                       _QuickActionCard(
                         title: 'Documents',
@@ -150,9 +164,16 @@ class HomeScreen extends StatelessWidget {
                   StreamBuilder<List<Meal>>(
                     stream: firestore.getTodayMeals(),
                     builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return const Text('Erreur lors du chargement des repas', style: TextStyle(color: Colors.red));
+                      }
+                      
                       final meals = snapshot.data ?? [];
                       if (meals.isEmpty) {
-                        return _buildMealMock(); // Show mock if DB is empty for demo
+                        return _buildEmptyState(Icons.restaurant_menu, "Aucun repas prévu pour aujourd'hui");
                       }
                       return _MealPreviewCard(meal: meals.first);
                     },
@@ -186,58 +207,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMealMock() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primary.withBlue(200)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: const Row(
-        children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.white24,
-            child: Icon(Icons.restaurant, color: Colors.white, size: 30),
-          ),
-          SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Déjeuner',
-                  style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  'Couscous aux légumes',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.star, color: Colors.amber, size: 16),
-                    SizedBox(width: 4),
-                    Text('4.5 (120 avis)', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: Colors.white),
-        ],
-      ),
-    );
-  }
+  // Mock removed
 }
 
 class _AnnouncementCard extends StatelessWidget {
@@ -287,7 +257,7 @@ class _AnnouncementCard extends StatelessWidget {
               const Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
               const SizedBox(width: 4),
               Text(
-                'Il y a 2h',
+                _formatTimeAgo(announcement.timestamp),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
               ),
             ],
@@ -296,18 +266,28 @@ class _AnnouncementCard extends StatelessWidget {
       ),
     );
   }
+
+  String _formatTimeAgo(DateTime time) {
+    final diff = DateTime.now().difference(time);
+    if (diff.inDays > 0) return 'Il y a ${diff.inDays}j';
+    if (diff.inHours > 0) return 'Il y a ${diff.inHours}h';
+    if (diff.inMinutes > 0) return 'Il y a ${diff.inMinutes}m';
+    return 'À l\'instant';
+  }
 }
 
 class _QuickActionCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final Color color;
+  final int badgeCount;
   final VoidCallback onTap;
 
   const _QuickActionCard({
     required this.title,
     required this.icon,
     required this.color,
+    this.badgeCount = 0,
     required this.onTap,
   });
 
@@ -323,16 +303,36 @@ class _QuickActionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.borderColor),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 28),
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+              ],
             ),
+            if (badgeCount > 0)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    badgeCount.toString(),
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -365,7 +365,7 @@ class _MealPreviewCard extends StatelessWidget {
                   style: const TextStyle(color: Colors.white70),
                 ),
                 Text(
-                  meal.name,
+                  meal.menu,
                   style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],

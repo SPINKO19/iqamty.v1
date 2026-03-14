@@ -1,3 +1,6 @@
+
+
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'src/core/theme/app_theme.dart';
@@ -5,6 +8,7 @@ import 'src/core/router.dart';
 import 'src/providers/auth_provider.dart';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'src/services/auth_service.dart';
 import 'src/services/firestore_service.dart';
 import 'src/providers/theme_provider.dart';
@@ -14,11 +18,15 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Try to initialize Firebase, if it fails gracefully continue (for dev before google-services.json)
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    debugPrint("Firebase init failed: $e");
-  }
+ 
+   try {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+} catch (e) {
+  debugPrint("Firebase init failed: $e");
+}
+  
 
   final authService = AuthService();
   final authProvider = AuthProvider(authService);

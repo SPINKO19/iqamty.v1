@@ -12,6 +12,13 @@ class FirestoreService extends ChangeNotifier {
   }
 
   // Announcements
+  Future<void> addAnnouncement(Announcement announcement) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final data = announcement.toJson();
+    data['timestamp'] = FieldValue.serverTimestamp();
+    await _db!.collection('announcements').add(data);
+  }
+
   Stream<List<Announcement>> getAnnouncements() {
     if (_db == null) return Stream.value([]);
     return _db!
@@ -26,22 +33,25 @@ class FirestoreService extends ChangeNotifier {
   // Dining
   Stream<List<Meal>> getTodayMeals() {
     if (_db == null) return Stream.value([]);
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-    
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
     return _db!
         .collection('meals')
         .where('date', isGreaterThanOrEqualTo: startOfDay)
+        .where('date', isLessThanOrEqualTo: endOfDay)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => Meal.fromJson(doc.data()..['id'] = doc.id))
             .toList());
   }
-
   // Complaints
   Future<void> submitComplaint(Complaint complaint) async {
     if (_db == null) throw Exception("Firestore not initialized");
-    await _db!.collection('complaints').add(complaint.toJson());
+    final data = complaint.toJson();
+    data['timestamp'] = FieldValue.serverTimestamp();
+    await _db!.collection('complaints').add(data);
   }
 
   Stream<List<Complaint>> getMyComplaints(String userId) {
@@ -59,7 +69,9 @@ class FirestoreService extends ChangeNotifier {
   // Service Requests
   Future<void> submitServiceRequest(ServiceRequest request) async {
     if (_db == null) throw Exception("Firestore not initialized");
-    await _db!.collection('requests').add(request.toJson());
+    final data = request.toJson();
+    data['timestamp'] = FieldValue.serverTimestamp();
+    await _db!.collection('requests').add(data);
   }
 
   Stream<List<ServiceRequest>> getMyRequests(String userId) {
@@ -71,6 +83,18 @@ class FirestoreService extends ChangeNotifier {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => ServiceRequest.fromJson(doc.data()..['id'] = doc.id))
+            .toList());
+  }
+
+  // Documents
+  Stream<List<DocumentModel>> getDocuments() {
+    if (_db == null) return Stream.value([]);
+    return _db!
+        .collection('documents')
+        .orderBy('uploadedAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => DocumentModel.fromJson(doc.data()..['id'] = doc.id))
             .toList());
   }
 

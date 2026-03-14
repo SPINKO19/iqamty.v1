@@ -21,7 +21,7 @@ class Complaint {
   final Priority priority;
   final Status status;
   final String? imageUrl;
-  final DateTime createdAt;
+  final DateTime timestamp;
   final String? adminComment;
   final String? department;
   final String? assignedWorkerId;
@@ -35,7 +35,7 @@ class Complaint {
     required this.priority,
     required this.status,
     this.imageUrl,
-    required this.createdAt,
+    required this.timestamp,
     this.adminComment,
     this.department,
     this.assignedWorkerId,
@@ -51,7 +51,7 @@ class Complaint {
       priority: Priority.values.firstWhere((e) => e.toString() == json['priority'], orElse: () => Priority.medium),
       status: Status.values.firstWhere((e) => e.toString() == json['status'], orElse: () => Status.received),
       imageUrl: json['imageUrl'],
-      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       adminComment: json['adminComment'],
       department: json['department'],
       assignedWorkerId: json['assignedWorkerId'],
@@ -59,7 +59,7 @@ class Complaint {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final Map<String, dynamic> data = {
       'userId': userId,
       'title': title,
       'description': description,
@@ -67,11 +67,13 @@ class Complaint {
       'priority': priority.toString(),
       'status': status.toString(),
       'imageUrl': imageUrl,
-      'createdAt': Timestamp.fromDate(createdAt),
       'adminComment': adminComment,
       'department': department,
       'assignedWorkerId': assignedWorkerId,
     };
+    
+    // We don't include timestamp here because it will be added by the server
+    return data;
   }
 }
 
@@ -79,14 +81,14 @@ class Announcement {
   final String? id;
   final String title;
   final String description;
-  final DateTime createdAt;
+  final DateTime timestamp;
   final String? imageUrl;
 
   Announcement({
     this.id,
     required this.title,
     required this.description,
-    required this.createdAt,
+    required this.timestamp,
     this.imageUrl,
   });
 
@@ -95,7 +97,7 @@ class Announcement {
       id: json['id'],
       title: json['title'] ?? '',
       description: json['description'] ?? '',
-      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       imageUrl: json['imageUrl'],
     );
   }
@@ -104,81 +106,77 @@ class Announcement {
     return {
       'title': title,
       'description': description,
-      'createdAt': Timestamp.fromDate(createdAt),
       'imageUrl': imageUrl,
+      // timestamp is added by the server
     };
   }
 }
 
-class AppDocument {
+class DocumentModel {
   final String? id;
   final String title;
-  final String subtitle;
-  final String url;
-  final String icon;
+  final String fileUrl;
+  final String fileType;
+  final String fileSize;
+  final DateTime uploadedAt;
 
-  AppDocument({
+  DocumentModel({
     this.id,
     required this.title,
-    required this.subtitle,
-    required this.url,
-    required this.icon,
+    required this.fileUrl,
+    required this.fileType,
+    required this.fileSize,
+    required this.uploadedAt,
   });
 
-  factory AppDocument.fromJson(Map<String, dynamic> json) {
-    return AppDocument(
+  factory DocumentModel.fromJson(Map<String, dynamic> json) {
+    return DocumentModel(
       id: json['id'],
       title: json['title'] ?? '',
-      subtitle: json['subtitle'] ?? '',
-      url: json['url'] ?? '',
-      icon: json['icon'] ?? '',
+      fileUrl: json['fileUrl'] ?? '',
+      fileType: json['fileType'] ?? '',
+      fileSize: json['fileSize'] ?? '',
+      uploadedAt: (json['uploadedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'title': title,
-      'subtitle': subtitle,
-      'url': url,
-      'icon': icon,
+      'fileUrl': fileUrl,
+      'fileType': fileType,
+      'fileSize': fileSize,
+      // uploadedAt is added by the server
     };
   }
 }
 
 class Meal {
   final String? id;
-  final String name;
-  final String type; // breakfast, lunch, dinner
-  final int calories;
-  final double rating;
+  final String menu;
+  final String type; // Breakfast, Lunch, Dinner
   final DateTime date;
 
   Meal({
     this.id,
-    required this.name,
+    required this.menu,
     required this.type,
-    required this.calories,
-    required this.rating,
     required this.date,
   });
 
   factory Meal.fromJson(Map<String, dynamic> json) {
     return Meal(
       id: json['id'],
-      name: json['name'] ?? '',
+      menu: json['menu'] ?? '',
       type: json['type'] ?? '',
-      calories: json['calories'] ?? 0,
-      rating: (json['rating'] ?? 0).toDouble(),
       date: (json['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
+      'menu': menu,
       'type': type,
-      'calories': calories,
-      'rating': rating,
       'date': Timestamp.fromDate(date),
     };
   }
@@ -256,7 +254,7 @@ class ServiceRequest {
   final String type;
   final String details;
   final String status; // pending, reviewed, completed
-  final DateTime createdAt;
+  final DateTime timestamp;
   final String? adminResponseText;
   final String? adminResponseImageUrl;
 
@@ -266,7 +264,7 @@ class ServiceRequest {
     required this.type,
     required this.details,
     required this.status,
-    required this.createdAt,
+    required this.timestamp,
     this.adminResponseText,
     this.adminResponseImageUrl,
   });
@@ -278,7 +276,7 @@ class ServiceRequest {
       type: json['type'] ?? '',
       details: json['details'] ?? '',
       status: json['status'] ?? 'pending',
-      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       adminResponseText: json['adminResponseText'],
       adminResponseImageUrl: json['adminResponseImageUrl'],
     );
@@ -290,9 +288,9 @@ class ServiceRequest {
       'type': type,
       'details': details,
       'status': status,
-      'createdAt': Timestamp.fromDate(createdAt),
       'adminResponseText': adminResponseText,
       'adminResponseImageUrl': adminResponseImageUrl,
+      // timestamp is added by the server
     };
   }
 }
@@ -305,7 +303,7 @@ class ForumPost {
   final bool isPoll;
   final List<PollOption>? pollOptions;
   final int likesCount;
-  final DateTime createdAt;
+  final DateTime timestamp;
 
   ForumPost({
     this.id,
@@ -315,7 +313,7 @@ class ForumPost {
     this.isPoll = false,
     this.pollOptions,
     this.likesCount = 0,
-    required this.createdAt,
+    required this.timestamp,
   });
 
   factory ForumPost.fromJson(Map<String, dynamic> json) {
@@ -327,7 +325,7 @@ class ForumPost {
       isPoll: json['isPoll'] ?? false,
       pollOptions: (json['pollOptions'] as List?)?.map((e) => PollOption.fromJson(e)).toList(),
       likesCount: json['likesCount'] ?? 0,
-      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
@@ -339,7 +337,7 @@ class ForumPost {
       'isPoll': isPoll,
       'pollOptions': pollOptions?.map((e) => e.toJson()).toList(),
       'likesCount': likesCount,
-      'createdAt': Timestamp.fromDate(createdAt),
+      // timestamp is added by the server
     };
   }
 }
@@ -453,7 +451,7 @@ class ChatMessage {
       'isAdmin': isAdmin,
       'imageUrl': imageUrl,
       'pdfUrl': pdfUrl,
-      'timestamp': Timestamp.fromDate(timestamp),
+      // timestamp is added by the server
     };
   }
 }

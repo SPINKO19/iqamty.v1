@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/firestore_service.dart';
+import '../models/types.dart';
 import '../core/theme/colors.dart';
 
 class DiningView extends StatelessWidget {
@@ -6,20 +9,65 @@ class DiningView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final firestore = context.watch<FirestoreService>();
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Restauration'),
         centerTitle: true,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          _buildMealSection(context, 'Petit Déjeuner', '07:00 - 08:30', 'Café, Lait, Pain, Confiture'),
-          const SizedBox(height: 16),
-          _buildMealSection(context, 'Déjeuner', '11:45 - 13:30', 'Couscous, Viande, Salade, Fruit'),
-          const SizedBox(height: 16),
-          _buildMealSection(context, 'Dîner', '18:30 - 20:00', 'Soupe, Pâtes, Yaourt'),
-        ],
+      body: StreamBuilder<List<Meal>>(
+        stream: firestore.getTodayMeals(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Erreur: ${snapshot.error}'));
+          }
+
+          final meals = snapshot.data ?? [];
+
+          if (meals.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.restaurant_menu_outlined, size: 64, color: AppColors.textSecondary),
+                  SizedBox(height: 16),
+                  Text(
+                    'Aucun repas prévu pour aujourd\'hui',
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(24),
+            itemCount: meals.length,
+            itemBuilder: (context, index) {
+              final meal = meals[index];
+              final type = meal.type;
+              final menu = meal.menu;
+
+              String time = '';
+
+              if (type == 'Breakfast') time = '07:00 - 08:30';
+              if (type == 'Lunch') time = '11:45 - 13:30';
+              if (type == 'Dinner') time = '18:30 - 20:00';
+
+              return Column(
+                children: [
+                  _buildMealSection(context, type, time, menu),
+                  const SizedBox(height: 16),
+                ],
+              );
+            },
+          );
+        },
       ),
     );
   }
