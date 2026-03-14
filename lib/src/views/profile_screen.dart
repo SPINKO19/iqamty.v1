@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
@@ -11,6 +12,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final student = context.watch<AuthProvider>().currentStudent;
+    final lp = context.watch<LanguageProvider>();
     final textTheme = Theme.of(context).textTheme;
 
     // Formatting date
@@ -28,13 +30,13 @@ class ProfileScreen extends StatelessWidget {
     final safeNomFr = student?.nomFr ?? '';
     final safePrenomFr = student?.prenomFr ?? '';
     final displayName = '$safeNomFr $safePrenomFr'.trim().isEmpty 
-        ? "No Name Found" 
+        ? lp.getText('no_name') 
         : '$safeNomFr $safePrenomFr'.trim();
 
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: Text('Profil', style: TextStyle(color: context.appTextPrimary)),
+        title: Text(lp.getText('profile'), style: TextStyle(color: context.appTextPrimary)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -89,7 +91,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    student?.residence ?? "Non assigné", 
+                    student?.residence ?? lp.getText('not_assigned'), 
                     style: textTheme.bodyMedium,
                   ),
                 ],
@@ -98,14 +100,14 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Action List
-            _buildActionItem(context, Icons.article_outlined, 'Mes Annonces', () {}),
+            _buildActionItem(context, Icons.article_outlined, lp.getText('mes_annonces'), () {}),
             const SizedBox(height: 12),
-            _buildActionItem(context, Icons.person_outline, 'Informations Personnelles', () {}),
+            _buildActionItem(context, Icons.person_outline, lp.getText('personal_info'), () {}),
             const SizedBox(height: 12),
             _buildActionItem(
               context, 
               Icons.logout, 
-              'Déconnexion', 
+              lp.getText('logout'), 
               () => _showLogoutConfirmation(context),
               isDestructive: true,
             ),
@@ -116,7 +118,7 @@ class ProfileScreen extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'MA CARTE DE RÉSIDENT',
+                lp.getText('my_resident_card'),
                 style: textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
@@ -162,20 +164,20 @@ class ProfileScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                            Text(
-                            'RÉPUBLIQUE ALGÉRIENNE',
+                            lp.getText('republic_algeria_1'),
                             style: textTheme.bodyMedium?.copyWith(fontSize: 8, fontWeight: FontWeight.bold),
                            ),
                            Text(
-                            'DÉMOCRATIQUE ET POPULAIRE',
+                            lp.getText('republic_algeria_2'),
                             style: textTheme.bodyMedium?.copyWith(fontSize: 8, fontWeight: FontWeight.bold),
                            ),
                            const SizedBox(height: 8),
                            Text(
-                            'CARTE RÉSIDENT',
+                            lp.getText('resident_card_title'),
                             style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
                            ),
                            Text(
-                            'بطاقة الإقامة',
+                            lp.currentLocale.languageCode == 'ar' ? 'بطاقة الإقامة' : 'بطاقة الإقامة', // Keep Arabic always or use key
                             style: textTheme.bodyMedium?.copyWith(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
                            ),
                         ],
@@ -222,7 +224,7 @@ class ProfileScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'NOM & PRÉNOM / الإسم و اللقب',
+                              lp.getText('name_surname_label'),
                               style: textTheme.bodyMedium?.copyWith(fontSize: 8, color: context.appTextSecondary),
                             ),
                             Text(
@@ -231,7 +233,7 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             Text(
                               '${student?.nomAr ?? ''} ${student?.prenomAr ?? ''}'.trim().isEmpty 
-                                  ? 'لا يوجد اسم' 
+                                  ? lp.getText('no_name') 
                                   : '${student?.nomAr ?? ''} ${student?.prenomAr ?? ''}'.trim(),
                               style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 14, color: context.appTextPrimary),
                             ),
@@ -239,12 +241,12 @@ class ProfileScreen extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                _buildInfoColumn(context, 'BLOC', student?.bloc ?? '—', textTheme),
-                                _buildInfoColumn(context, 'N° CHAMBRE', student?.chambre ?? '—', textTheme),
+                                _buildInfoColumn(context, lp.getText('bloc_label'), student?.bloc ?? '—', textTheme),
+                                _buildInfoColumn(context, lp.getText('room_no_label'), student?.chambre ?? '—', textTheme),
                               ],
                             ),
                             const SizedBox(height: 12),
-                            _buildInfoColumn(context, 'DATE DE NAISSANCE', dobFormatted, textTheme),
+                            _buildInfoColumn(context, lp.getText('dob_label'), dobFormatted, textTheme),
                           ],
                         ),
                       ),
@@ -269,7 +271,7 @@ class ProfileScreen extends StatelessWidget {
                             child: Icon(Icons.qr_code, size: 20, color: context.appTextPrimary),
                           ),
                           const SizedBox(height: 4),
-                          Text('SCAN ID', style: textTheme.bodyMedium?.copyWith(fontSize: 8, color: context.appTextPrimary)),
+                          Text(lp.getText('scan_id'), style: textTheme.bodyMedium?.copyWith(fontSize: 8, color: context.appTextPrimary)),
                         ],
                       ),
                       // Fake barcode visual representation
@@ -311,7 +313,7 @@ class ProfileScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'ANNÉE: 2023/2024',
+                        lp.getText('year_label'),
                         style: textTheme.bodyMedium?.copyWith(fontSize: 10, fontWeight: FontWeight.bold, color: context.appTextPrimary),
                       ),
                       Container(
@@ -325,7 +327,7 @@ class ProfileScreen extends StatelessWidget {
                              const Icon(Icons.circle, color: AppColors.success, size: 6),
                              const SizedBox(width: 4),
                              Text(
-                              'VALIDE',
+                              lp.getText('valide'),
                               style: textTheme.bodyMedium?.copyWith(fontSize: 10, color: AppColors.success, fontWeight: FontWeight.bold),
                              ),
                           ],
@@ -401,15 +403,16 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void _showLogoutConfirmation(BuildContext context) {
+    final lp = context.read<LanguageProvider>();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Déconnexion'),
-        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+        title: Text(lp.getText('logout_confirm_title')),
+        content: Text(lp.getText('logout_confirm_msg')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: Text(lp.getText('cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -417,7 +420,7 @@ class ProfileScreen extends StatelessWidget {
               context.read<AuthProvider>().logout();
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Déconnecter'),
+            child: Text(lp.getText('confirm')),
           ),
         ],
       ),

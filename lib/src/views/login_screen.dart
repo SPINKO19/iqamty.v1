@@ -30,9 +30,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final matricule = _matriculeController.text.trim();
     final password = _passwordController.text;
 
+    final lp = context.read<LanguageProvider>();
     if (matricule.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
+        SnackBar(content: Text(lp.getText('err_fill_fields'))),
       );
       return;
     }
@@ -43,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } else if (mounted) {
       final error = context.read<AuthProvider>().error;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error ?? 'Login failed')),
+        SnackBar(content: Text(error ?? lp.getText('err_login_failed'))),
       );
     }
   }
@@ -54,6 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final themeProvider = context.watch<ThemeProvider>();
     final isDark = themeProvider.themeMode == ThemeMode.dark;
     final textTheme = Theme.of(context).textTheme;
+
+    final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -80,9 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
                   ),
-                  /*
                   _buildLanguageSelector(context),
-                  */
                 ],
               ),
               const SizedBox(height: 60),
@@ -139,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Form
               Text(
-                'MATRICULE DU BAC',
+                lp.getText('matricule_label'),
                 style: textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
@@ -164,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'MOT DE PASSE',
+                lp.getText('password_label'),
                 style: textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
@@ -218,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Log In',
+                            lp.getText('login_button'),
                             style: textTheme.bodyLarge?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -240,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // Footer
               Center(
                 child: Text(
-                  'SECURE AUTHENTICATION GATEWAY',
+                  lp.getText('secure_gateway'),
                   style: textTheme.bodyMedium?.copyWith(
                     fontSize: 10,
                     letterSpacing: 2,

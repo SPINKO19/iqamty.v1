@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'src/core/theme/app_theme.dart';
@@ -51,10 +52,7 @@ class _IqamtyAppState extends State<IqamtyApp> {
   @override
   Widget build(BuildContext context) {
     final themeMode = context.watch<ThemeProvider>().themeMode;
-    // Locale logic commented out for debugging white screen
-    /*
     final currentLocale = context.watch<LanguageProvider>().currentLocale;
-    */
     
     return MaterialApp.router(
       title: 'Iqamty',
@@ -62,6 +60,18 @@ class _IqamtyAppState extends State<IqamtyApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
+      locale: currentLocale,
+      localizationsDelegates: const [
+        // AppLocalizations.delegate, // Add this if you use arb files
+        ...GlobalMaterialLocalizations.delegates,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('fr'),
+        Locale('en'),
+        Locale('ar'),
+      ],
       routerConfig: _router,
     );
   }

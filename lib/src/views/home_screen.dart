@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/language_provider.dart';
 import '../services/firestore_service.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
@@ -15,6 +16,8 @@ class HomeScreen extends StatelessWidget {
     final student = context.watch<AuthProvider>().currentStudent;
     final firestore = context.watch<FirestoreService>();
     final textTheme = Theme.of(context).textTheme;
+
+    final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -40,13 +43,13 @@ class HomeScreen extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(
+                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Bienvenue,',
-                          style: TextStyle(
+                        Text(
+                          lp.getText('welcome'),
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -54,7 +57,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          student?.prenomFr ?? 'Étudiant',
+                          student?.prenomFr ?? lp.getText('profile'),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 28,
@@ -138,14 +141,14 @@ class HomeScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Annonces', style: textTheme.titleMedium?.copyWith(color: context.appTextPrimary)),
+                      Text(lp.getText('announcements'), style: textTheme.titleMedium?.copyWith(color: context.appTextPrimary)),
                       TextButton(
                         onPressed: () {},
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.primary,
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         ),
-                        child: const Text('Voir tout'),
+                        child: Text(lp.getText('view_all')),
                       ),
                     ],
                   ),
@@ -157,7 +160,7 @@ class HomeScreen extends StatelessWidget {
                       builder: (context, snapshot) {
                         final announcements = snapshot.data ?? [];
                         if (announcements.isEmpty) {
-                          return _buildEmptyState(context, Icons.campaign_rounded, "Aucune annonce pour le moment");
+                          return _buildEmptyState(context, Icons.campaign_rounded, lp.getText('no_announcements'));
                         }
                         return ListView.separated(
                           scrollDirection: Axis.horizontal,
@@ -173,7 +176,7 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 32),
 
                   // Quick Actions Grid
-                  Text('Actions Rapides', style: textTheme.titleMedium?.copyWith(color: context.appTextPrimary)),
+                  Text(lp.getText('quick_actions'), style: textTheme.titleMedium?.copyWith(color: context.appTextPrimary)),
                   const SizedBox(height: 16),
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -188,22 +191,22 @@ class HomeScreen extends StatelessWidget {
                         childAspectRatio: constraints.maxWidth > 800 ? 1.5 : 1.1,
                         children: [
                           _QuickActionCard(
-                            title: 'Réclamations',
+                            title: lp.getText('complaints'),
                             icon: Icons.report_problem_rounded,
                             onTap: () => context.go('/complaints'),
                           ),
                           _QuickActionCard(
-                            title: 'Restauration',
+                            title: lp.getText('restoration'),
                             icon: Icons.restaurant_rounded,
                             onTap: () => context.go('/dining'),
                           ),
                           _QuickActionCard(
-                            title: 'Demandes',
+                            title: lp.getText('requests'),
                             icon: Icons.handyman_rounded,
                             onTap: () => context.go('/requests'),
                           ),
                           _QuickActionCard(
-                            title: 'Documents',
+                            title: lp.getText('documents'),
                             icon: Icons.description_rounded,
                             onTap: () => context.go('/documents'),
                           ),
@@ -215,14 +218,14 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 32),
 
                   // Today's Menu
-                  Text('Menu d\'aujourd\'hui', style: textTheme.titleMedium?.copyWith(color: context.appTextPrimary)),
+                  Text(lp.getText('menu_today'), style: textTheme.titleMedium?.copyWith(color: context.appTextPrimary)),
                   const SizedBox(height: 16),
                   StreamBuilder<List<Meal>>(
                     stream: firestore.getTodayMeals(),
                     builder: (context, snapshot) {
                       final meals = snapshot.data ?? [];
                       if (meals.isEmpty) {
-                        return _buildMealMock(context);
+                        return _buildMealMock(context, lp);
                       }
                       return _MealPreviewCard(meal: meals.first);
                     },
@@ -277,7 +280,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMealMock(BuildContext context) {
+  Widget _buildMealMock(BuildContext context, LanguageProvider lp) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -308,7 +311,7 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Déjeuner',
+                  lp.getText('lunch'),
                   style: TextStyle(color: context.appTextSecondary, fontSize: 13, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 4),
@@ -332,6 +335,7 @@ class _AnnouncementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lp = context.watch<LanguageProvider>();
     return Container(
       width: 270,
       padding: const EdgeInsets.all(20),
@@ -358,9 +362,9 @@ class _AnnouncementCard extends StatelessWidget {
                   color: context.appHighlight,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'Général',
-                  style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                child: Text(
+                  lp.getText('general'),
+                  style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
               const Spacer(),
@@ -380,7 +384,7 @@ class _AnnouncementCard extends StatelessWidget {
               Icon(Icons.access_time_rounded, size: 14, color: context.appTextSecondary),
               const SizedBox(width: 6),
               Text(
-                'Il y a 2h',
+                lp.getText('ago_2h'),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
               ),
             ],
