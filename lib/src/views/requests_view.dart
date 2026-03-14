@@ -7,8 +7,10 @@ class RequestsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: const Text('Demandes'),
+        title: Text('Demandes', style: TextStyle(color: context.appTextPrimary)),
+        backgroundColor: context.appCard,
         centerTitle: true,
       ),
       body: ListView(
@@ -37,9 +39,9 @@ class RequestsView extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.appCard,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.borderColor),
+          border: Border.all(color: context.appBorder),
         ),
         child: Row(
           children: [
@@ -56,12 +58,12 @@ class RequestsView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: context.appTextPrimary)),
+                  Text(subtitle, style: TextStyle(color: context.appTextSecondary, fontSize: 12)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            Icon(Icons.chevron_right, color: context.appTextSecondary),
           ],
         ),
       ),

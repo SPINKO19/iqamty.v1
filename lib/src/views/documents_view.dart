@@ -7,8 +7,10 @@ class DocumentsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: const Text('Documents'),
+        title: Text('Documents', style: TextStyle(color: context.appTextPrimary)),
+        backgroundColor: context.appCard,
         centerTitle: true,
       ),
       body: ListView(
@@ -28,9 +30,9 @@ class DocumentsView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderColor),
+        border: Border.all(color: context.appBorder),
       ),
       child: Row(
         children: [
@@ -40,8 +42,8 @@ class DocumentsView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(info, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+                Text(info, style: TextStyle(color: context.appTextSecondary, fontSize: 12)),
               ],
             ),
           ),

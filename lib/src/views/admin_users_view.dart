@@ -13,34 +13,45 @@ class AdminUsersView extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const TextField(
+          TextField(
+            style: TextStyle(color: context.appTextPrimary),
             decoration: InputDecoration(
-              prefixIcon: Icon(Icons.search),
+              prefixIcon: Icon(Icons.search, color: context.appTextSecondary),
               hintText: 'Rechercher par matricule ou nom...',
-              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+              hintStyle: TextStyle(color: context.appTextSecondary),
+              fillColor: context.appCard,
+              filled: true,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: const BorderRadius.all(Radius.circular(12)),
+                borderSide: BorderSide(color: context.appBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: const BorderRadius.all(Radius.circular(12)),
+                borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              ),
             ),
           ),
           const SizedBox(height: 24),
-          _buildUserTile('KHOUDIR Lynda', '202433294616', 'Bloc J / 414', false),
+          _buildUserTile(context, 'KHOUDIR Lynda', '202433294616', 'Bloc J / 414', false),
           const SizedBox(height: 12),
-          _buildUserTile('BOUZIDI Ahmed', '202433294001', 'Bloc A / 102', true),
+          _buildUserTile(context, 'BOUZIDI Ahmed', '202433294001', 'Bloc A / 102', true),
         ],
       ),
     );
   }
 
-  Widget _buildUserTile(String name, String matricule, String room, bool isBanned) {
+  Widget _buildUserTile(BuildContext context, String name, String matricule, String room, bool isBanned) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderColor),
+        border: Border.all(color: context.appBorder),
       ),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: AppColors.backgroundLight,
+            backgroundColor: context.isDark ? AppColors.highlightDark : AppColors.backgroundLight,
             child: Text(name[0], style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 16),
@@ -48,8 +59,8 @@ class AdminUsersView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text('$room • $matricule', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                Text(name, style: TextStyle(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+                Text('$room • $matricule', style: TextStyle(color: context.appTextSecondary, fontSize: 12)),
               ],
             ),
           ),

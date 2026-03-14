@@ -21,8 +21,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: const Text('Réglages'),
+        title: Text(languageProvider.currentLocale.languageCode == 'ar' ? 'الإعدادات' : 'Réglages', style: TextStyle(color: context.appTextPrimary)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -56,7 +57,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: (val) => themeProvider.toggleTheme(val),
                   textTheme: textTheme,
                 ),
-                const Divider(color: AppColors.borderColor, height: 1),
+                Divider(color: context.appBorder, height: 1),
                 _buildDropdownRow(
                   icon: Icons.language,
                   title: 'Langue',
@@ -77,7 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   trailingIcon: Icons.open_in_new,
                   textTheme: textTheme,
                 ),
-                const Divider(color: AppColors.borderColor, height: 1),
+                Divider(color: context.appBorder, height: 1),
                 _buildActionRow(
                   icon: Icons.email_outlined,
                   title: 'Contactez-nous',
@@ -97,7 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   trailingText: '2.4.0',
                   textTheme: textTheme,
                 ),
-                const Divider(color: AppColors.borderColor, height: 1),
+                Divider(color: context.appBorder, height: 1),
                 _buildActionRow(
                   icon: Icons.description_outlined,
                   title: 'Conditions d\'utilisation',
@@ -122,6 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           fontWeight: FontWeight.bold,
           letterSpacing: 1,
           fontSize: 12,
+          color: context.appTextSecondary,
         ),
       ),
     );
@@ -130,9 +132,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildSettingsCard({required List<Widget> children}) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderColor),
+        border: Border.all(color: context.appBorder),
       ),
       child: Column(
         children: children,
@@ -157,7 +159,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         activeThumbColor: Colors.white,
         activeTrackColor: AppColors.primary,
         inactiveThumbColor: Colors.white,
-        inactiveTrackColor: AppColors.borderColor,
+        inactiveTrackColor: context.appBorder,
       ),
     );
   }
@@ -183,7 +185,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 20),
+            Icon(Icons.keyboard_arrow_down, color: context.appTextSecondary, size: 20),
           ],
         ),
       ),
@@ -193,21 +195,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showLanguagePicker(BuildContext context, LanguageProvider provider) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: context.appCard,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('Français'),
+              title: Text('Français', style: TextStyle(color: context.appTextPrimary)),
+              trailing: provider.currentLocale.languageCode == 'fr' ? const Icon(Icons.check, color: AppColors.primary) : null,
               onTap: () { provider.setLocale('fr'); Navigator.pop(context); },
             ),
             ListTile(
-              title: const Text('English'),
+              title: Text('English', style: TextStyle(color: context.appTextPrimary)),
+              trailing: provider.currentLocale.languageCode == 'en' ? const Icon(Icons.check, color: AppColors.primary) : null,
               onTap: () { provider.setLocale('en'); Navigator.pop(context); },
             ),
             ListTile(
-              title: const Text('العربية'),
+              title: Text('العربية', style: TextStyle(color: context.appTextPrimary)),
+              trailing: provider.currentLocale.languageCode == 'ar' ? const Icon(Icons.check, color: AppColors.primary) : null,
               onTap: () { provider.setLocale('ar'); Navigator.pop(context); },
             ),
           ],
@@ -228,9 +235,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       title: title,
       textTheme: textTheme,
       trailing: trailingIcon != null
-          ? Icon(trailingIcon, color: AppColors.textSecondary, size: 20)
+          ? Icon(trailingIcon, color: context.appTextSecondary, size: 20)
           : (trailingText != null
-              ? Text(trailingText, style: textTheme.bodyMedium)
+              ? Text(trailingText, style: textTheme.bodyMedium?.copyWith(color: context.appTextPrimary))
               : const SizedBox.shrink()),
     );
   }
@@ -257,7 +264,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Expanded(
             child: Text(
               title,
-              style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+              style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: context.appTextPrimary),
             ),
           ),
           trailing,

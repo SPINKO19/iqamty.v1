@@ -32,11 +32,13 @@ class ProfileScreen extends StatelessWidget {
         : '$safeNomFr $safePrenomFr'.trim();
 
     return Scaffold(
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: const Text('Profil'),
+        title: Text('Profil', style: TextStyle(color: context.appTextPrimary)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: IconThemeData(color: context.appTextPrimary),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -51,15 +53,24 @@ class ProfileScreen extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 40,
-                        backgroundColor: AppColors.backgroundLight,
-                        backgroundImage: student?.photoBase64 != null 
-                            ? MemoryImage(base64Decode(student!.photoBase64!))
-                            : student?.photo != null 
-                                ? NetworkImage(student!.photo!) as ImageProvider
-                                : null,
-                        child: (student?.photo == null && student?.photoBase64 == null) 
-                            ? const Icon(Icons.person, size: 40, color: AppColors.textSecondary)
-                            : null,
+                        backgroundColor: context.appBorder,
+                        child: ClipOval(
+                          child: student?.photoBase64 != null 
+                              ? Image.memory(
+                                  base64Decode(student!.photoBase64!),
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                )
+                              : student?.photo != null 
+                                  ? Image.network(
+                                      student!.photo!,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Icon(Icons.person, size: 40, color: context.appTextSecondary),
+                        ),
                       ),
                       Container(
                         padding: const EdgeInsets.all(4),
@@ -95,7 +106,7 @@ class ProfileScreen extends StatelessWidget {
               context, 
               Icons.logout, 
               'Déconnexion', 
-              () { context.read<AuthProvider>().logout(); },
+              () => _showLogoutConfirmation(context),
               isDestructive: true,
             ),
             
@@ -118,16 +129,16 @@ class ProfileScreen extends StatelessWidget {
             // ID Card Widget
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.appCard,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: [
+                boxShadow: context.isDark ? null : [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
                 ],
-                border: Border.all(color: AppColors.borderColor),
+                border: Border.all(color: context.appBorder),
               ),
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -138,14 +149,14 @@ class ProfileScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                       Container(
+                      Container(
                         width: 40,
                         height: 40,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.school, color: AppColors.primary, size: 24),
+                        child: const Icon(Icons.school, color: Colors.white, size: 24),
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -178,27 +189,31 @@ class ProfileScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Photo
-                      Container(
-                        width: 70,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          color: AppColors.backgroundLight,
-                          borderRadius: BorderRadius.circular(8),
-                          image: student?.photoBase64 != null 
-                              ? DecorationImage(
-                                  image: MemoryImage(base64Decode(student!.photoBase64!)),
-                                  fit: BoxFit.cover,
-                                )
-                              : student?.photoEtudiant != null 
+                      Column(
+                        children: [
+                          Container(
+                            width: 70,
+                            height: 90,
+                            decoration: BoxDecoration(
+                              color: context.appBorder,
+                              borderRadius: BorderRadius.circular(8),
+                              image: student?.photoBase64 != null 
                                   ? DecorationImage(
-                                      image: NetworkImage(student!.photoEtudiant!),
+                                      image: MemoryImage(base64Decode(student!.photoBase64!)),
                                       fit: BoxFit.cover,
                                     )
-                                  : null,
-                        ),
-                        child: (student?.photoEtudiant == null && student?.photoBase64 == null) 
-                            ? const Icon(Icons.person, color: AppColors.textSecondary) 
-                            : null,
+                                  : student?.photoEtudiant != null 
+                                      ? DecorationImage(
+                                          image: NetworkImage(student!.photoEtudiant!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                            ),
+                            child: (student?.photoEtudiant == null && student?.photoBase64 == null) 
+                                ? Icon(Icons.person, color: context.appTextSecondary) 
+                                : null,
+                          ),
+                        ],
                       ),
                       const SizedBox(width: 16),
                       // Details
@@ -208,28 +223,28 @@ class ProfileScreen extends StatelessWidget {
                           children: [
                             Text(
                               'NOM & PRÉNOM / الإسم و اللقب',
-                              style: textTheme.bodyMedium?.copyWith(fontSize: 8, color: AppColors.textSecondary),
+                              style: textTheme.bodyMedium?.copyWith(fontSize: 8, color: context.appTextSecondary),
                             ),
                             Text(
                               displayName.toUpperCase(),
-                              style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 14, color: context.appTextPrimary),
                             ),
                             Text(
                               '${student?.nomAr ?? ''} ${student?.prenomAr ?? ''}'.trim().isEmpty 
                                   ? 'لا يوجد اسم' 
                                   : '${student?.nomAr ?? ''} ${student?.prenomAr ?? ''}'.trim(),
-                              style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 14, color: context.appTextPrimary),
                             ),
                             const SizedBox(height: 12),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                _buildInfoColumn('BLOC', student?.bloc ?? '—', textTheme),
-                                _buildInfoColumn('N° CHAMBRE', student?.chambre ?? '—', textTheme),
+                                _buildInfoColumn(context, 'BLOC', student?.bloc ?? '—', textTheme),
+                                _buildInfoColumn(context, 'N° CHAMBRE', student?.chambre ?? '—', textTheme),
                               ],
                             ),
                             const SizedBox(height: 12),
-                            _buildInfoColumn('DATE DE NAISSANCE', dobFormatted, textTheme),
+                            _buildInfoColumn(context, 'DATE DE NAISSANCE', dobFormatted, textTheme),
                           ],
                         ),
                       ),
@@ -248,13 +263,13 @@ class ProfileScreen extends StatelessWidget {
                             width: 30,
                             height: 40,
                             decoration: BoxDecoration(
-                              border: Border.all(color: AppColors.borderColor),
+                              border: Border.all(color: context.appBorder),
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Icon(Icons.qr_code, size: 20),
+                            child: Icon(Icons.qr_code, size: 20, color: context.appTextPrimary),
                           ),
                           const SizedBox(height: 4),
-                          Text('SCAN ID', style: textTheme.bodyMedium?.copyWith(fontSize: 8)),
+                          Text('SCAN ID', style: textTheme.bodyMedium?.copyWith(fontSize: 8, color: context.appTextPrimary)),
                         ],
                       ),
                       // Fake barcode visual representation
@@ -289,7 +304,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   
-                  const Divider(color: AppColors.borderColor),
+                  Divider(color: context.appBorder),
                   const SizedBox(height: 8),
 
                   Row(
@@ -297,7 +312,7 @@ class ProfileScreen extends StatelessWidget {
                     children: [
                       Text(
                         'ANNÉE: 2023/2024',
-                        style: textTheme.bodyMedium?.copyWith(fontSize: 10, fontWeight: FontWeight.bold),
+                        style: textTheme.bodyMedium?.copyWith(fontSize: 10, fontWeight: FontWeight.bold, color: context.appTextPrimary),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -327,24 +342,24 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoColumn(String title, String value, TextTheme textTheme) {
+  Widget _buildInfoColumn(BuildContext context, String title, String value, TextTheme textTheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: textTheme.bodyMedium?.copyWith(fontSize: 8, color: AppColors.textSecondary),
+          style: textTheme.bodyMedium?.copyWith(fontSize: 8, color: context.appTextSecondary),
         ),
         Text(
           value,
-          style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
+          style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 12, color: context.appTextPrimary),
         ),
       ],
     );
   }
 
   Widget _buildActionItem(BuildContext context, IconData icon, String title, VoidCallback onTap, {bool isDestructive = false}) {
-    final color = isDestructive ? AppColors.error : AppColors.textPrimary;
+    final color = isDestructive ? AppColors.error : context.appTextPrimary;
     final iconColor = isDestructive ? AppColors.error : AppColors.primary;
     final bgIconColor = isDestructive ? AppColors.error.withValues(alpha: 0.1) : AppColors.primary.withValues(alpha: 0.1);
 
@@ -354,9 +369,9 @@ class ProfileScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.appCard,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderColor),
+          border: Border.all(color: context.appBorder),
         ),
         child: Row(
           children: [
@@ -378,9 +393,33 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            Icon(Icons.chevron_right, color: context.appTextSecondary),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showLogoutConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Déconnexion'),
+        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<AuthProvider>().logout();
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Déconnecter'),
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart';
+import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
@@ -49,10 +51,12 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final isLoading = context.watch<AuthProvider>().isLoading;
+    final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.appBackground,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
@@ -65,35 +69,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundLight,
+                      color: context.appCard,
                       shape: BoxShape.circle,
+                      border: Border.all(color: context.appBorder),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.wb_sunny_outlined, color: AppColors.textSecondary),
-                      onPressed: () {},
+                      icon: Icon(isDark ? Icons.nights_stay_outlined : Icons.wb_sunny_outlined, color: context.appTextPrimary),
+                      onPressed: () {
+                        themeProvider.toggleTheme(!isDark);
+                      },
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundLight,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.language, size: 16, color: AppColors.primary),
-                        const SizedBox(width: 8),
-                        Text(
-                          'EN',
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.textSecondary),
-                      ],
-                    ),
-                  ),
+                  /*
+                  _buildLanguageSelector(context),
+                  */
                 ],
               ),
               const SizedBox(height: 60),
@@ -106,13 +95,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 90,
                       height: 90,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(30),
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(28),
                       ),
                       child: Center(
                         child: Container(
-                          width: 54,
-                          height: 54,
+                          width: 60,
+                          height: 60,
                           decoration: const BoxDecoration(
                             color: AppColors.primary,
                             shape: BoxShape.circle,
@@ -120,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Icon(
                             Icons.school,
                             color: Colors.white,
-                            size: 30,
+                            size: 32,
                           ),
                         ),
                       ),
@@ -131,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: textTheme.displayLarge?.copyWith(
                         letterSpacing: 1.5,
                         fontWeight: FontWeight.w900,
-                        color: const Color(0xFF0D1B2A), // Very dark navy blue
+                        color: context.appTextPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -155,14 +144,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
                   fontSize: 12,
+                  color: context.appTextSecondary,
                 ),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _matriculeController,
+                style: TextStyle(color: context.appTextPrimary),
                 decoration: InputDecoration(
                   hintText: 'e.g. 2024310542',
-                  prefixIcon: const Icon(Icons.badge_outlined, color: AppColors.textSecondary),
+                  hintStyle: TextStyle(color: context.appTextSecondary),
+                  prefixIcon: Icon(Icons.badge_outlined, color: context.appTextSecondary),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: context.appBorder), borderRadius: BorderRadius.circular(12)),
+                  focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppColors.primary, width: 2), borderRadius: BorderRadius.circular(12)),
+                  fillColor: context.appCard,
+                  filled: true,
                 ),
                 keyboardType: TextInputType.number,
               ),
@@ -173,19 +169,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
                   fontSize: 12,
+                  color: context.appTextSecondary,
                 ),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
+                style: TextStyle(color: context.appTextPrimary),
                 decoration: InputDecoration(
                   hintText: '••••••••',
-                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textSecondary),
+                  hintStyle: TextStyle(color: context.appTextSecondary),
+                  prefixIcon: Icon(Icons.lock_outline, color: context.appTextSecondary),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: context.appBorder), borderRadius: BorderRadius.circular(12)),
+                  focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppColors.primary, width: 2), borderRadius: BorderRadius.circular(12)),
+                  fillColor: context.appCard,
+                  filled: true,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                      color: AppColors.textSecondary,
+                      color: context.appTextSecondary,
                     ),
                     onPressed: () {
                       setState(() {
@@ -242,7 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontSize: 10,
                     letterSpacing: 2,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textSecondary.withValues(alpha: 0.5),
+                    color: context.appTextSecondary.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -255,43 +258,51 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildDevAccessPanel(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade300),
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.appBorder),
+        boxShadow: context.isDark ? null : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            '── Dev Quick Access (Testing) ──',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade600,
-            ),
+          Row(
+            children: [
+              const Icon(Icons.bug_report_outlined, size: 18, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                'DEV QUICK ACCESS',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                  color: context.appTextSecondary,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
-          _devButton(context, '👨‍🎓 Enter as Student', Colors.blue, 'student', '/'),
-          const SizedBox(height: 8),
-          _devButton(context, '🛠️  Enter as Worker', Colors.orange, 'worker', '/worker-dashboard'),
-          const SizedBox(height: 8),
-          _devButton(context, '👑  Enter as Admin', Colors.red, 'administrator', '/admin'),
+          _devButton(context, 'Enter as Student', Icons.school_outlined, AppColors.primary, 'student', '/'),
+          const SizedBox(height: 12),
+          _devButton(context, 'Enter as Worker', Icons.handyman_outlined, Colors.orange, 'worker', '/worker-dashboard'),
+          const SizedBox(height: 12),
+          _devButton(context, 'Enter as Admin', Icons.admin_panel_settings_outlined, AppColors.error, 'administrator', '/admin'),
         ],
       ),
     );
   }
 
-  Widget _devButton(BuildContext context, String label, Color color, String role, String route) {
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(color: color),
-        foregroundColor: color,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      onPressed: () async {
+  Widget _devButton(BuildContext context, String label, IconData icon, Color color, String role, String route) {
+    return InkWell(
+      onTap: () async {
         final auth = context.read<AuthProvider>();
         auth.injectDevUser(role);
         // Give provider a moment to notify
@@ -300,7 +311,73 @@ class _LoginScreenState extends State<LoginScreen> {
           context.go(route);
         }
       },
-      child: Text(label),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+          color: color.withValues(alpha: 0.05),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: color.withValues(alpha: 0.5), size: 14),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _buildLanguageSelector(BuildContext context) {
+    final languageProvider = context.watch<LanguageProvider>();
+    final currentLocale = languageProvider.currentLocale.languageCode;
+    
+    String label = 'EN';
+    if (currentLocale == 'fr') label = 'FR';
+    if (currentLocale == 'ar') label = 'AR';
+
+    return PopupMenuButton<String>(
+      onSelected: (String code) {
+        languageProvider.setLocale(code);
+      },
+      itemBuilder: (BuildContext context) => [
+        const PopupMenuItem(value: 'en', child: Text('English')),
+        const PopupMenuItem(value: 'fr', child: Text('Français')),
+        const PopupMenuItem(value: 'ar', child: Text('العربية')),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: context.appCard,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: context.appBorder),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.language, size: 16, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: context.appTextPrimary,
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_down, size: 16, color: context.appTextSecondary),
+          ],
+        ),
+      ),
     );
   }
 }

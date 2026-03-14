@@ -7,8 +7,10 @@ class ForumView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: const Text('Communauté'),
+        title: Text('Communauté', style: TextStyle(color: context.appTextPrimary)),
+        backgroundColor: context.appCard,
         centerTitle: true,
       ),
       body: ListView(
@@ -33,9 +35,9 @@ class ForumView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isOfficial ? AppColors.primary.withValues(alpha: 0.05) : Colors.white,
+        color: isOfficial ? AppColors.primary.withValues(alpha: 0.05) : context.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isOfficial ? AppColors.primary.withValues(alpha: 0.2) : AppColors.borderColor),
+        border: Border.all(color: isOfficial ? AppColors.primary.withValues(alpha: 0.2) : context.appBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,27 +46,27 @@ class ForumView extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundColor: isOfficial ? AppColors.primary : Colors.grey[300],
+                backgroundColor: isOfficial ? AppColors.primary : Colors.grey[600],
                 child: Icon(isOfficial ? Icons.verified : Icons.person, size: 14, color: Colors.white),
               ),
               const SizedBox(width: 8),
-              Text(author, style: TextStyle(fontWeight: FontWeight.bold, color: isOfficial ? AppColors.primary : AppColors.textPrimary)),
+              Text(author, style: TextStyle(fontWeight: FontWeight.bold, color: isOfficial ? AppColors.primary : context.appTextPrimary)),
               const Spacer(),
-              Text(time, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+              Text(time, style: TextStyle(fontSize: 10, color: context.appTextSecondary)),
             ],
           ),
           const SizedBox(height: 12),
-          Text(text),
+          Text(text, style: TextStyle(color: context.appTextPrimary)),
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.favorite_border, size: 18, color: AppColors.textSecondary),
+              Icon(Icons.favorite_border, size: 18, color: context.appTextSecondary),
               const SizedBox(width: 4),
-              const Text('12', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              Text('12', style: TextStyle(fontSize: 12, color: context.appTextSecondary)),
               const SizedBox(width: 16),
-              const Icon(Icons.chat_bubble_outline, size: 18, color: AppColors.textSecondary),
+              Icon(Icons.chat_bubble_outline, size: 18, color: context.appTextSecondary),
               const SizedBox(width: 4),
-              const Text('3', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              Text('3', style: TextStyle(fontSize: 12, color: context.appTextSecondary)),
             ],
           ),
         ],
@@ -76,9 +78,9 @@ class ForumView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderColor),
+        border: Border.all(color: context.appBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,26 +89,26 @@ class ForumView extends StatelessWidget {
             children: [
               const CircleAvatar(radius: 14, backgroundColor: Colors.amber, child: Icon(Icons.poll, size: 14, color: Colors.white)),
               const SizedBox(width: 8),
-              Text(author, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(author, style: TextStyle(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
               const Spacer(),
               const Text('Sondage', style: TextStyle(fontSize: 10, color: Colors.amber, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 12),
-          Text(question, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(question, style: TextStyle(fontWeight: FontWeight.w600, color: context.appTextPrimary)),
           const SizedBox(height: 12),
           ...options.map((opt) => Container(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.backgroundLight,
+              color: context.isDark ? context.appBorder.withValues(alpha: 0.3) : AppColors.backgroundLight,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                Text(opt),
+                Text(opt, style: TextStyle(color: context.appTextSecondary)),
                 const Spacer(),
-                const Text('0%', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text('0%', style: TextStyle(fontSize: 12, color: context.appTextSecondary)),
               ],
             ),
           )),
