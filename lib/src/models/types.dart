@@ -80,14 +80,14 @@ class Complaint {
 class Announcement {
   final String? id;
   final String title;
-  final String description;
+  final String content;
   final DateTime timestamp;
   final String? imageUrl;
 
   Announcement({
     this.id,
     required this.title,
-    required this.description,
+    required this.content,
     required this.timestamp,
     this.imageUrl,
   });
@@ -96,7 +96,9 @@ class Announcement {
     return Announcement(
       id: json['id'],
       title: json['title'] ?? '',
-      description: json['description'] ?? '',
+      // Firestore stores the body as 'content'; fall back to 'description'
+      // for any legacy documents that used the old field name.
+      content: json['content'] ?? json['description'] ?? '',
       timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       imageUrl: json['imageUrl'],
     );
@@ -105,7 +107,7 @@ class Announcement {
   Map<String, dynamic> toJson() {
     return {
       'title': title,
-      'description': description,
+      'content': content,
       'imageUrl': imageUrl,
       // timestamp is added by the server
     };
@@ -251,20 +253,22 @@ class Facility {
 class ServiceRequest {
   final String? id;
   final String userId;
-  final String type;
-  final String details;
+  final String category;
+  final String description;
   final String status; // pending, reviewed, completed
-  final DateTime timestamp;
+  final String? imageUrl;
+  final DateTime createdAt;
   final String? adminResponseText;
   final String? adminResponseImageUrl;
 
   ServiceRequest({
     this.id,
     required this.userId,
-    required this.type,
-    required this.details,
+    required this.category,
+    required this.description,
     required this.status,
-    required this.timestamp,
+    this.imageUrl,
+    required this.createdAt,
     this.adminResponseText,
     this.adminResponseImageUrl,
   });
@@ -273,10 +277,11 @@ class ServiceRequest {
     return ServiceRequest(
       id: json['id'],
       userId: json['userId'] ?? '',
-      type: json['type'] ?? '',
-      details: json['details'] ?? '',
+      category: json['category'] ?? json['type'] ?? '',
+      description: json['description'] ?? json['details'] ?? '',
       status: json['status'] ?? 'pending',
-      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      imageUrl: json['imageUrl'],
+      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       adminResponseText: json['adminResponseText'],
       adminResponseImageUrl: json['adminResponseImageUrl'],
     );
@@ -285,12 +290,13 @@ class ServiceRequest {
   Map<String, dynamic> toJson() {
     return {
       'userId': userId,
-      'type': type,
-      'details': details,
+      'category': category,
+      'description': description,
       'status': status,
+      'imageUrl': imageUrl,
       'adminResponseText': adminResponseText,
       'adminResponseImageUrl': adminResponseImageUrl,
-      // timestamp is added by the server
+      // createdAt is added by the server
     };
   }
 }

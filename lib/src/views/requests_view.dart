@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 
@@ -19,15 +20,15 @@ class RequestsView extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          _buildRequestType(context, lp.getText('repair'), Icons.build_outlined, lp.getText('repair_subtitle')),
+          _buildRequestType(context, lp.getText('repair'), Icons.build_outlined, lp.getText('repair_subtitle'), 'repair'),
           const SizedBox(height: 16),
-          _buildRequestType(context, lp.getText('cleaning'), Icons.cleaning_services_outlined, lp.getText('cleaning_subtitle')),
+          _buildRequestType(context, lp.getText('cleaning'), Icons.cleaning_services_outlined, lp.getText('cleaning_subtitle'), 'cleaning'),
           const SizedBox(height: 16),
-          _buildRequestType(context, lp.getText('housing'), Icons.hotel_outlined, lp.getText('housing_subtitle')),
+          _buildRequestType(context, lp.getText('housing'), Icons.hotel_outlined, lp.getText('housing_subtitle'), 'housing'),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () => context.push('/create-request'),
         label: Text(lp.getText('new_request')),
         icon: const Icon(Icons.add),
         backgroundColor: AppColors.primary,
@@ -35,9 +36,9 @@ class RequestsView extends StatelessWidget {
     );
   }
 
-  Widget _buildRequestType(BuildContext context, String title, IconData icon, String subtitle) {
+  Widget _buildRequestType(BuildContext context, String title, IconData icon, String subtitle, String category) {
     return InkWell(
-      onTap: () {},
+      onTap: () => context.push('/request-list/$category'),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(20),

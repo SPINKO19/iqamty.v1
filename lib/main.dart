@@ -14,6 +14,7 @@ import 'src/services/auth_service.dart';
 import 'src/services/firestore_service.dart';
 import 'src/providers/theme_provider.dart';
 import 'src/providers/language_provider.dart';
+import 'src/services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +33,7 @@ void main() async {
   final firestoreService = FirestoreService();
   final themeProvider = ThemeProvider();
   final languageProvider = LanguageProvider();
+  final storageService = StorageService();
 
   runApp(
     MultiProvider(
@@ -41,6 +43,7 @@ void main() async {
         ChangeNotifierProvider.value(value: firestoreService),
         ChangeNotifierProvider.value(value: themeProvider),
         ChangeNotifierProvider.value(value: languageProvider),
+        ChangeNotifierProvider.value(value: storageService),
       ],
       child: const IqamtyApp(),
     ),

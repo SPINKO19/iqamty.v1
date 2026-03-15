@@ -1,16 +1,22 @@
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
-import 'package:image_picker/image_picker.dart';
-import 'cloudinary_service.dart';
 
-class StorageService {
-  /// Uploads a complaint image, mapping to CloudinaryService
-  static Future<String?> uploadComplaintImage(XFile image) async {
-    return await CloudinaryService.uploadImage(image);
-  }
+class StorageService extends ChangeNotifier {
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  /// Since Cloudinary client-side cannot delete images securely, this is a no-op
-  static Future<void> deleteImage(String url) async {
-    // No-op for now. Deletions require backend secret.
-    debugPrint('StorageService.deleteImage: No-op. Url: $url');
+  Future<String?> uploadRequestImage(File imageFile, String userId) async {
+    try {
+      final String fileName = '${DateTime.now().millisecondsSinceEpoch}_$userId.jpg';
+      final Reference ref = _storage.ref().child('requests').child(userId).child(fileName);
+      
+      final UploadTask uploadTask = ref.putFile(imageFile);
+      final TaskSnapshot snapshot = await uploadTask;
+      
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      debugPrint('Error uploading image: $e');
+      return null;
+    }
   }
 }

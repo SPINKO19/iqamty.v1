@@ -369,74 +369,83 @@ class _AnnouncementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
-    return Container(
+    return SizedBox(
       width: 280,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
+      child: Material(
         color: context.appCard,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: context.appBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: () => context.go('/announcement', extra: announcement),
+          borderRadius: BorderRadius.circular(24),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: context.appBorder),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-                child: Text(
-                  lp.getText('actualite'),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        lp.getText('actualite'),
+                        style: GoogleFonts.inter(
+                          color: AppColors.primary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(Icons.push_pin_rounded, size: 16, color: AppColors.primary.withValues(alpha: 0.5)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  announcement.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: AppColors.primary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: context.appTextPrimary,
+                    height: 1.3,
                   ),
                 ),
-              ),
-              const Spacer(),
-              Icon(Icons.push_pin_rounded, size: 16, color: AppColors.primary.withValues(alpha: 0.5)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            announcement.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: context.appTextPrimary,
-              height: 1.3,
+                const Spacer(),
+                Row(
+                  children: [
+                    Icon(Icons.access_time_filled_rounded, size: 14, color: context.appTextSecondary.withValues(alpha: 0.5)),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatTimeAgo(announcement.timestamp),
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: context.appTextSecondary.withValues(alpha: 0.6),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const Spacer(),
-          Row(
-            children: [
-              Icon(Icons.access_time_filled_rounded, size: 14, color: context.appTextSecondary.withValues(alpha: 0.5)),
-              const SizedBox(width: 6),
-              Text(
-                _formatTimeAgo(announcement.timestamp),
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: context.appTextSecondary.withValues(alpha: 0.6),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
