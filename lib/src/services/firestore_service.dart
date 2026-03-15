@@ -70,19 +70,23 @@ class FirestoreService extends ChangeNotifier {
   Future<void> submitServiceRequest(ServiceRequest request) async {
     if (_db == null) throw Exception("Firestore not initialized");
     final data = request.toJson();
-    data['timestamp'] = FieldValue.serverTimestamp();
+    data['createdAt'] = FieldValue.serverTimestamp();
     await _db!.collection('requests').add(data);
   }
 
-  Stream<List<ServiceRequest>> getMyRequests(String userId) {
+  Stream<List<ServiceRequest>> getMyRequests(String userId, {String? category}) {
     if (_db == null) return Stream.value([]);
-    return _db!
-        .collection('requests')
-        .where('userId', isEqualTo: userId)
-        .orderBy('timestamp', descending: true)
+    Query query = _db!.collection('requests').where('userId', isEqualTo: userId);
+    
+    if (category != null && category.isNotEmpty) {
+      query = query.where('category', isEqualTo: category);
+    }
+    
+    return query
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => ServiceRequest.fromJson(doc.data()..['id'] = doc.id))
+            .map((doc) => ServiceRequest.fromJson(doc.data() as Map<String, dynamic>..['id'] = doc.id))
             .toList());
   }
 
