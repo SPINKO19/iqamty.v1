@@ -99,8 +99,44 @@ class LanguageProvider extends ChangeNotifier {
     'password_label': 'PASSWORD',
     'login_button': 'Log In',
     'secure_gateway': 'SECURE AUTHENTICATION GATEWAY',
+    'err_field_required': 'This field is required',
     'err_fill_fields': 'Please fill all fields',
     'err_login_failed': 'Login failed',
+    'login_matricule': 'Matricule',
+    'login_email': 'Email',
+    'register': 'Register',
+    'email_label': 'EMAIL',
+    'full_name_label': 'FULL NAME',
+    'role_label': 'ROLE',
+    'student': 'Student',
+    'worker': 'Worker',
+    'administrator': 'Administrator',
+    'department_label': 'DEPARTMENT',
+    'residence_label': 'RESIDENCE',
+    'confirm_password_label': 'CONFIRM PASSWORD',
+    'already_have_account': 'Already have an account?',
+    'no_account': 'Don\'t have an account?',
+    'register_button': 'Create Account',
+    'err_passwords_mismatch': 'Passwords do not match',
+    'err_register_failed': 'Registration failed',
+
+    // Management & Statuses
+    'status_received': 'Received',
+    'status_in_progress': 'In Progress',
+    'status_resolved': 'Resolved',
+    'status_approved': 'Approved',
+    'status_rejected': 'Rejected',
+    'complaints_management': 'Complaints Management',
+    'assign': 'Assign',
+    'resolve': 'Resolve',
+    'messaging': 'Support Chat',
+    'write_message': 'Write a message...',
+    'urgent_status': 'Urgent',
+    'new_status': 'New',
+    'worker_space': 'Worker Space',
+    'my_assigned_tasks': 'My Assigned Tasks',
+    'to_do': 'To Do',
+    'done_tasks': 'Done',
 
     // Profile
     'my_profile': 'My Profile',
@@ -136,7 +172,6 @@ class LanguageProvider extends ChangeNotifier {
     'it': 'Computer Science',
     'specialty': 'Specialty:',
     'is': 'Information Systems',
-    'student': 'Student',
 
     // Complaints
     'my_complaints': 'My Complaints',
@@ -152,9 +187,6 @@ class LanguageProvider extends ChangeNotifier {
     'add_visual_proof': 'Add visual proof',
     'accepted_formats': 'Accepted formats: JPG, PNG',
     'details': 'Details',
-    'status_received': 'Received',
-    'status_in_progress': 'In progress',
-    'status_resolved': 'Resolved',
 
     // Requests
     'my_requests': 'Requests',
@@ -179,10 +211,6 @@ class LanguageProvider extends ChangeNotifier {
     'breakfast_menu': 'Coffee, Milk, Bread, Jam, Butter',
     'lunch_menu': 'Couscous with vegetables, Meat, Mixed salad, Seasonal fruit',
     'dinner_menu': 'Lentil soup, Pasta with cheese, Yogurt',
-
-    // Chat
-    'messaging': 'Messaging',
-    'write_message': 'Write a message...',
 
     // Documents
     'housing_certificate': 'Housing certificate',
@@ -221,15 +249,10 @@ class LanguageProvider extends ChangeNotifier {
     'language_admin': 'Language',
     'disconnect': 'Disconnect',
 
-    // Admin Complaints
-    'complaints_management': 'Complaints Management',
-    'assign': 'Assign',
-    'resolve': 'Resolve',
+    // Admin Specific
     'priority_urgent': 'URGENT',
     'priority_medium': 'MEDIUM',
     'priority_normal': 'NORMAL',
-
-    // Admin Users
     'students_management': 'Students Management',
     'search_student': 'Search a student...',
     'total': 'Total',
@@ -238,8 +261,6 @@ class LanguageProvider extends ChangeNotifier {
     'edit': 'Edit',
     'block': 'Block',
     'unblock': 'Unblock',
-
-    // Admin Announcements
     'announcements_comm': 'Announcements & Communication',
     'create_announcement': 'Create a new announcement',
     'communicate_residents': 'Communicate with all residents instantly.',
@@ -247,14 +268,6 @@ class LanguageProvider extends ChangeNotifier {
     'broadcast': 'Broadcast',
     'urgent': 'URGENT',
     'info': 'INFO',
-
-    // Worker Dashboard
-    'worker_space': 'Worker Space',
-    'my_assigned_tasks': 'My Assigned Tasks',
-    'to_do': 'To do',
-    'done_tasks': 'Done',
-    'urgent_status': 'Urgent',
-    'new_status': 'New',
   };
 
   // ─── FRENCH ───
@@ -321,8 +334,26 @@ class LanguageProvider extends ChangeNotifier {
     'password_label': 'MOT DE PASSE',
     'login_button': 'Se connecter',
     'secure_gateway': 'PORTAIL D\'AUTHENTIFICATION SÉCURISÉ',
+    'err_field_required': 'Ce champ est obligatoire',
     'err_fill_fields': 'Veuillez remplir tous les champs',
     'err_login_failed': 'Échec de la connexion',
+    'login_matricule': 'Matricule',
+    'login_email': 'Email',
+    'register': 'S\'inscrire',
+    'email_label': 'E-MAIL',
+    'full_name_label': 'NOM COMPLET',
+    'role_label': 'RÔLE',
+    'student': 'Étudiant',
+    'worker': 'Travailleur',
+    'administrator': 'Administrateur',
+    'department_label': 'DÉPARTEMENT',
+    'residence_label': 'RÉSIDENCE',
+    'confirm_password_label': 'CONFIRMER LE MOT DE PASSE',
+    'already_have_account': 'Déjà un compte ?',
+    'no_account': 'Pas de compte ?',
+    'register_button': 'Créer un compte',
+    'err_passwords_mismatch': 'Les mots de passe ne correspondent pas',
+    'err_register_failed': 'Échec de l\'inscription',
 
     // Profile
     'my_profile': 'Mon Profil',
@@ -358,7 +389,6 @@ class LanguageProvider extends ChangeNotifier {
     'it': 'Informatique',
     'specialty': 'Spécialité:',
     'is': 'Systèmes d\'Information',
-    'student': 'Étudiant',
 
     // Complaints
     'my_complaints': 'Mes Réclamations',
@@ -377,6 +407,8 @@ class LanguageProvider extends ChangeNotifier {
     'status_received': 'Reçu',
     'status_in_progress': 'En cours',
     'status_resolved': 'Résolu',
+    'status_approved': 'Approuvé',
+    'status_rejected': 'Rejeté',
 
     // Requests
     'my_requests': 'Demandes',
@@ -543,8 +575,26 @@ class LanguageProvider extends ChangeNotifier {
     'password_label': 'كلمة المرور',
     'login_button': 'دخول',
     'secure_gateway': 'بوابة تسجيل دخول آمنة',
+    'err_field_required': 'هذا الحقل مطلوب',
     'err_fill_fields': 'يرجى ملء جميع الحقول',
     'err_login_failed': 'فشل تسجيل الدخول',
+    'login_matricule': 'رقم التسجيل',
+    'login_email': 'البريد الإلكتروني',
+    'register': 'تسجيل',
+    'email_label': 'البريد الإلكتروني',
+    'full_name_label': 'الاسم الكامل',
+    'role_label': 'الدور',
+    'student': 'طالب',
+    'worker': 'عامل',
+    'administrator': 'مشرف',
+    'department_label': 'القسم',
+    'residence_label': 'الإقامة',
+    'confirm_password_label': 'تأكيد كلمة المرور',
+    'already_have_account': 'لديك حساب بالفعل؟',
+    'no_account': 'ليس لديك حساب؟',
+    'register_button': 'إنشاء حساب',
+    'err_passwords_mismatch': 'كلمات المرور غير متطابقة',
+    'err_register_failed': 'فشل التسجيل',
 
     // Profile
     'my_profile': 'ملفي الشخصي',
@@ -580,7 +630,6 @@ class LanguageProvider extends ChangeNotifier {
     'it': 'إعلام آلي',
     'specialty': 'التخصص:',
     'is': 'نظم المعلومات',
-    'student': 'طالب',
 
     // Complaints
     'my_complaints': 'شكاواي',
@@ -599,6 +648,19 @@ class LanguageProvider extends ChangeNotifier {
     'status_received': 'مستلمة',
     'status_in_progress': 'قيد المعالجة',
     'status_resolved': 'تم الحل',
+    'status_approved': 'مقبولة',
+    'status_rejected': 'مرفوضة',
+    'complaints_management': 'إدارة الشكاوى',
+    'assign': 'تعيين',
+    'resolve': 'حل',
+    'messaging': 'دردشة الدعم',
+    'write_message': 'اكتب رسالة...',
+    'urgent_status': 'عاجل',
+    'new_status': 'جديد',
+    'worker_space': 'فضاء العامل',
+    'my_assigned_tasks': 'مهامي المعينة',
+    'to_do': 'للقيام به',
+    'done_tasks': 'مكتملة',
 
     // Requests
     'my_requests': 'الطلبات',
@@ -623,10 +685,6 @@ class LanguageProvider extends ChangeNotifier {
     'breakfast_menu': 'قهوة، حليب، خبز، مربى، زبدة',
     'lunch_menu': 'كسكس بالخضر، لحم، سلطة منوعة، فاكهة الموسم',
     'dinner_menu': 'شوربة عدس، معكرونة بالجبن، ياغورت',
-
-    // Chat
-    'messaging': 'المراسلة',
-    'write_message': 'اكتب رسالة...',
 
     // Documents
     'housing_certificate': 'شهادة الإقامة',
@@ -665,15 +723,10 @@ class LanguageProvider extends ChangeNotifier {
     'language_admin': 'اللغة',
     'disconnect': 'تسجيل الخروج',
 
-    // Admin Complaints
-    'complaints_management': 'إدارة الشكاوى',
-    'assign': 'تعيين',
-    'resolve': 'حل',
+    // Admin Specific
     'priority_urgent': 'عاجل',
     'priority_medium': 'متوسط',
     'priority_normal': 'عادي',
-
-    // Admin Users
     'students_management': 'إدارة الطلبة',
     'search_student': 'البحث عن طالب...',
     'total': 'المجموع',
@@ -682,8 +735,6 @@ class LanguageProvider extends ChangeNotifier {
     'edit': 'تعديل',
     'block': 'حظر',
     'unblock': 'إلغاء الحظر',
-
-    // Admin Announcements
     'announcements_comm': 'الإعلانات والتواصل',
     'create_announcement': 'إنشاء إعلان جديد',
     'communicate_residents': 'تواصل مع جميع المقيمين فوراً.',
@@ -691,13 +742,5 @@ class LanguageProvider extends ChangeNotifier {
     'broadcast': 'بث',
     'urgent': 'عاجل',
     'info': 'معلومة',
-
-    // Worker Dashboard
-    'worker_space': 'فضاء العامل',
-    'my_assigned_tasks': 'مهامي المعينة',
-    'to_do': 'للإنجاز',
-    'done_tasks': 'منجزة',
-    'urgent_status': 'عاجل',
-    'new_status': 'جديد',
   };
 }

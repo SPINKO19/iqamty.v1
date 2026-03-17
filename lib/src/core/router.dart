@@ -20,6 +20,7 @@ import '../views/admin_announcements_view.dart';
 import '../views/announcement_detail_screen.dart';
 import '../views/request_list_screen.dart';
 import '../views/create_request_screen.dart';
+import '../views/register_screen.dart';
 import '../views/placeholder_screen.dart';
 import '../models/types.dart';
 
@@ -71,6 +72,10 @@ class AppRouter {
         GoRoute(
           path: '/login',
           builder: (context, state) => const LoginScreen(),
+        ),
+        GoRoute(
+          path: '/register',
+          builder: (context, state) => const RegisterScreen(),
         ),
         GoRoute(
           path: '/banned',

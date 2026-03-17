@@ -60,6 +60,58 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> loginWithEmail(String email, String password) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _authService.signIn(email, password);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> register({
+    required String email,
+    required String password,
+    required String name,
+    String? role,
+    String? residence,
+    String? bloc,
+    String? room,
+    String? department,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    
+    try {
+      await _authService.register(email, password, {
+        'displayName': name,
+        'role': role ?? 'student',
+        'residence': residence,
+        'bloc': bloc,
+        'room': room,
+        'department': department,
+      });
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   void injectDevUser(String role) {
     _authService.injectDevUser(role);
   }

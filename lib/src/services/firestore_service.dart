@@ -112,4 +112,99 @@ class FirestoreService extends ChangeNotifier {
             .map((doc) => TransportSchedule.fromJson(doc.data()..['id'] = doc.id))
             .toList());
   }
+
+  // Complaints (Admin/Worker)
+  Stream<List<Complaint>> getAllComplaints() {
+    if (_db == null) return Stream.value([]);
+    return _db!
+        .collection('complaints')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Complaint.fromJson(doc.data()..['id'] = doc.id))
+            .toList());
+  }
+
+  Stream<List<Complaint>> getComplaintsByDepartment(String department) {
+    if (_db == null) return Stream.value([]);
+    return _db!
+        .collection('complaints')
+        .where('department', isEqualTo: department)
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Complaint.fromJson(doc.data()..['id'] = doc.id))
+            .toList());
+  }
+
+  Future<void> updateComplaintStatus(String complaintId, Status status, {String? adminComment}) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final data = {
+      'status': status.toString(),
+      if (adminComment != null) 'adminComment': adminComment,
+    };
+    await _db!.collection('complaints').doc(complaintId).update(data);
+  }
+
+  // Chats
+  Future<String> startOrGetChat(String studentId, String studentName) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final chats = await _db!
+        .collection('chats')
+        .where('studentId', isEqualTo: studentId)
+        .limit(1)
+        .get();
+
+    if (chats.docs.isNotEmpty) {
+      return chats.docs.first.id;
+    }
+
+    final doc = await _db!.collection('chats').add({
+      'studentId': studentId,
+      'studentName': studentName,
+      'lastMessageTime': FieldValue.serverTimestamp(),
+      'lastMessageText': '',
+      'hasUnreadStudent': false,
+      'hasUnreadAdmin': false,
+    });
+    return doc.id;
+  }
+
+  Stream<List<ChatMessage>> streamChatMessages(String chatId) {
+    if (_db == null) return Stream.value([]);
+    return _db!
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ChatMessage.fromJson(doc.data()..['id'] = doc.id))
+            .toList());
+  }
+
+  Future<void> sendMessage(String chatId, ChatMessage message) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final data = message.toJson();
+    data['timestamp'] = FieldValue.serverTimestamp();
+    
+    final batch = _db!.batch();
+    final msgDoc = _db!.collection('chats').doc(chatId).collection('messages').doc();
+    batch.set(msgDoc, data);
+    
+    batch.update(_db!.collection('chats').doc(chatId), {
+      'lastMessageTime': FieldValue.serverTimestamp(),
+      'lastMessageText': message.text,
+      if (message.isAdmin) 'hasUnreadStudent': true else 'hasUnreadAdmin': true,
+    });
+    
+    await batch.commit();
+  }
+
+  Future<void> markChatAsRead(String chatId, bool isAdmin) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    await _db!.collection('chats').doc(chatId).update({
+      if (isAdmin) 'hasUnreadAdmin': false else 'hasUnreadStudent': false,
+    });
+  }
 }

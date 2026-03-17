@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/firestore_service.dart';
+import '../services/cloudinary_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../models/types.dart';
@@ -235,6 +238,8 @@ class _ModernComplaintCard extends StatelessWidget {
       case Status.received: return lp.getText('status_received');
       case Status.inProgress: return lp.getText('status_in_progress');
       case Status.resolved: return lp.getText('status_resolved');
+      case Status.approved: return lp.getText('status_approved');
+      case Status.rejected: return lp.getText('status_rejected');
     }
   }
 
@@ -243,12 +248,82 @@ class _ModernComplaintCard extends StatelessWidget {
       case Status.received: return const Color(0xFF3B82F6);
       case Status.inProgress: return const Color(0xFFF59E0B);
       case Status.resolved: return const Color(0xFF10B981);
+      case Status.approved: return const Color(0xFF10B981);
+      case Status.rejected: return const Color(0xFFEF4444);
     }
   }
 }
 
-class _ComplaintSubmissionSheet extends StatelessWidget {
+class _ComplaintSubmissionSheet extends StatefulWidget {
   const _ComplaintSubmissionSheet();
+
+  @override
+  State<_ComplaintSubmissionSheet> createState() => _ComplaintSubmissionSheetState();
+}
+
+class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
+  final _titleController = TextEditingController();
+  final _descController = TextEditingController();
+  XFile? _imageFile;
+  bool _isUploading = false;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() => _imageFile = image);
+    }
+  }
+
+  Future<void> _handleSubmit() async {
+    if (_titleController.text.isEmpty || _descController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.read<LanguageProvider>().getText('err_fill_fields'))),
+      );
+      return;
+    }
+
+    setState(() => _isUploading = true);
+
+    try {
+      String? imageUrl;
+      if (_imageFile != null) {
+        imageUrl = await CloudinaryService.uploadImage(_imageFile!);
+      }
+
+      final auth = context.read<AuthProvider>();
+      final firestore = context.read<FirestoreService>();
+      final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
+
+      final complaint = Complaint(
+        userId: userId,
+        title: _titleController.text,
+        description: _descController.text,
+        category: 'General', // Default for now
+        priority: Priority.medium,
+        status: Status.received,
+        imageUrl: imageUrl,
+        timestamp: DateTime.now(),
+      );
+
+      await firestore.submitComplaint(complaint);
+      
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Complaint submitted successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -307,12 +382,16 @@ class _ComplaintSubmissionSheet extends StatelessWidget {
           const SizedBox(height: 32),
           _buildFieldLabel(lp.getText('complaint_title_label')),
           const SizedBox(height: 10),
-          _buildModernTextField(hint: lp.getText('complaint_title_hint')),
+          _buildModernTextField(
+            controller: _titleController,
+            hint: lp.getText('complaint_title_hint'),
+          ),
           const SizedBox(height: 24),
           _buildFieldLabel(lp.getText('detailed_description')),
           const SizedBox(height: 10),
           Expanded(
             child: _buildModernTextField(
+              controller: _descController,
               hint: lp.getText('describe_problem_hint'),
               maxLines: null,
             ),
@@ -320,23 +399,40 @@ class _ComplaintSubmissionSheet extends StatelessWidget {
           const SizedBox(height: 24),
           _buildFieldLabel(lp.getText('photo_optional')),
           const SizedBox(height: 10),
-          _UploadPlaceholder(),
+          GestureDetector(
+            onTap: _isUploading ? null : _pickImage,
+            child: _imageFile != null 
+              ? Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    image: DecorationImage(
+                      image: FileImage(File(_imageFile!.path)),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                )
+              : _UploadPlaceholder(),
+          ),
           const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: _isUploading ? null : _handleSubmit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              child: Text(
-                lp.getText('submit_complaint'),
-                style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 14),
-              ),
+              child: _isUploading 
+                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : Text(
+                    lp.getText('submit_complaint'),
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 14),
+                  ),
             ),
           ),
         ],
@@ -356,13 +452,14 @@ class _ComplaintSubmissionSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildModernTextField({required String hint, int? maxLines = 1}) {
+  Widget _buildModernTextField({required TextEditingController controller, required String hint, int? maxLines = 1}) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF1F5F9).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
       ),
       child: TextField(
+        controller: controller,
         maxLines: maxLines,
         decoration: InputDecoration(
           hintText: hint,

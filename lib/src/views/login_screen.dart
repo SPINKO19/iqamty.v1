@@ -19,6 +19,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _matriculeController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _useEmail = false;
+  String _selectedRole = 'student';
 
 
   @override
@@ -29,22 +31,26 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleLogin() async {
-    final matricule = _matriculeController.text.trim();
+    final identifier = _matriculeController.text.trim();
     final password = _passwordController.text;
 
     final lp = context.read<LanguageProvider>();
-    if (matricule.isEmpty || password.isEmpty) {
+    if (identifier.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(lp.getText('err_fill_fields'))),
       );
       return;
     }
 
-    final success = await context.read<AuthProvider>().login(matricule, password);
+    final auth = context.read<AuthProvider>();
+    final success = _useEmail 
+        ? await auth.loginWithEmail(identifier, password)
+        : await auth.login(identifier, password);
+
     if (success && mounted) {
       context.go('/');
     } else if (mounted) {
-      final error = context.read<AuthProvider>().error;
+      final error = auth.error;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error ?? lp.getText('err_login_failed'))),
       );
@@ -109,6 +115,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          // Top-Left Role Selector
+                          Row(
+                            children: [
+                              _buildMiniRoleSelector(lp, isDark),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
                           // Logo
                           Center(
                             child: Container(
@@ -147,15 +161,59 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 48),
 
-                          // Matricule Field
-                          _buildLabel(lp.getText('matricule_label'), isDark),
+
+                          // Login Method Toggle (Only for Students)
+                          if (_selectedRole == 'student') ...[
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _toggleButton(
+                                      label: lp.getText('login_matricule'),
+                                      isSelected: !_useEmail,
+                                      onTap: () => setState(() => _useEmail = false),
+                                      isDark: isDark,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: _toggleButton(
+                                      label: lp.getText('login_email'),
+                                      isSelected: _useEmail,
+                                      onTap: () => setState(() => _useEmail = true),
+                                      isDark: isDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+
+                          // Matricule / Email Field
+                          _buildLabel(
+                            (_selectedRole != 'student' || _useEmail) 
+                              ? lp.getText('email_label') 
+                              : lp.getText('matricule_label'), 
+                            isDark
+                          ),
                           const SizedBox(height: 8),
-                          _buildTextField(
+                          _buildTextFieldBody(
                             controller: _matriculeController,
-                            hintText: 'e.g. 2024310542',
-                            icon: Icons.badge_outlined,
+                            hintText: (_selectedRole != 'student' || _useEmail) 
+                              ? 'email@exemple.com' 
+                              : 'e.g. 2024310542',
+                            icon: (_selectedRole != 'student' || _useEmail) 
+                              ? Icons.email_outlined 
+                              : Icons.badge_outlined,
                             isDark: isDark,
-                            keyboardType: TextInputType.number,
+                            keyboardType: (_selectedRole != 'student' || _useEmail) 
+                              ? TextInputType.emailAddress 
+                              : TextInputType.number,
                           ),
                           const SizedBox(height: 24),
 
@@ -208,6 +266,30 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ],
                                     ),
                             ),
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                lp.getText('no_account'),
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => context.go('/register'),
+                                child: Text(
+                                  lp.getText('register'),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -314,10 +396,10 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white),
+          color: isSelected ? AppColors.primary : (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.primary : (isDark ? Colors.white10 : Colors.grey.withValues(alpha: 0.2)),
+            color: isSelected ? AppColors.primary : (isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFE2E8F0)),
           ),
         ),
         child: Text(
@@ -326,6 +408,93 @@ class _LoginScreenState extends State<LoginScreen> {
             fontSize: 12,
             fontWeight: FontWeight.bold,
             color: isSelected ? Colors.white : (isDark ? Colors.white54 : Colors.grey[600]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniRoleSelector(LanguageProvider lp, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _roleToggleSmallButton('student', lp.getText('student'), isDark),
+          _roleToggleSmallButton('worker', lp.getText('worker'), isDark),
+          _roleToggleSmallButton('administrator', lp.getText('administrator'), isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _roleToggleSmallButton(String role, String label, bool isDark) {
+    bool isSelected = _selectedRole == role;
+    return GestureDetector(
+      onTap: () => setState(() {
+        _selectedRole = role;
+        if (role != 'student') {
+          _useEmail = true;
+        }
+      }),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected ? Colors.white : (isDark ? Colors.white38 : Colors.grey[600]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _toggleButton({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? (isDark ? AppColors.primary : Colors.white)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected && !isDark
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected
+                ? (isDark ? Colors.white : AppColors.primary)
+                : (isDark ? Colors.white38 : Colors.grey[500]),
           ),
         ),
       ),
@@ -345,6 +514,33 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    bool isPassword = false,
+    bool obscureText = false,
+    VoidCallback? onToggleVisibility,
+    TextInputType? keyboardType,
+    required bool isDark,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildTextFieldBody(
+          controller: controller,
+          hintText: hintText,
+          icon: icon,
+          isPassword: isPassword,
+          obscureText: obscureText,
+          onToggleVisibility: onToggleVisibility,
+          keyboardType: keyboardType,
+          isDark: isDark,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextFieldBody({
     required TextEditingController controller,
     required String hintText,
     required IconData icon,

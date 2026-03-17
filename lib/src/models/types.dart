@@ -4,6 +4,8 @@ enum Status {
   received,
   inProgress,
   resolved,
+  approved,
+  rejected,
 }
 
 enum Priority {
