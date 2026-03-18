@@ -31,7 +31,8 @@ class RequestListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
-    final student = context.watch<AuthProvider>().currentStudent;
+    final auth = context.watch<AuthProvider>();
+    final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
     final firestore = context.watch<FirestoreService>();
 
     return Scaffold(
@@ -43,7 +44,7 @@ class RequestListScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: StreamBuilder<List<ServiceRequest>>(
-        stream: firestore.getMyRequests(student?.id?.toString() ?? '', category: category),
+        stream: firestore.getMyRequests(userId, category: category),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

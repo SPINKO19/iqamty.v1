@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/types.dart';
 import '../services/firestore_service.dart';
-import '../services/storage_service.dart';
+import '../services/cloudinary_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
@@ -55,6 +55,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
     }
   }
 
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate() || _selectedCategory == null) {
       if (_selectedCategory == null) {
@@ -69,16 +70,23 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
 
     try {
       final authProvider = context.read<AuthProvider>();
-      final storageService = context.read<StorageService>();
       final firestoreService = context.read<FirestoreService>();
       final messenger = ScaffoldMessenger.of(context);
       final navigator = Navigator.of(context);
 
-      final userId = authProvider.currentStudent?.id?.toString() ?? '';
+      // Use the UID for consistency across all login methods
+      final userId = authProvider.currentStudent?.matricule ?? authProvider.currentUserData?['uid'] ?? '';
+      
+      if (userId.isEmpty) {
+        throw Exception("Impossible de trouver l'ID utilisateur");
+      }
+
       String? imageUrl;
 
       if (_imageFile != null) {
-        imageUrl = await storageService.uploadRequestImage(_imageFile!, userId);
+        // We use XFile for Cloudinary (cross-platform handle)
+        final xFile = XFile(_imageFile!.path);
+        imageUrl = await CloudinaryService.uploadImage(xFile);
       }
 
       final request = ServiceRequest(

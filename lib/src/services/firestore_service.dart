@@ -207,4 +207,94 @@ class FirestoreService extends ChangeNotifier {
       if (isAdmin) 'hasUnreadAdmin': false else 'hasUnreadStudent': false,
     });
   }
+
+  // Forum
+  Stream<List<ForumPost>> streamForumPosts() {
+    if (_db == null) return Stream.value([]);
+    return _db!
+        .collection('forum')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ForumPost.fromJson(doc.data()..['id'] = doc.id))
+            .toList());
+  }
+
+  Future<void> addForumPost(ForumPost post) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final data = post.toJson();
+    data['timestamp'] = FieldValue.serverTimestamp();
+    await _db!.collection('forum').add(data);
+  }
+
+  Future<void> toggleLike(String postId, String userId) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final docRef = _db!.collection('forum').doc(postId);
+    final doc = await docRef.get();
+    if (!doc.exists) return;
+
+    final likedBy = List<String>.from(doc.data()?['likedBy'] ?? []);
+    if (likedBy.contains(userId)) {
+      likedBy.remove(userId);
+    } else {
+      likedBy.add(userId);
+    }
+    await docRef.update({'likedBy': likedBy});
+  }
+
+  Future<void> voteInPoll(String postId, int optionIndex, String userId) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final docRef = _db!.collection('forum').doc(postId);
+    final doc = await docRef.get();
+    if (!doc.exists) return;
+
+    final pollOptions = (doc.data()?['pollOptions'] as List?)
+        ?.map((e) => PollOption.fromJson(e as Map<String, dynamic>))
+        .toList();
+    if (pollOptions == null || optionIndex >= pollOptions.length) return;
+
+    // Remove user from any previous option and add to new one
+    for (var i = 0; i < pollOptions.length; i++) {
+      final votedBy = List<String>.from(pollOptions[i].votedBy);
+      if (i == optionIndex) {
+        if (!votedBy.contains(userId)) votedBy.add(userId);
+      } else {
+        votedBy.remove(userId);
+      }
+      pollOptions[i] = PollOption(text: pollOptions[i].text, votedBy: votedBy);
+    }
+
+    await docRef.update({
+      'pollOptions': pollOptions.map((e) => e.toJson()).toList(),
+    });
+  }
+
+  Stream<List<ForumReply>> streamForumReplies(String postId) {
+    if (_db == null) return Stream.value([]);
+    return _db!
+        .collection('forum')
+        .doc(postId)
+        .collection('replies')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ForumReply.fromJson(doc.data()..['id'] = doc.id))
+            .toList());
+  }
+
+  Future<void> addForumReply(String postId, ForumReply reply) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final data = reply.toJson();
+    data['timestamp'] = FieldValue.serverTimestamp();
+    
+    final batch = _db!.batch();
+    final replyRef = _db!.collection('forum').doc(postId).collection('replies').doc();
+    batch.set(replyRef, data);
+    
+    batch.update(_db!.collection('forum').doc(postId), {
+      'replyCount': FieldValue.increment(1),
+    });
+    
+    await batch.commit();
+  }
 }

@@ -268,6 +268,20 @@ class LanguageProvider extends ChangeNotifier {
     'broadcast': 'Broadcast',
     'urgent': 'URGENT',
     'info': 'INFO',
+
+    // New Forum Keys
+    'create_post': 'Create Post',
+    'post_text_hint': 'What\'s on your mind?',
+    'add_image': 'Add Image',
+    'create_poll': 'Create Poll',
+    'poll_question': 'Poll Question',
+    'add_option': 'Add Option',
+    'post_button': 'Post',
+    'liked': 'Liked',
+    'replies': 'Replies',
+    'write_reply': 'Write a reply...',
+    'no_posts': 'No posts yet. Be the first to share something!',
+    'official_announcement': 'OFFICIAL',
   };
 
   // ─── FRENCH ───
@@ -501,6 +515,20 @@ class LanguageProvider extends ChangeNotifier {
     'broadcast': 'Diffuser',
     'urgent': 'URGENT',
     'info': 'INFO',
+
+    // New Forum Keys
+    'create_post': 'Créer un post',
+    'post_text_hint': 'À quoi pensez-vous ?',
+    'add_image': 'Ajouter une image',
+    'create_poll': 'Créer un sondage',
+    'poll_question': 'Question du sondage',
+    'add_option': 'Ajouter une option',
+    'post_button': 'Publier',
+    'liked': 'Aimé',
+    'replies': 'Réponses',
+    'write_reply': 'Écrire une réponse...',
+    'no_posts': 'Aucun post pour le moment. Soyez le premier à partager !',
+    'official_announcement': 'OFFICIEL',
 
     // Worker Dashboard
     'worker_space': 'Espace Travailleur',
@@ -739,8 +767,17 @@ class LanguageProvider extends ChangeNotifier {
     'create_announcement': 'إنشاء إعلان جديد',
     'communicate_residents': 'تواصل مع جميع المقيمين فوراً.',
     'message_history': 'سجل الرسائل',
-    'broadcast': 'بث',
-    'urgent': 'عاجل',
-    'info': 'معلومة',
+    'official_announcement': 'رسمي',
+    'create_post': 'إنشاء منشور',
+    'post_text_hint': 'بماذا تفكر؟',
+    'add_image': 'إضافة صورة',
+    'create_poll': 'إنشاء استطلاع',
+    'poll_question': 'سؤال الاستطلاع',
+    'add_option': 'إضافة خيار',
+    'post_button': 'نشر',
+    'liked': 'أعجبني',
+    'replies': 'الردود',
+    'write_reply': 'اكتب رداً...',
+    'no_posts': 'لا توجد منشورات بعد. كن أول من يشارك شيئاً!',
   };
 }

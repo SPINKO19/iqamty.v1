@@ -308,9 +308,12 @@ class ForumPost {
   final String userId;
   final String authorName;
   final String text;
+  final String? imageUrl;
   final bool isPoll;
   final List<PollOption>? pollOptions;
-  final int likesCount;
+  final List<String> likedBy; // List of user IDs
+  final int replyCount;
+  final bool isOfficial;
   final DateTime timestamp;
 
   ForumPost({
@@ -318,9 +321,12 @@ class ForumPost {
     required this.userId,
     required this.authorName,
     required this.text,
+    this.imageUrl,
     this.isPoll = false,
     this.pollOptions,
-    this.likesCount = 0,
+    this.likedBy = const [],
+    this.replyCount = 0,
+    this.isOfficial = false,
     required this.timestamp,
   });
 
@@ -330,9 +336,12 @@ class ForumPost {
       userId: json['userId'] ?? '',
       authorName: json['authorName'] ?? '',
       text: json['text'] ?? '',
+      imageUrl: json['imageUrl'],
       isPoll: json['isPoll'] ?? false,
       pollOptions: (json['pollOptions'] as List?)?.map((e) => PollOption.fromJson(e)).toList(),
-      likesCount: json['likesCount'] ?? 0,
+      likedBy: List<String>.from(json['likedBy'] ?? []),
+      replyCount: json['replyCount'] ?? 0,
+      isOfficial: json['isOfficial'] ?? false,
       timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
@@ -342,9 +351,12 @@ class ForumPost {
       'userId': userId,
       'authorName': authorName,
       'text': text,
+      'imageUrl': imageUrl,
       'isPoll': isPoll,
       'pollOptions': pollOptions?.map((e) => e.toJson()).toList(),
-      'likesCount': likesCount,
+      'likedBy': likedBy,
+      'replyCount': replyCount,
+      'isOfficial': isOfficial,
       // timestamp is added by the server
     };
   }
@@ -352,24 +364,61 @@ class ForumPost {
 
 class PollOption {
   final String text;
-  final int voteCount;
+  final List<String> votedBy; // List of user IDs
 
   PollOption({
     required this.text,
-    this.voteCount = 0,
+    this.votedBy = const [],
   });
+
+  int get voteCount => votedBy.length;
 
   factory PollOption.fromJson(Map<String, dynamic> json) {
     return PollOption(
       text: json['text'] ?? '',
-      voteCount: json['voteCount'] ?? 0,
+      votedBy: List<String>.from(json['votedBy'] ?? []),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'text': text,
-      'voteCount': voteCount,
+      'votedBy': votedBy,
+    };
+  }
+}
+
+class ForumReply {
+  final String? id;
+  final String userId;
+  final String authorName;
+  final String text;
+  final DateTime timestamp;
+
+  ForumReply({
+    this.id,
+    required this.userId,
+    required this.authorName,
+    required this.text,
+    required this.timestamp,
+  });
+
+  factory ForumReply.fromJson(Map<String, dynamic> json) {
+    return ForumReply(
+      id: json['id'],
+      userId: json['userId'] ?? '',
+      authorName: json['authorName'] ?? '',
+      text: json['text'] ?? '',
+      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'userId': userId,
+      'authorName': authorName,
+      'text': text,
+      // timestamp is added by the server
     };
   }
 }
