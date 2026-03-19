@@ -121,7 +121,7 @@ class DiningView extends StatelessWidget {
                 _buildMealSection(
                   context,
                   title: 'Déjeuner',
-                  time: '11:45 - 13:30',
+                  time: '12:00 - 14:00',
                   menu: 'Couscous aux légumes, Viande, Salade variée, Fruit de saison',
                   icon: Icons.lunch_dining_rounded,
                   color: AppColors.primary,
@@ -267,7 +267,7 @@ class DiningView extends StatelessWidget {
           Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () {},
+              onTap: () => _showRatingDialog(context, title),
               borderRadius: BorderRadius.circular(12),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -301,4 +301,83 @@ class DiningView extends StatelessWidget {
       ),
     );
   }
+
+  void _showRatingDialog(BuildContext context, String mealName) {
+    int rating = 0;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: context.appCard,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Text(
+                'Noter $mealName',
+                style: TextStyle(color: context.appTextPrimary, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Comment était votre repas ?',
+                    style: TextStyle(color: context.appTextSecondary),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                          color: Colors.amber,
+                          size: 40,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          setState(() {
+                            rating = index + 1;
+                          });
+                        },
+                      );
+                    }).map((w) => Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: w)).toList(),
+                  ),
+                ],
+              ),
+              actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Annuler', style: TextStyle(color: context.appTextSecondary, fontWeight: FontWeight.w600)),
+                ),
+                ElevatedButton(
+                  onPressed: rating > 0
+                      ? () {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Merci pour votre évaluation !'),
+                              backgroundColor: AppColors.success,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    minimumSize: const Size(100, 44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Envoyer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 }
+

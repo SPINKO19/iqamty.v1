@@ -34,10 +34,13 @@ class AppSidebar extends StatelessWidget {
                     width: 32,
                     height: 32,
                     decoration: const BoxDecoration(
-                      color: AppColors.primary,
+                      color: Colors.white,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.school, size: 18, color: Colors.white),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Text(
@@ -95,10 +98,13 @@ class AppSidebar extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: const BoxDecoration(
-                  color: AppColors.primary,
+                  color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.school, size: 24, color: Colors.white),
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
+                ),
               ),
                 const SizedBox(width: 16),
                 Text(

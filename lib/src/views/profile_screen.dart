@@ -153,10 +153,13 @@ class ProfileScreen extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: const BoxDecoration(
-                          color: AppColors.primary,
+                          color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.school, color: Colors.white, size: 24),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
+                        ),
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,

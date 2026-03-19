@@ -57,85 +57,122 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: context.appBackground,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top Bar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: context.appCard,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: context.appBorder),
-                    ),
-                    child: IconButton(
-                      icon: Icon(isDark ? Icons.nights_stay_outlined : Icons.wb_sunny_outlined, color: context.appTextPrimary),
-                      onPressed: () {
-                        themeProvider.toggleTheme(!isDark);
-                      },
-                    ),
-                  ),
-                  /*
-                  _buildLanguageSelector(context),
-                  */
-                ],
-              ),
-              const SizedBox(height: 60),
-
-              // Logo & Title
-              Center(
-                child: Column(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark 
+              ? [AppColors.backgroundDark, AppColors.backgroundDark.withValues(alpha: 0.8)]
+              : [Colors.white, AppColors.backgroundLight],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Top Bar
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      width: 90,
-                      height: 90,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(28),
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
+                        color: context.appCard,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                          child: const Icon(
-                            Icons.school,
-                            color: Colors.white,
-                            size: 32,
-                          ),
-                        ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'IQAMTY',
-                      style: textTheme.displayLarge?.copyWith(
-                        letterSpacing: 1.5,
-                        fontWeight: FontWeight.w900,
-                        color: context.appTextPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: 40,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(4),
+                      child: IconButton(
+                        icon: Icon(isDark ? Icons.nights_stay_rounded : Icons.wb_sunny_rounded, color: context.appTextPrimary),
+                        onPressed: () {
+                          themeProvider.toggleTheme(!isDark);
+                        },
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 50),
+                const SizedBox(height: 40),
+  
+                // Logo & Title
+                Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.2),
+                              blurRadius: 30,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: ClipOval(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Text(
+                        'IQAMTY',
+                        style: textTheme.displayLarge?.copyWith(
+                          letterSpacing: 4,
+                          fontWeight: FontWeight.w900,
+                          color: context.appTextPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 48,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 24,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 60),
 
               // Form
               Text(
@@ -252,6 +289,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
