@@ -1,0 +1,60 @@
+﻿> Task :gradle:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle:compileKotlin UP-TO-DATE
+> Task :gradle:compileJava NO-SOURCE
+> Task :gradle:compileGroovy NO-SOURCE
+> Task :gradle:pluginDescriptors UP-TO-DATE
+> Task :gradle:processResources UP-TO-DATE
+> Task :gradle:classes UP-TO-DATE
+> Task :gradle:jar UP-TO-DATE
+.\gradlew.bat : 
+At line:1 char:1
++ .\gradlew.bat 
+assembleDebug > 
+build-out.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (:String) [],    
+ RemoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+FAILURE: Build failed 
+with an exception.
+
+* Where:
+Build file 'C:\Users\14
+382\iqamty.v1\android\b
+uild.gradle.kts' line: 
+19
+
+* What went wrong:
+A problem occurred 
+configuring project 
+':app'.
+> com.android.builder.e
+rrors.EvalIssueExceptio
+n: [CXX1101] NDK at C:\
+Users\14382\AppData\Loc
+al\Android\sdk\ndk\28.2
+.13676358 did not have 
+a source.properties 
+file
+
+* Try:
+> Run with 
+--stacktrace option to 
+get the stack trace.
+> Run with --info or 
+--debug option to get 
+more log output.
+> Run with --scan to 
+get full insights.
+> Get more help at http
+s://help.gradle.org.
+
+BUILD FAILED in 4s
+4 actionable tasks: 4 up-to-date

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 
 class AppSidebar extends StatelessWidget {
@@ -66,17 +67,18 @@ class AppSidebar extends StatelessWidget {
   }
 
   Widget _buildSidebar(BuildContext context, {required bool isDesktop}) {
+    final languageProvider = context.watch<LanguageProvider>();
     final role = context.watch<AuthProvider>().currentStudent?.role 
               ?? context.watch<AuthProvider>().currentUserData?['role'] 
               ?? 'student';
 
     List<dynamic> items;
     if (role == 'administrator') {
-      items = _adminItems(context);
+      items = _adminItems(context, languageProvider);
     } else if (role == 'worker') {
-      items = _workerItems(context);
+      items = _workerItems(context, languageProvider);
     } else {
-      items = _studentItems(context);
+      items = _studentItems(context, languageProvider);
     }
 
     final currentRoute = GoRouterState.of(context).uri.toString();
@@ -142,12 +144,12 @@ class AppSidebar extends StatelessWidget {
               children: [
                 _buildNavItem(
                   context, 
-                  _NavItemData(Icons.settings_outlined, 'Paramètres', '/settings'),
+                  _NavItemData(Icons.settings_outlined, languageProvider.getText('settings'), '/settings'),
                   currentRoute,
                 ),
                 _buildNavItem(
                   context, 
-                  _NavItemData(Icons.logout_rounded, 'Déconnexion', '/logout'),
+                  _NavItemData(Icons.logout_rounded, languageProvider.getText('logout'), '/logout'),
                   currentRoute,
                   isLogout: true,
                 ),
@@ -169,44 +171,46 @@ class AppSidebar extends StatelessWidget {
     return drawer;
   }
 
-  List<dynamic> _studentItems(BuildContext context) {
+  List<dynamic> _studentItems(BuildContext context, LanguageProvider lp) {
     return [
-      _NavHeaderData('PLATEFORME'),
-      _NavItemData(Icons.home_outlined, 'Dashboard', '/'),
-      _NavItemData(Icons.restaurant_outlined, 'Restauration', '/dining'),
+      _NavHeaderData(lp.getText('platform')),
+      _NavItemData(Icons.home_outlined, lp.getText('dashboard'), '/'),
+      _NavItemData(Icons.restaurant_outlined, lp.getText('restoration'), '/dining'),
       
       const SizedBox(height: 16),
-      _NavHeaderData('SERVICES'),
-      _NavItemData(Icons.report_problem_outlined, 'Réclamations', '/complaints'),
-      _NavItemData(Icons.handyman_outlined, 'Demandes', '/requests'),
+      _NavHeaderData(lp.getText('services')),
+      _NavItemData(Icons.report_problem_outlined, lp.getText('complaints'), '/complaints'),
+      _NavItemData(Icons.handyman_outlined, lp.getText('requests'), '/requests'),
       
       const SizedBox(height: 16),
-      _NavHeaderData('RÉSEAU'),
-      _NavItemData(Icons.forum_outlined, 'Communauté', '/community'),
-      _NavItemData(Icons.chat_bubble_outline_rounded, 'Messages', '/chat'),
-      _NavItemData(Icons.person_outline_rounded, 'Profil', '/profile'),
+      _NavHeaderData(lp.getText('network')),
+      _NavItemData(Icons.forum_outlined, lp.getText('community'), '/community'),
+      _NavItemData(Icons.chat_bubble_outline_rounded, lp.getText('messages'), '/chat'),
+      _NavItemData(Icons.person_outline_rounded, lp.getText('profile'), '/profile'),
     ];
   }
 
-  List<dynamic> _adminItems(BuildContext context) {
+  List<dynamic> _adminItems(BuildContext context, LanguageProvider lp) {
     return [
-      _NavHeaderData('PLATEFORME'),
-      _NavItemData(Icons.dashboard_outlined, 'Admin Dashboard', '/admin'),
+      _NavHeaderData(lp.getText('platform')),
+      _NavItemData(Icons.dashboard_outlined, lp.getText('admin_dashboard'), '/admin'),
       
       const SizedBox(height: 16),
-      _NavHeaderData('GESTION'),
-      _NavItemData(Icons.report_problem_outlined, 'Réclamations', '/admin/complaints'),
-      _NavItemData(Icons.handyman_outlined, 'Demandes', '/admin/requests'),
-      _NavItemData(Icons.people_outline_rounded, 'Utilisateurs', '/admin/users'),
+      _NavHeaderData(lp.getText('management')),
+      _NavItemData(Icons.report_problem_outlined, lp.getText('complaints'), '/admin/complaints'),
+      _NavItemData(Icons.handyman_outlined, lp.getText('requests'), '/admin/requests'),
+      _NavItemData(Icons.people_outline_rounded, lp.getText('users'), '/admin/users'),
     ];
   }
 
-  List<dynamic> _workerItems(BuildContext context) {
+  List<dynamic> _workerItems(BuildContext context, LanguageProvider lp) {
     return [
-      _NavHeaderData('PLATEFORME'),
-      _NavItemData(Icons.build_outlined, 'Worker Dashboard', '/worker-dashboard'),
+      _NavHeaderData(lp.getText('platform')),
+      _NavItemData(Icons.build_outlined, lp.getText('worker_dashboard'), '/worker-dashboard'),
     ];
   }
+
+  
 
   Widget _buildNavHeader(BuildContext context, _NavHeaderData data) {
     return Padding(
@@ -302,15 +306,16 @@ class AppSidebar extends StatelessWidget {
   }
 
   void _showLogoutConfirmation(BuildContext context) {
+    final lp = context.read<LanguageProvider>();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Déconnexion'),
-        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+        title: Text(lp.getText('logout_confirm_title')),
+        content: Text(lp.getText('logout_confirm_msg')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: Text(lp.getText('cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -318,7 +323,7 @@ class AppSidebar extends StatelessWidget {
               context.read<AuthProvider>().logout();
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Déconnecter'),
+            child: Text(lp.getText('confirm')),
           ),
         ],
       ),

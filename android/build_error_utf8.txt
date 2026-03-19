@@ -1,0 +1,68 @@
+﻿> Task :gradle:checkKotlinGradlePluginConfigurationErrors
+> Task :gradle:compileKotlin UP-TO-DATE
+> Task :gradle:compileJava NO-SOURCE
+> Task :gradle:compileGroovy NO-SOURCE
+> Task :gradle:pluginDescriptors UP-TO-DATE
+> Task :gradle:processResources UP-TO-DATE
+> Task :gradle:classes UP-TO-DATE
+> Task :gradle:jar UP-TO-DATE
+.\gradlew : 
+At line:1 char:1
++ .\gradlew 
+assembleDebug 
+--console=plain > 
+build_error.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (:String) [],    
+ RemoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+FAILURE: Build failed 
+with an exception.
+
+* Where:
+Build file 'C:\Users\14
+382\iqamty.v1\android\a
+pp\build.gradle.kts' 
+line: 1
+
+* What went wrong:
+An exception occurred 
+applying plugin 
+request [id: 'com.andro
+id.application']
+> Failed to apply 
+plugin 'com.android.int
+ernal.version-check'.
+   > Minimum supported 
+Gradle version is 
+8.13. Current version 
+is 8.7.
+     Try updating the 
+'distributionUrl' 
+property in C:\Users\14
+382\iqamty.v1\android\g
+radle\wrapper\gradle-wr
+apper.properties to 
+'gradle-8.13-bin.zip'.
+
+* Try:
+> Run with 
+--stacktrace option to 
+get the stack trace.
+> Run with --info or 
+--debug option to get 
+more log output.
+> Run with --scan to 
+get full insights.
+> Get more help at http
+s://help.gradle.org.
+
+BUILD FAILED in 3s
+5 actionable tasks: 1 executed, 4 up-to-date

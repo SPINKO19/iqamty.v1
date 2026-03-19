@@ -7,26 +7,49 @@ class DocumentsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.appBackground,
-      appBar: AppBar(
-        title: Text('Documents', style: TextStyle(color: context.appTextPrimary)),
-        backgroundColor: context.appCard,
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Documents'), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          _buildDocItem(context, 'Certificat d\'hébergement', 'PDF • 1.2 MB', Icons.picture_as_pdf, Colors.red),
+          _buildDocItem(
+            context,
+            'Certificat d\'hébergement',
+            'PDF • 1.2 MB',
+            Icons.picture_as_pdf,
+            Colors.red,
+            '',
+          ),
           const SizedBox(height: 16),
-          _buildDocItem(context, 'Règlement intérieur', 'PDF • 3.5 MB', Icons.picture_as_pdf, Colors.red),
+          _buildDocItem(
+            context,
+            'Règlement intérieur',
+            'PDF • 3.5 MB',
+            Icons.picture_as_pdf,
+            Colors.red,
+            '',
+          ),
           const SizedBox(height: 16),
-          _buildDocItem(context, 'Formulaire de départ', 'DOCX • 500 KB', Icons.description, Colors.blue),
+          _buildDocItem(
+            context,
+            'Formulaire de départ',
+            'DOCX • 500 KB',
+            Icons.description,
+            Colors.blue,
+            '',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDocItem(BuildContext context, String title, String info, IconData icon, Color iconColor) {
+  Widget _buildDocItem(
+    BuildContext context,
+    String title,
+    String info,
+    IconData icon,
+    Color iconColor,
+    String url,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -42,13 +65,24 @@ class DocumentsView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
-                Text(info, style: TextStyle(color: context.appTextSecondary, fontSize: 12)),
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  info,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              // Action: Implement download / open URL
+            },
             icon: const Icon(Icons.download_outlined, color: AppColors.primary),
           ),
         ],

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "559394782861",
+    "project_id": "iqamty-41729",
+    "storage_bucket": "iqamty-41729.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:559394782861:android:7e8f12c5c63d15e11a2cc4",
+        "android_client_info": {
+          "package_name": "com.example.iqamty"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5az2PVCMF0zOUT9xcUxkrI9CTVAf0F2M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

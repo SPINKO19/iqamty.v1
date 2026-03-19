@@ -1,5 +1,4 @@
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import '../components/app_sidebar.dart';
 import '../providers/auth_provider.dart';
@@ -18,7 +17,12 @@ import '../views/admin_dashboard.dart';
 import '../views/admin_complaints_view.dart';
 import '../views/admin_users_view.dart';
 import '../views/admin_announcements_view.dart';
+import '../views/announcement_detail_screen.dart';
+import '../views/request_list_screen.dart';
+import '../views/create_request_screen.dart';
+import '../views/register_screen.dart';
 import '../views/placeholder_screen.dart';
+import '../models/types.dart';
 
 class AppRouter {
   static GoRouter createRouter(AuthProvider authProvider) {
@@ -70,6 +74,10 @@ class AppRouter {
           builder: (context, state) => const LoginScreen(),
         ),
         GoRoute(
+          path: '/register',
+          builder: (context, state) => const RegisterScreen(),
+        ),
+        GoRoute(
           path: '/banned',
           builder: (context, state) => const PlaceholderScreen(title: 'Account Suspended'),
         ),
@@ -85,10 +93,32 @@ class AppRouter {
             ),
             GoRoute(path: '/dining', pageBuilder: (context, state) => const NoTransitionPage(child: DiningView())),
             GoRoute(path: '/complaints', pageBuilder: (context, state) => const NoTransitionPage(child: ComplaintsView())),
-            GoRoute(path: '/requests', pageBuilder: (context, state) => const NoTransitionPage(child: RequestsView())),
-            GoRoute(path: '/documents', pageBuilder: (context, state) => const NoTransitionPage(child: DocumentsView())),
+          GoRoute(path: '/requests', pageBuilder: (context, state) => const NoTransitionPage(child: RequestsView())),
+          GoRoute(path: '/transport', pageBuilder: (context, state) => const NoTransitionPage(child: PlaceholderScreen(title: 'Transport'))),
+          GoRoute(path: '/documents', pageBuilder: (context, state) => const NoTransitionPage(child: DocumentsView())),
             GoRoute(path: '/community', pageBuilder: (context, state) => const NoTransitionPage(child: ForumView())),
             GoRoute(path: '/chat', pageBuilder: (context, state) => const NoTransitionPage(child: ChatView())),
+            GoRoute(
+              path: '/announcement',
+              builder: (context, state) {
+                final announcement = state.extra as Announcement;
+                return AnnouncementDetailScreen(announcement: announcement);
+              },
+            ),
+            GoRoute(
+              path: '/request-list/:category',
+              builder: (context, state) {
+                final category = state.pathParameters['category']!;
+                return RequestListScreen(category: category);
+              },
+            ),
+            GoRoute(
+              path: '/create-request',
+              builder: (context, state) {
+                final category = state.extra as String?;
+                return CreateRequestScreen(initialCategory: category);
+              },
+            ),
             GoRoute(
               path: '/profile',
               pageBuilder: (context, state) => const NoTransitionPage(child: ProfileScreen()),

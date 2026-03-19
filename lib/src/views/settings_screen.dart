@@ -23,7 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: Text(languageProvider.currentLocale.languageCode == 'ar' ? 'الإعدادات' : 'Réglages', style: TextStyle(color: context.appTextPrimary)),
+        title: Text(languageProvider.getText('settings'), style: TextStyle(color: context.appTextPrimary)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -33,12 +33,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle('COMPTE', textTheme),
+            _buildSectionTitle(languageProvider.getText('account'), textTheme),
             _buildSettingsCard(
               children: [
                 _buildSwitchRow(
                   icon: Icons.notifications_outlined,
-                  title: 'Notifications',
+                  title: languageProvider.getText('notifications'),
                   value: _notificationsEnabled,
                   onChanged: (val) => setState(() => _notificationsEnabled = val),
                   textTheme: textTheme,
@@ -47,12 +47,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
             
-            _buildSectionTitle('PRÉFÉRENCES', textTheme),
+            _buildSectionTitle(languageProvider.getText('preferences'), textTheme),
             _buildSettingsCard(
               children: [
                 _buildSwitchRow(
                   icon: Icons.dark_mode_outlined,
-                  title: 'Mode Sombre',
+                  title: languageProvider.getText('dark_mode'),
                   value: themeProvider.themeMode == ThemeMode.dark,
                   onChanged: (val) => themeProvider.toggleTheme(val),
                   textTheme: textTheme,
@@ -60,7 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Divider(color: context.appBorder, height: 1),
                 _buildDropdownRow(
                   icon: Icons.language,
-                  title: 'Langue',
+                  title: languageProvider.getText('language'),
                   value: languageProvider.currentLocale.languageCode == 'ar' ? 'العربية' : (languageProvider.currentLocale.languageCode == 'en' ? 'English' : 'Français'),
                   onTap: () => _showLanguagePicker(context, languageProvider),
                   textTheme: textTheme,
@@ -69,19 +69,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
-            _buildSectionTitle('ASSISTANCE', textTheme),
+            _buildSectionTitle(languageProvider.getText('assistance'), textTheme),
             _buildSettingsCard(
               children: [
                 _buildActionRow(
                   icon: Icons.help_outline,
-                  title: 'Centre d\'aide',
+                  title: languageProvider.getText('help_center'),
                   trailingIcon: Icons.open_in_new,
                   textTheme: textTheme,
                 ),
                 Divider(color: context.appBorder, height: 1),
                 _buildActionRow(
                   icon: Icons.email_outlined,
-                  title: 'Contactez-nous',
+                  title: languageProvider.getText('contact_us'),
                   trailingIcon: Icons.chevron_right,
                   textTheme: textTheme,
                 ),
@@ -89,19 +89,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
-            _buildSectionTitle('À PROPOS', textTheme),
+            _buildSectionTitle(languageProvider.getText('about'), textTheme),
             _buildSettingsCard(
               children: [
                 _buildActionRow(
                   icon: Icons.info_outline,
-                  title: 'Version de l\'application',
+                  title: languageProvider.getText('app_version'),
                   trailingText: '2.4.0',
                   textTheme: textTheme,
                 ),
                 Divider(color: context.appBorder, height: 1),
                 _buildActionRow(
                   icon: Icons.description_outlined,
-                  title: 'Conditions d\'utilisation',
+                  title: languageProvider.getText('terms_of_use'),
                   trailingIcon: Icons.chevron_right,
                   textTheme: textTheme,
                 ),

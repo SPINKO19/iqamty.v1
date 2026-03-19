@@ -118,6 +118,8 @@ class AuthService extends ChangeNotifier {
       clearDevUser();
     } else {
       await _auth?.signOut();
+      _userData = null;
+      notifyListeners();
     }
   }
 

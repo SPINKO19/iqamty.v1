@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter/foundation.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
-import 'package:flutter/foundation.dart';
-import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,6 +19,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _matriculeController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _useEmail = false;
+  String _selectedRole = 'student';
+
 
   @override
   void dispose() {
@@ -27,23 +31,28 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleLogin() async {
-    final matricule = _matriculeController.text.trim();
+    final identifier = _matriculeController.text.trim();
     final password = _passwordController.text;
 
-    if (matricule.isEmpty || password.isEmpty) {
+    final lp = context.read<LanguageProvider>();
+    if (identifier.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
+        SnackBar(content: Text(lp.getText('err_fill_fields'))),
       );
       return;
     }
 
-    final success = await context.read<AuthProvider>().login(matricule, password);
+    final auth = context.read<AuthProvider>();
+    final success = _useEmail 
+        ? await auth.loginWithEmail(identifier, password)
+        : await auth.login(identifier, password);
+
     if (success && mounted) {
       context.go('/');
     } else if (mounted) {
-      final error = context.read<AuthProvider>().error;
+      final error = auth.error;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error ?? 'Login failed')),
+        SnackBar(content: Text(error ?? lp.getText('err_login_failed'))),
       );
     }
   }
@@ -53,240 +62,364 @@ class _LoginScreenState extends State<LoginScreen> {
     final isLoading = context.watch<AuthProvider>().isLoading;
     final themeProvider = context.watch<ThemeProvider>();
     final isDark = themeProvider.themeMode == ThemeMode.dark;
-    final textTheme = Theme.of(context).textTheme;
-
+    final lp = context.watch<LanguageProvider>();
+    
     return Scaffold(
-      backgroundColor: context.appBackground,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark 
-              ? [AppColors.backgroundDark, AppColors.backgroundDark.withValues(alpha: 0.8)]
-              : [Colors.white, AppColors.backgroundLight],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Top Bar
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      backgroundColor: isDark ? Colors.lightBlue.shade900 : const Color(0xFFF8FAFC),
+      body: Stack(
+        children: [
+          // Background Glow effect for professional look
+          if (isDark)
+            Positioned(
+              top: -100,
+              right: -100,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                ),
+              ),
+            ),
+          
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Language selector at the top
+                    _buildLanguageSelector(context),
+                    const SizedBox(height: 40),
+
+                    // Main Login Card
                     Container(
+                      constraints: const BoxConstraints(maxWidth: 450),
+                      padding: const EdgeInsets.all(40),
                       decoration: BoxDecoration(
-                        color: context.appCard,
-                        shape: BoxShape.circle,
+                        color: isDark ? Colors.lightBlue.shade800 : Colors.white,
+                        borderRadius: BorderRadius.circular(28),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
+                            blurRadius: 40,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Top-Left Role Selector
+                          Row(
+                            children: [
+                              _buildMiniRoleSelector(lp, isDark),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Logo
+                          Center(
+                            child: Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary.withValues(alpha: 0.2),
+                                    blurRadius: 30,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: ClipOval(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Image.asset(
+                                    'assets/images/logo.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            'IQAMTY',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : const Color(0xFF1E293B),
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Smart Platform for Residence',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 48),
+
+
+                          // Login Method Toggle (Only for Students)
+                          if (_selectedRole == 'student') ...[
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _toggleButton(
+                                      label: lp.getText('login_matricule'),
+                                      isSelected: !_useEmail,
+                                      onTap: () => setState(() => _useEmail = false),
+                                      isDark: isDark,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: _toggleButton(
+                                      label: lp.getText('login_email'),
+                                      isSelected: _useEmail,
+                                      onTap: () => setState(() => _useEmail = true),
+                                      isDark: isDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+
+                          // Matricule / Email Field
+                          _buildLabel(
+                            (_selectedRole != 'student' || _useEmail) 
+                              ? lp.getText('email_label') 
+                              : lp.getText('matricule_label'), 
+                            isDark
+                          ),
+                          const SizedBox(height: 8),
+                          _buildTextFieldBody(
+                            controller: _matriculeController,
+                            hintText: (_selectedRole != 'student' || _useEmail) 
+                              ? 'email@exemple.com' 
+                              : 'e.g. 2024310542',
+                            icon: (_selectedRole != 'student' || _useEmail) 
+                              ? Icons.email_outlined 
+                              : Icons.badge_outlined,
+                            isDark: isDark,
+                            keyboardType: (_selectedRole != 'student' || _useEmail) 
+                              ? TextInputType.emailAddress 
+                              : TextInputType.number,
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Password Field
+                          _buildLabel(lp.getText('password_label'), isDark),
+                          const SizedBox(height: 8),
+                          _buildTextField(
+                            controller: _passwordController,
+                            hintText: '••••••••',
+                            icon: Icons.lock_outline_rounded,
+                            isDark: isDark,
+                            isPassword: true,
+                            obscureText: _obscurePassword,
+                            onToggleVisibility: () => setState(() => _obscurePassword = !_obscurePassword),
+                          ),
+                          const SizedBox(height: 12),
+                          const SizedBox(height: 32),
+
+                          // Login Button
+                          SizedBox(
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: isLoading ? null : _handleLogin,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: isLoading
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          lp.getText('login_button'),
+                                          style: GoogleFonts.inter(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        const Icon(Icons.arrow_forward, size: 20),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                lp.getText('no_account'),
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => context.go('/register'),
+                                child: Text(
+                                  lp.getText('register'),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
+                    ),
+
+                    // DEV QUICK ACCESS
+                    if (kDebugMode) ...[
+                      const SizedBox(height: 40),
+                      Container(
+                        constraints: const BoxConstraints(maxWidth: 450),
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withValues(alpha: 0.02) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: isDark ? Colors.white10 : Colors.grey.withValues(alpha: 0.2)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.bug_report_outlined, size: 18, color: AppColors.primary),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'DEV QUICK ACCESS',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.5,
+                                    color: isDark ? Colors.white54 : Colors.blueGrey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            _devButton(context, 'Enter as Student', Icons.school_outlined, AppColors.primary, 'student', '/'),
+                            const SizedBox(height: 12),
+                            _devButton(context, 'Enter as Worker', Icons.handyman_outlined, Colors.orange, 'worker', '/worker-dashboard'),
+                            const SizedBox(height: 12),
+                            _devButton(context, 'Enter as Admin', Icons.admin_panel_settings_outlined, AppColors.error, 'administrator', '/admin'),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 40),
+                    Text(
+                      '© 2026 ${lp.getText('secure_gateway')}',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        letterSpacing: 2,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white24 : Colors.grey[400],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Theme Switcher now at the bottom
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+                        borderRadius: BorderRadius.circular(50),
+                        border: Border.all(color: isDark ? Colors.white10 : Colors.grey.withValues(alpha: 0.1)),
+                      ),
                       child: IconButton(
-                        icon: Icon(isDark ? Icons.nights_stay_rounded : Icons.wb_sunny_rounded, color: context.appTextPrimary),
-                        onPressed: () {
-                          themeProvider.toggleTheme(!isDark);
-                        },
+                        icon: Icon(
+                          isDark ? Icons.wb_sunny_outlined : Icons.nights_stay_outlined,
+                          color: isDark ? Colors.amber : const Color(0xFF1E293B),
+                          size: 20,
+                        ),
+                        onPressed: () => themeProvider.toggleTheme(!isDark),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 40),
-  
-                // Logo & Title
-                Center(
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.2),
-                              blurRadius: 30,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Image.asset(
-                              'assets/images/logo.png',
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      Text(
-                        'IQAMTY',
-                        style: textTheme.displayLarge?.copyWith(
-                          letterSpacing: 4,
-                          fontWeight: FontWeight.w900,
-                          color: context.appTextPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 48,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 24,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 60),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-              // Form
-              Text(
-                'MATRICULE DU BAC',
-                style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                  fontSize: 12,
-                  color: context.appTextSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _matriculeController,
-                style: TextStyle(color: context.appTextPrimary),
-                decoration: InputDecoration(
-                  hintText: 'e.g. 2024310542',
-                  hintStyle: TextStyle(color: context.appTextSecondary),
-                  prefixIcon: Icon(Icons.badge_outlined, color: context.appTextSecondary),
-                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: context.appBorder), borderRadius: BorderRadius.circular(12)),
-                  focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppColors.primary, width: 2), borderRadius: BorderRadius.circular(12)),
-                  fillColor: context.appCard,
-                  filled: true,
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'MOT DE PASSE',
-                style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                  fontSize: 12,
-                  color: context.appTextSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                style: TextStyle(color: context.appTextPrimary),
-                decoration: InputDecoration(
-                  hintText: '••••••••',
-                  hintStyle: TextStyle(color: context.appTextSecondary),
-                  prefixIcon: Icon(Icons.lock_outline, color: context.appTextSecondary),
-                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: context.appBorder), borderRadius: BorderRadius.circular(12)),
-                  focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppColors.primary, width: 2), borderRadius: BorderRadius.circular(12)),
-                  fillColor: context.appCard,
-                  filled: true,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                      color: context.appTextSecondary,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 40),
+  Widget _buildLanguageSelector(BuildContext context) {
+    final lp = context.watch<LanguageProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _langButton(context, 'FR', 'fr', lp, isDark),
+        const SizedBox(width: 8),
+        _langButton(context, 'EN', 'en', lp, isDark),
+        const SizedBox(width: 8),
+        _langButton(context, 'عر', 'ar', lp, isDark),
+      ],
+    );
+  }
 
-              // Login Button
-              ElevatedButton(
-                onPressed: isLoading ? null : _handleLogin,
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16), // Match screenshot curve, looks like stadium or large rounded rect. Let's use 28 for pill shape as per theme. Actually screenshot looks like a capsule.
-                  ),
-                ),
-                child: isLoading
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Log In',
-                            style: textTheme.bodyLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-                        ],
-                      ),
-              ),
-              
-              if (kDebugMode) ...[
-                const SizedBox(height: 30),
-                _buildDevAccessPanel(context),
-              ],
-
-              const SizedBox(height: 60),
-
-              // Footer
-              Center(
-                child: Text(
-                  'SECURE AUTHENTICATION GATEWAY',
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontSize: 10,
-                    letterSpacing: 2,
-                    fontWeight: FontWeight.bold,
-                    color: context.appTextSecondary.withValues(alpha: 0.5),
-                  ),
-                ),
-              ),
-            ],
+  Widget _langButton(BuildContext context, String label, String code, LanguageProvider lp, bool isDark) {
+    final isSelected = lp.currentLocale.languageCode == code;
+    return GestureDetector(
+      onTap: () => lp.setLocale(code),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : (isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFE2E8F0)),
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : (isDark ? Colors.white54 : Colors.grey[600]),
           ),
         ),
       ),
@@ -294,46 +427,172 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildDevAccessPanel(BuildContext context) {
+  Widget _buildMiniRoleSelector(LanguageProvider lp, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: context.appCard,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.appBorder),
-        boxShadow: context.isDark ? null : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+        color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _roleToggleSmallButton('student', lp.getText('student'), isDark),
+          _roleToggleSmallButton('worker', lp.getText('worker'), isDark),
+          _roleToggleSmallButton('administrator', lp.getText('administrator'), isDark),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.bug_report_outlined, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Text(
-                'DEV QUICK ACCESS',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.5,
-                  color: context.appTextSecondary,
-                ),
-              ),
-            ],
+    );
+  }
+
+  Widget _roleToggleSmallButton(String role, String label, bool isDark) {
+    bool isSelected = _selectedRole == role;
+    return GestureDetector(
+      onTap: () => setState(() {
+        _selectedRole = role;
+        if (role != 'student') {
+          _useEmail = true;
+        }
+      }),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected ? Colors.white : (isDark ? Colors.white38 : Colors.grey[600]),
           ),
-          const SizedBox(height: 16),
-          _devButton(context, 'Enter as Student', Icons.school_outlined, AppColors.primary, 'student', '/'),
-          const SizedBox(height: 12),
-          _devButton(context, 'Enter as Worker', Icons.handyman_outlined, Colors.orange, 'worker', '/worker-dashboard'),
-          const SizedBox(height: 12),
-          _devButton(context, 'Enter as Admin', Icons.admin_panel_settings_outlined, AppColors.error, 'administrator', '/admin'),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _toggleButton({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? (isDark ? AppColors.primary : Colors.white)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected && !isDark
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected
+                ? (isDark ? Colors.white : AppColors.primary)
+                : (isDark ? Colors.white38 : Colors.grey[500]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text, bool isDark) {
+    return Text(
+      text,
+      style: GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: isDark ? Colors.white38 : Colors.black38,
+        letterSpacing: 1,
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    bool isPassword = false,
+    bool obscureText = false,
+    VoidCallback? onToggleVisibility,
+    TextInputType? keyboardType,
+    required bool isDark,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildTextFieldBody(
+          controller: controller,
+          hintText: hintText,
+          icon: icon,
+          isPassword: isPassword,
+          obscureText: obscureText,
+          onToggleVisibility: onToggleVisibility,
+          keyboardType: keyboardType,
+          isDark: isDark,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextFieldBody({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    bool isPassword = false,
+    bool obscureText = false,
+    VoidCallback? onToggleVisibility,
+    TextInputType? keyboardType,
+    required bool isDark,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
+        ),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1E293B)),
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: TextStyle(color: isDark ? Colors.white24 : Colors.grey[500], fontSize: 14),
+          prefixIcon: Icon(icon, color: isDark ? Colors.white38 : Colors.grey[500], size: 20),
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    color: isDark ? Colors.white38 : Colors.grey[500],
+                    size: 20,
+                  ),
+                  onPressed: onToggleVisibility,
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        ),
       ),
     );
   }
@@ -343,11 +602,8 @@ class _LoginScreenState extends State<LoginScreen> {
       onTap: () async {
         final auth = context.read<AuthProvider>();
         auth.injectDevUser(role);
-        // Give provider a moment to notify
         await Future.delayed(const Duration(milliseconds: 100));
-        if (context.mounted) {
-          context.go(route);
-        }
+        if (context.mounted) context.go(route);
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
@@ -364,55 +620,10 @@ class _LoginScreenState extends State<LoginScreen> {
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 14),
               ),
             ),
             Icon(Icons.arrow_forward_ios, color: color.withValues(alpha: 0.5), size: 14),
-          ],
-        ),
-      ),
-    );
-  }
-  Widget _buildLanguageSelector(BuildContext context) {
-    final languageProvider = context.watch<LanguageProvider>();
-    final currentLocale = languageProvider.currentLocale.languageCode;
-    
-    String label = 'EN';
-    if (currentLocale == 'fr') label = 'FR';
-    if (currentLocale == 'ar') label = 'AR';
-
-    return PopupMenuButton<String>(
-      onSelected: (String code) {
-        languageProvider.setLocale(code);
-      },
-      itemBuilder: (BuildContext context) => [
-        const PopupMenuItem(value: 'en', child: Text('English')),
-        const PopupMenuItem(value: 'fr', child: Text('Français')),
-        const PopupMenuItem(value: 'ar', child: Text('العربية')),
-      ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: context.appCard,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: context.appBorder),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.language, size: 16, color: AppColors.primary),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: context.appTextPrimary,
-              ),
-            ),
-            Icon(Icons.keyboard_arrow_down, size: 16, color: context.appTextSecondary),
           ],
         ),
       ),

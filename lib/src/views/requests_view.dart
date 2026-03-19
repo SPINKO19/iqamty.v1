@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 
 class RequestsView extends StatelessWidget {
@@ -6,35 +9,36 @@ class RequestsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lp = context.watch<LanguageProvider>();
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: Text('Demandes', style: TextStyle(color: context.appTextPrimary)),
+        title: Text(lp.getText('my_requests'), style: TextStyle(color: context.appTextPrimary)),
         backgroundColor: context.appCard,
         centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          _buildRequestType(context, 'Réparation', Icons.build_outlined, 'Plomberie, Électricité, Menuiserie'),
+          _buildRequestType(context, lp.getText('repair'), Icons.build_outlined, lp.getText('repair_subtitle'), 'repair'),
           const SizedBox(height: 16),
-          _buildRequestType(context, 'Nettoyage', Icons.cleaning_services_outlined, 'Chambre, Couloir, Bloc'),
+          _buildRequestType(context, lp.getText('cleaning'), Icons.cleaning_services_outlined, lp.getText('cleaning_subtitle'), 'cleaning'),
           const SizedBox(height: 16),
-          _buildRequestType(context, 'Hébergement', Icons.hotel_outlined, 'Changement de chambre, Clés'),
+          _buildRequestType(context, lp.getText('housing'), Icons.hotel_outlined, lp.getText('housing_subtitle'), 'housing'),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
-        label: const Text('Nouvelle Demande'),
+        onPressed: () => context.push('/create-request'),
+        label: Text(lp.getText('new_request')),
         icon: const Icon(Icons.add),
         backgroundColor: AppColors.primary,
       ),
     );
   }
 
-  Widget _buildRequestType(BuildContext context, String title, IconData icon, String subtitle) {
+  Widget _buildRequestType(BuildContext context, String title, IconData icon, String subtitle, String category) {
     return InkWell(
-      onTap: () {},
+      onTap: () => context.push('/request-list/$category'),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(20),
@@ -46,13 +50,13 @@ class RequestsView extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.primary),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(14),
             ),
+            child: Icon(icon, color: Colors.white, size: 28),
+          ),
             const SizedBox(width: 20),
             Expanded(
               child: Column(

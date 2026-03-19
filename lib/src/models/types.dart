@@ -4,6 +4,8 @@ enum Status {
   received,
   inProgress,
   resolved,
+  approved,
+  rejected,
 }
 
 enum Priority {
@@ -21,7 +23,7 @@ class Complaint {
   final Priority priority;
   final Status status;
   final String? imageUrl;
-  final DateTime createdAt;
+  final DateTime timestamp;
   final String? adminComment;
   final String? department;
   final String? assignedWorkerId;
@@ -35,7 +37,7 @@ class Complaint {
     required this.priority,
     required this.status,
     this.imageUrl,
-    required this.createdAt,
+    required this.timestamp,
     this.adminComment,
     this.department,
     this.assignedWorkerId,
@@ -51,7 +53,7 @@ class Complaint {
       priority: Priority.values.firstWhere((e) => e.toString() == json['priority'], orElse: () => Priority.medium),
       status: Status.values.firstWhere((e) => e.toString() == json['status'], orElse: () => Status.received),
       imageUrl: json['imageUrl'],
-      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       adminComment: json['adminComment'],
       department: json['department'],
       assignedWorkerId: json['assignedWorkerId'],
@@ -59,7 +61,7 @@ class Complaint {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final Map<String, dynamic> data = {
       'userId': userId,
       'title': title,
       'description': description,
@@ -67,26 +69,28 @@ class Complaint {
       'priority': priority.toString(),
       'status': status.toString(),
       'imageUrl': imageUrl,
-      'createdAt': Timestamp.fromDate(createdAt),
       'adminComment': adminComment,
       'department': department,
       'assignedWorkerId': assignedWorkerId,
     };
+    
+    // We don't include timestamp here because it will be added by the server
+    return data;
   }
 }
 
 class Announcement {
   final String? id;
   final String title;
-  final String description;
-  final DateTime createdAt;
+  final String content;
+  final DateTime timestamp;
   final String? imageUrl;
 
   Announcement({
     this.id,
     required this.title,
-    required this.description,
-    required this.createdAt,
+    required this.content,
+    required this.timestamp,
     this.imageUrl,
   });
 
@@ -94,8 +98,10 @@ class Announcement {
     return Announcement(
       id: json['id'],
       title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      // Firestore stores the body as 'content'; fall back to 'description'
+      // for any legacy documents that used the old field name.
+      content: json['content'] ?? json['description'] ?? '',
+      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       imageUrl: json['imageUrl'],
     );
   }
@@ -103,82 +109,78 @@ class Announcement {
   Map<String, dynamic> toJson() {
     return {
       'title': title,
-      'description': description,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'content': content,
       'imageUrl': imageUrl,
+      // timestamp is added by the server
     };
   }
 }
 
-class AppDocument {
+class DocumentModel {
   final String? id;
   final String title;
-  final String subtitle;
-  final String url;
-  final String icon;
+  final String fileUrl;
+  final String fileType;
+  final String fileSize;
+  final DateTime uploadedAt;
 
-  AppDocument({
+  DocumentModel({
     this.id,
     required this.title,
-    required this.subtitle,
-    required this.url,
-    required this.icon,
+    required this.fileUrl,
+    required this.fileType,
+    required this.fileSize,
+    required this.uploadedAt,
   });
 
-  factory AppDocument.fromJson(Map<String, dynamic> json) {
-    return AppDocument(
+  factory DocumentModel.fromJson(Map<String, dynamic> json) {
+    return DocumentModel(
       id: json['id'],
       title: json['title'] ?? '',
-      subtitle: json['subtitle'] ?? '',
-      url: json['url'] ?? '',
-      icon: json['icon'] ?? '',
+      fileUrl: json['fileUrl'] ?? '',
+      fileType: json['fileType'] ?? '',
+      fileSize: json['fileSize'] ?? '',
+      uploadedAt: (json['uploadedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'title': title,
-      'subtitle': subtitle,
-      'url': url,
-      'icon': icon,
+      'fileUrl': fileUrl,
+      'fileType': fileType,
+      'fileSize': fileSize,
+      // uploadedAt is added by the server
     };
   }
 }
 
 class Meal {
   final String? id;
-  final String name;
-  final String type; // breakfast, lunch, dinner
-  final int calories;
-  final double rating;
+  final String menu;
+  final String type; // Breakfast, Lunch, Dinner
   final DateTime date;
 
   Meal({
     this.id,
-    required this.name,
+    required this.menu,
     required this.type,
-    required this.calories,
-    required this.rating,
     required this.date,
   });
 
   factory Meal.fromJson(Map<String, dynamic> json) {
     return Meal(
       id: json['id'],
-      name: json['name'] ?? '',
+      menu: json['menu'] ?? '',
       type: json['type'] ?? '',
-      calories: json['calories'] ?? 0,
-      rating: (json['rating'] ?? 0).toDouble(),
       date: (json['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
+      'menu': menu,
       'type': type,
-      'calories': calories,
-      'rating': rating,
       'date': Timestamp.fromDate(date),
     };
   }
@@ -253,9 +255,10 @@ class Facility {
 class ServiceRequest {
   final String? id;
   final String userId;
-  final String type;
-  final String details;
+  final String category;
+  final String description;
   final String status; // pending, reviewed, completed
+  final String? imageUrl;
   final DateTime createdAt;
   final String? adminResponseText;
   final String? adminResponseImageUrl;
@@ -263,9 +266,10 @@ class ServiceRequest {
   ServiceRequest({
     this.id,
     required this.userId,
-    required this.type,
-    required this.details,
+    required this.category,
+    required this.description,
     required this.status,
+    this.imageUrl,
     required this.createdAt,
     this.adminResponseText,
     this.adminResponseImageUrl,
@@ -275,10 +279,11 @@ class ServiceRequest {
     return ServiceRequest(
       id: json['id'],
       userId: json['userId'] ?? '',
-      type: json['type'] ?? '',
-      details: json['details'] ?? '',
+      category: json['category'] ?? json['type'] ?? '',
+      description: json['description'] ?? json['details'] ?? '',
       status: json['status'] ?? 'pending',
-      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      imageUrl: json['imageUrl'],
+      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       adminResponseText: json['adminResponseText'],
       adminResponseImageUrl: json['adminResponseImageUrl'],
     );
@@ -287,12 +292,13 @@ class ServiceRequest {
   Map<String, dynamic> toJson() {
     return {
       'userId': userId,
-      'type': type,
-      'details': details,
+      'category': category,
+      'description': description,
       'status': status,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'imageUrl': imageUrl,
       'adminResponseText': adminResponseText,
       'adminResponseImageUrl': adminResponseImageUrl,
+      // createdAt is added by the server
     };
   }
 }
@@ -302,20 +308,26 @@ class ForumPost {
   final String userId;
   final String authorName;
   final String text;
+  final String? imageUrl;
   final bool isPoll;
   final List<PollOption>? pollOptions;
-  final int likesCount;
-  final DateTime createdAt;
+  final List<String> likedBy; // List of user IDs
+  final int replyCount;
+  final bool isOfficial;
+  final DateTime timestamp;
 
   ForumPost({
     this.id,
     required this.userId,
     required this.authorName,
     required this.text,
+    this.imageUrl,
     this.isPoll = false,
     this.pollOptions,
-    this.likesCount = 0,
-    required this.createdAt,
+    this.likedBy = const [],
+    this.replyCount = 0,
+    this.isOfficial = false,
+    required this.timestamp,
   });
 
   factory ForumPost.fromJson(Map<String, dynamic> json) {
@@ -324,10 +336,13 @@ class ForumPost {
       userId: json['userId'] ?? '',
       authorName: json['authorName'] ?? '',
       text: json['text'] ?? '',
+      imageUrl: json['imageUrl'],
       isPoll: json['isPoll'] ?? false,
       pollOptions: (json['pollOptions'] as List?)?.map((e) => PollOption.fromJson(e)).toList(),
-      likesCount: json['likesCount'] ?? 0,
-      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      likedBy: List<String>.from(json['likedBy'] ?? []),
+      replyCount: json['replyCount'] ?? 0,
+      isOfficial: json['isOfficial'] ?? false,
+      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
@@ -336,34 +351,74 @@ class ForumPost {
       'userId': userId,
       'authorName': authorName,
       'text': text,
+      'imageUrl': imageUrl,
       'isPoll': isPoll,
       'pollOptions': pollOptions?.map((e) => e.toJson()).toList(),
-      'likesCount': likesCount,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'likedBy': likedBy,
+      'replyCount': replyCount,
+      'isOfficial': isOfficial,
+      // timestamp is added by the server
     };
   }
 }
 
 class PollOption {
   final String text;
-  final int voteCount;
+  final List<String> votedBy; // List of user IDs
 
   PollOption({
     required this.text,
-    this.voteCount = 0,
+    this.votedBy = const [],
   });
+
+  int get voteCount => votedBy.length;
 
   factory PollOption.fromJson(Map<String, dynamic> json) {
     return PollOption(
       text: json['text'] ?? '',
-      voteCount: json['voteCount'] ?? 0,
+      votedBy: List<String>.from(json['votedBy'] ?? []),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'text': text,
-      'voteCount': voteCount,
+      'votedBy': votedBy,
+    };
+  }
+}
+
+class ForumReply {
+  final String? id;
+  final String userId;
+  final String authorName;
+  final String text;
+  final DateTime timestamp;
+
+  ForumReply({
+    this.id,
+    required this.userId,
+    required this.authorName,
+    required this.text,
+    required this.timestamp,
+  });
+
+  factory ForumReply.fromJson(Map<String, dynamic> json) {
+    return ForumReply(
+      id: json['id'],
+      userId: json['userId'] ?? '',
+      authorName: json['authorName'] ?? '',
+      text: json['text'] ?? '',
+      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'userId': userId,
+      'authorName': authorName,
+      'text': text,
+      // timestamp is added by the server
     };
   }
 }
@@ -453,7 +508,7 @@ class ChatMessage {
       'isAdmin': isAdmin,
       'imageUrl': imageUrl,
       'pdfUrl': pdfUrl,
-      'timestamp': Timestamp.fromDate(timestamp),
+      // timestamp is added by the server
     };
   }
 }
