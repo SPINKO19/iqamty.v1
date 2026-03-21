@@ -146,7 +146,7 @@ class _ChatViewState extends State<ChatView> {
       ),
       child: Row(
         children: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.add_circle_outline, color: AppColors.primary)),
+          IconButton(onPressed: () {}, icon: Icon(Icons.add_circle_outline, color: AppColors.primary)),
           Expanded(
             child: TextField(
               controller: _messageController,

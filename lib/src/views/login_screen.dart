@@ -323,7 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.bug_report_outlined, size: 18, color: AppColors.primary),
+                                Icon(Icons.bug_report_outlined, size: 18, color: AppColors.primary),
                                 const SizedBox(width: 8),
                                 Text(
                                   'DEV QUICK ACCESS',
@@ -372,7 +372,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: isDark ? Colors.amber : const Color(0xFF1E293B),
                           size: 20,
                         ),
-                        onPressed: () => themeProvider.toggleTheme(!isDark),
+                        onPressed: () => themeProvider.setThemeMode(!isDark ? AppThemeMode.dark : AppThemeMode.normal),
                       ),
                     ),
                   ],
@@ -422,7 +422,6 @@ class _LoginScreenState extends State<LoginScreen> {
             color: isSelected ? Colors.white : (isDark ? Colors.white54 : Colors.grey[600]),
           ),
         ),
-      ),
       ),
     );
   }

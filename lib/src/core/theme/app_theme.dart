@@ -8,7 +8,7 @@ class AppTheme {
       useMaterial3: true,
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.backgroundLight,
-      colorScheme: const ColorScheme.light(
+      colorScheme: ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.success,
         surface: AppColors.cardColor,
@@ -38,7 +38,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.borderColorLight, width: 1),
+          side: BorderSide(color: AppColors.borderColorLight, width: 1),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -48,19 +48,19 @@ class AppTheme {
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.borderColorLight, width: 1.0),
+          borderSide: BorderSide(color: AppColors.borderColorLight, width: 1.0),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.borderColorLight, width: 1.0),
+          borderSide: BorderSide(color: AppColors.borderColorLight, width: 1.0),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2.0),
+          borderSide: BorderSide(color: AppColors.primary, width: 2.0),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.error, width: 1.0),
+          borderSide: BorderSide(color: AppColors.error, width: 1.0),
         ),
         hintStyle: GoogleFonts.inter(color: AppColors.textSecondaryLight, fontSize: 14),
       ),
@@ -73,7 +73,7 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.backgroundDark,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: ColorScheme.dark(
         primary: AppColors.primary,
         secondary: AppColors.success,
         surface: AppColors.cardDark,
@@ -103,7 +103,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.borderColorDark, width: 1),
+          side: BorderSide(color: AppColors.borderColorDark, width: 1),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -113,19 +113,19 @@ class AppTheme {
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.borderColorDark, width: 1.0),
+          borderSide: BorderSide(color: AppColors.borderColorDark, width: 1.0),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.borderColorDark, width: 1.0),
+          borderSide: BorderSide(color: AppColors.borderColorDark, width: 1.0),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2.0),
+          borderSide: BorderSide(color: AppColors.primary, width: 2.0),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.error, width: 1.0),
+          borderSide: BorderSide(color: AppColors.error, width: 1.0),
         ),
         hintStyle: GoogleFonts.inter(color: AppColors.textSecondaryDark, fontSize: 14),
       ),

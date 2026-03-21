@@ -50,13 +50,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSectionTitle(languageProvider.getText('preferences'), textTheme),
             _buildSettingsCard(
               children: [
-                _buildSwitchRow(
-                  icon: Icons.dark_mode_outlined,
-                  title: languageProvider.getText('dark_mode'),
-                  value: themeProvider.themeMode == ThemeMode.dark,
-                  onChanged: (val) => themeProvider.toggleTheme(val),
-                  textTheme: textTheme,
-                ),
+                _buildThemeSelection(context, themeProvider, textTheme, languageProvider),
+                if (themeProvider.themeMode == AppThemeMode.styled) ...[
+                  Divider(color: context.appBorder, height: 1),
+                  _buildColorPicker(context, themeProvider, textTheme),
+                ],
                 Divider(color: context.appBorder, height: 1),
                 _buildDropdownRow(
                   icon: Icons.language,
@@ -204,17 +202,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             ListTile(
               title: Text('Français', style: TextStyle(color: context.appTextPrimary)),
-              trailing: provider.currentLocale.languageCode == 'fr' ? const Icon(Icons.check, color: AppColors.primary) : null,
+              trailing: provider.currentLocale.languageCode == 'fr' ? Icon(Icons.check, color: AppColors.primary) : null,
               onTap: () { provider.setLocale('fr'); Navigator.pop(context); },
             ),
             ListTile(
               title: Text('English', style: TextStyle(color: context.appTextPrimary)),
-              trailing: provider.currentLocale.languageCode == 'en' ? const Icon(Icons.check, color: AppColors.primary) : null,
+              trailing: provider.currentLocale.languageCode == 'en' ? Icon(Icons.check, color: AppColors.primary) : null,
               onTap: () { provider.setLocale('en'); Navigator.pop(context); },
             ),
             ListTile(
               title: Text('العربية', style: TextStyle(color: context.appTextPrimary)),
-              trailing: provider.currentLocale.languageCode == 'ar' ? const Icon(Icons.check, color: AppColors.primary) : null,
+              trailing: provider.currentLocale.languageCode == 'ar' ? Icon(Icons.check, color: AppColors.primary) : null,
               onTap: () { provider.setLocale('ar'); Navigator.pop(context); },
             ),
           ],
@@ -268,6 +266,134 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           trailing,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemeSelection(BuildContext context, ThemeProvider themeProvider, TextTheme textTheme, LanguageProvider lp) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.palette_outlined, color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                lp.currentLocale.languageCode == 'fr' ? 'Thème' : (lp.currentLocale.languageCode == 'ar' ? 'المظهر' : 'Theme'),
+                style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: context.appTextPrimary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _buildThemeOption(context, AppThemeMode.normal, Icons.wb_sunny_rounded, lp.currentLocale.languageCode == 'fr' ? 'Normal' : (lp.currentLocale.languageCode == 'ar' ? 'عادي' : 'Normal'), themeProvider),
+              const SizedBox(width: 8),
+              _buildThemeOption(context, AppThemeMode.dark, Icons.nights_stay_rounded, lp.currentLocale.languageCode == 'fr' ? 'Sombre' : (lp.currentLocale.languageCode == 'ar' ? 'داكن' : 'Dark'), themeProvider),
+              const SizedBox(width: 8),
+              _buildThemeOption(context, AppThemeMode.styled, Icons.auto_awesome_rounded, lp.currentLocale.languageCode == 'fr' ? 'Stylé' : (lp.currentLocale.languageCode == 'ar' ? 'أنيق' : 'Styled'), themeProvider),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemeOption(BuildContext context, AppThemeMode mode, IconData icon, String label, ThemeProvider provider) {
+    final isSelected = provider.themeMode == mode;
+    return Expanded(
+      child: InkWell(
+        onTap: () => provider.setThemeMode(mode),
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
+            border: Border.all(
+              color: isSelected ? AppColors.primary : context.appBorder,
+              width: isSelected ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: isSelected ? AppColors.primary : context.appTextSecondary, size: 20),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? AppColors.primary : context.appTextSecondary,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildColorPicker(BuildContext context, ThemeProvider themeProvider, TextTheme textTheme) {
+    final colors = [
+      const Color(0xFF0EA5E9), // Sky Blue
+      const Color(0xFF8B5CF6), // Purple
+      const Color(0xFFEC4899), // Pink
+      const Color(0xFF10B981), // Emerald
+      const Color(0xFFF59E0B), // Amber
+      const Color(0xFFEF4444), // Red
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Couleur Principale / Primary Color',
+            style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600, color: context.appTextSecondary),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            children: colors.map((color) {
+              final isSelected = themeProvider.styledPrimaryColor.value == color.value;
+              return GestureDetector(
+                onTap: () => themeProvider.setStyledColor(color),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? Colors.white : Colors.transparent,
+                      width: 3,
+                    ),
+                    boxShadow: [
+                      if (isSelected)
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.5),
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
         ],
       ),
     );

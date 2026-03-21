@@ -148,7 +148,7 @@ class _SimplePostInputState extends State<_SimplePostInput> {
               ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
               : IconButton(
                   onPressed: _submit,
-                  icon: const Icon(Icons.send, color: AppColors.primary),
+                  icon: Icon(Icons.send, color: AppColors.primary),
                 ),
         ],
       ),
@@ -370,7 +370,7 @@ class _RepliesSheetState extends State<_RepliesSheet> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton(onPressed: _isLoading ? null : _submitReply, icon: const Icon(Icons.send, color: AppColors.primary)),
+                IconButton(onPressed: _isLoading ? null : _submitReply, icon: Icon(Icons.send, color: AppColors.primary)),
               ],
             ),
           ),

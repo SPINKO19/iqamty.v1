@@ -71,7 +71,7 @@ class DocumentsView extends StatelessWidget {
                 ),
                 Text(
                   info,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -83,7 +83,7 @@ class DocumentsView extends StatelessWidget {
             onPressed: () {
               // Action: Implement download / open URL
             },
-            icon: const Icon(Icons.download_outlined, color: AppColors.primary),
+            icon: Icon(Icons.download_outlined, color: AppColors.primary),
           ),
         ],
       ),

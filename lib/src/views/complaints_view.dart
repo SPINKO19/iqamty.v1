@@ -493,7 +493,7 @@ class _UploadPlaceholder extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.camera_alt_rounded, color: AppColors.primary, size: 28),
+            child: Icon(Icons.camera_alt_rounded, color: AppColors.primary, size: 28),
           ),
           const SizedBox(height: 16),
           Text(

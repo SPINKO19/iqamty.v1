@@ -218,7 +218,7 @@ class AdminDashboard extends StatelessWidget {
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('65%', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                      Text('65%', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: AppColors.primary)),
                       Text(lp.getText('tasks_completed'), style: TextStyle(fontSize: 12, color: context.appTextSecondary, fontWeight: FontWeight.w500)),
                     ],
                   ),
@@ -324,10 +324,10 @@ class AdminDashboard extends StatelessWidget {
               ListTile(
                 leading: Icon(isDark ? Icons.nights_stay : Icons.wb_sunny, color: AppColors.primary),
                 title: Text(lp2.getText('dark_mode_admin'), style: TextStyle(color: context.appTextPrimary)),
-                trailing: Switch(value: isDark, onChanged: (val) => themeProvider.toggleTheme(val), activeThumbColor: AppColors.primary),
+                trailing: Switch(value: isDark, onChanged: (val) => themeProvider.setThemeMode(val ? AppThemeMode.dark : AppThemeMode.normal), activeThumbColor: AppColors.primary),
               ),
               ListTile(
-                leading: const Icon(Icons.language, color: AppColors.primary),
+                leading: Icon(Icons.language, color: AppColors.primary),
                 title: Text(lp2.getText('language_admin'), style: TextStyle(color: context.appTextPrimary)),
                 trailing: DropdownButton<String>(
                   value: lp2.currentLocale.languageCode,
@@ -345,8 +345,8 @@ class AdminDashboard extends StatelessWidget {
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.logout, color: AppColors.error),
-                title: Text(lp2.getText('disconnect'), style: const TextStyle(color: AppColors.error)),
+                leading: Icon(Icons.logout, color: AppColors.error),
+                title: Text(lp2.getText('disconnect'), style: TextStyle(color: AppColors.error)),
                 onTap: () {
                   Navigator.pop(context);
                   _showLogoutConfirmation(context);
