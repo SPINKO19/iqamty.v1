@@ -13,6 +13,85 @@ extension StringExtension on String {
   String capitalize() => "${this[0].toUpperCase()}${substring(1)}";
 }
 
+
+class _SimplePostInput extends StatefulWidget {
+  final String userId;
+  const _SimplePostInput({required this.userId});
+
+  @override
+  State<_SimplePostInput> createState() => _SimplePostInputState();
+}
+
+class _SimplePostInputState extends State<_SimplePostInput> {
+  final _controller = TextEditingController();
+  bool _isPosting = false;
+
+  Future<void> _submit() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty || _isPosting) return;
+
+    setState(() => _isPosting = true);
+    final auth = context.read<AuthProvider>();
+    final firestore = context.read<FirestoreService>();
+
+    try {
+      final post = ForumPost(
+        title: '',
+        content: text,
+        authorId: widget.userId,
+        authorName: auth.currentUserData?['displayName'] ?? 'User',
+        type: 'post',
+        createdAt: DateTime.now(),
+      );
+      await firestore.addForumPost(post);
+      _controller.clear();
+      FocusScope.of(context).unfocus();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      if (mounted) setState(() => _isPosting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lp = context.watch<LanguageProvider>();
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E2E) : Colors.white,
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                hintText: lp.getText('post_text_hint'),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                filled: true,
+                fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              maxLines: null,
+            ),
+          ),
+          const SizedBox(width: 8),
+          _isPosting
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+              : IconButton(
+                  onPressed: _submit,
+                  icon: const Icon(Icons.send, color: AppColors.primary),
+                ),
+        ],
+      ),
+    );
+  }
+}
+
+}
+
 String _formatTime(DateTime time) {
   final now = DateTime.now();
   final diff = now.difference(time);
@@ -109,35 +188,55 @@ class _FeedTab extends StatelessWidget {
               );
             }
             
+            if (postType == 'post') {
+              return Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
+                      itemCount: posts.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _PostCard(post: posts[index], userId: userData?['uid'] ?? '').animate().fade(duration: 300.ms).slideY(begin: 0.1, end: 0, duration: 300.ms),
+                        );
+                      },
+                    ),
+                  ),
+                  _SimplePostInput(userId: userData?['uid'] ?? ''),
+                ],
+              );
+            }
+
             return ListView.builder(
               padding: const EdgeInsets.only(bottom: 80, top: 16, left: 16, right: 16),
               itemCount: posts.length,
               itemBuilder: (context, index) {
-                final post = posts[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: _PostCard(post: post, userId: userData?['uid'] ?? '').animate().fade(duration: 300.ms).slideY(begin: 0.1, end: 0, duration: 300.ms),
+                  child: _PostCard(post: posts[index], userId: userData?['uid'] ?? '').animate().fade(duration: 300.ms).slideY(begin: 0.1, end: 0, duration: 300.ms),
                 );
               },
             );
           },
         ),
         
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: FloatingActionButton(
-            backgroundColor: AppColors.primary,
-            onPressed: () {
-               if (postType == 'announcement' && userData?['role'] != 'administrator') {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Only admins can post announcements')));
-                  return;
-               }
-               _showCreateSheet(context, postType);
-            },
-            child: const Icon(Icons.edit, color: Colors.white),
+        if (postType != 'post')
+          Positioned(
+            bottom: 16,
+            right: 16,
+            child: FloatingActionButton(
+              backgroundColor: AppColors.primary,
+              onPressed: () {
+                 if (postType == 'announcement' && userData?['role'] != 'administrator') {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Only admins can post announcements')));
+                    return;
+                 }
+                 _showCreateSheet(context, postType);
+              },
+              child: const Icon(Icons.edit, color: Colors.white),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -178,26 +277,32 @@ class _PostCardState extends State<_PostCard> {
       default: badgeColor = Colors.grey; badgeText = '💬 Post'; break;
     }
 
+    final isOfficial = widget.post.type == 'announcement';
+
     Widget card = Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+        color: isOfficial ? AppColors.primary.withOpacity(0.05) : (isDark ? const Color(0xFF1E1E2E) : Colors.white),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: widget.post.type == 'announcement' ? Colors.red.withOpacity(0.3) : Colors.transparent),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        border: Border.all(color: isOfficial ? AppColors.primary.withOpacity(0.3) : Colors.transparent),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              CircleAvatar(radius: 16, backgroundColor: Colors.grey[300], child: const Icon(Icons.person, size: 16, color: Colors.black54)),
+              CircleAvatar(
+                radius: 16, 
+                backgroundColor: isOfficial ? AppColors.primary : Colors.grey[300], 
+                child: Icon(isOfficial ? Icons.verified : Icons.person, size: 16, color: isOfficial ? Colors.white : Colors.black54)
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.post.authorName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(widget.post.authorName, style: TextStyle(fontWeight: FontWeight.bold, color: isOfficial ? AppColors.primary : (isDark ? Colors.white : Colors.black))),
                     Text(_formatTime(widget.post.createdAt), style: const TextStyle(fontSize: 10, color: Colors.grey)),
                   ],
                 ),

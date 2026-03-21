@@ -433,7 +433,7 @@ class DiningView extends StatelessWidget {
                       ? () {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text('Merci pour votre évaluation !'),
                               backgroundColor: AppColors.success,
                               behavior: SnackBarBehavior.floating,

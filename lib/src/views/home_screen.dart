@@ -327,7 +327,7 @@ Widget _buildMealMock(BuildContext context, LanguageProvider lp) {
               color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(Icons.lunch_dining_rounded, color: AppColors.primary, size: 32),
+            child: Icon(Icons.lunch_dining_rounded, color: AppColors.primary, size: 32),
           ),
           const SizedBox(width: 20),
           Expanded(
@@ -586,7 +586,7 @@ class _MealPreviewCard extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(Icons.restaurant_menu_rounded, color: AppColors.primary, size: 32),
+            child: Icon(Icons.restaurant_menu_rounded, color: AppColors.primary, size: 32),
           ),
           const SizedBox(width: 20),
           Expanded(

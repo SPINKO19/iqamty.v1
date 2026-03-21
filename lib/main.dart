@@ -68,7 +68,7 @@ class _IqamtyAppState extends State<IqamtyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final themeMode = context.watch<ThemeProvider>().themeMode;
+    final themeMode = context.watch<ThemeProvider>().flutterThemeMode;
     final currentLocale = context.watch<LanguageProvider>().currentLocale;
     
     return MaterialApp.router(

@@ -76,7 +76,7 @@ class WorkerDashboard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(color: AppColors.backgroundLight, borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.assignment_outlined, color: AppColors.primary),
+            child: Icon(Icons.assignment_outlined, color: AppColors.primary),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -84,7 +84,7 @@ class WorkerDashboard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(location, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                Text(location, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
               ],
             ),
           ),

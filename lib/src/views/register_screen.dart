@@ -159,7 +159,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       color: AppColors.primary.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.school_rounded,
                       size: 36,
                       color: AppColors.primary,
@@ -342,7 +342,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       TextButton(
                         onPressed: () => context.go('/login'),
-                        child: const Text(
+                        child: Text(
                           'Log In',
                           style: TextStyle(
                             color: AppColors.primary,
@@ -448,7 +448,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
       validator: (value) {
