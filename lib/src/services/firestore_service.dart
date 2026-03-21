@@ -209,21 +209,25 @@ class FirestoreService extends ChangeNotifier {
   }
 
   // Forum
-  Stream<List<ForumPost>> streamForumPosts() {
+  Stream<List<ForumPost>> streamForumPosts({String? type, int limit = 50}) {
     if (_db == null) return Stream.value([]);
-    return _db!
-        .collection('forum')
-        .orderBy('timestamp', descending: true)
+    Query query = _db!.collection('forum').orderBy('createdAt', descending: true).limit(limit);
+
+    return query
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ForumPost.fromJson(doc.data()..['id'] = doc.id))
-            .toList());
+        .map((snapshot) {
+           var docs = snapshot.docs.map((doc) => ForumPost.fromJson(doc.data() as Map<String, dynamic>..['id'] = doc.id));
+           if (type != null) {
+              docs = docs.where((post) => post.type == type);
+           }
+           return docs.toList();
+        });
   }
 
   Future<void> addForumPost(ForumPost post) async {
     if (_db == null) throw Exception("Firestore not initialized");
     final data = post.toJson();
-    data['timestamp'] = FieldValue.serverTimestamp();
+    data['createdAt'] = FieldValue.serverTimestamp();
     await _db!.collection('forum').add(data);
   }
 
@@ -234,12 +238,18 @@ class FirestoreService extends ChangeNotifier {
     if (!doc.exists) return;
 
     final likedBy = List<String>.from(doc.data()?['likedBy'] ?? []);
+    int change = 0;
     if (likedBy.contains(userId)) {
       likedBy.remove(userId);
+      change = -1;
     } else {
       likedBy.add(userId);
+      change = 1;
     }
-    await docRef.update({'likedBy': likedBy});
+    await docRef.update({
+      'likedBy': likedBy,
+      'likesCount': FieldValue.increment(change),
+    });
   }
 
   Future<void> voteInPoll(String postId, int optionIndex, String userId) async {
@@ -253,7 +263,14 @@ class FirestoreService extends ChangeNotifier {
         .toList();
     if (pollOptions == null || optionIndex >= pollOptions.length) return;
 
-    // Remove user from any previous option and add to new one
+    bool isNewVoter = true;
+    for (var opt in pollOptions) {
+      if (opt.votedBy.contains(userId)) {
+        isNewVoter = false;
+        break;
+      }
+    }
+
     for (var i = 0; i < pollOptions.length; i++) {
       final votedBy = List<String>.from(pollOptions[i].votedBy);
       if (i == optionIndex) {
@@ -264,9 +281,14 @@ class FirestoreService extends ChangeNotifier {
       pollOptions[i] = PollOption(text: pollOptions[i].text, votedBy: votedBy);
     }
 
-    await docRef.update({
+    final updateData = <String, dynamic>{
       'pollOptions': pollOptions.map((e) => e.toJson()).toList(),
-    });
+    };
+    if (isNewVoter) {
+      updateData['votersCount'] = FieldValue.increment(1);
+    }
+
+    await docRef.update(updateData);
   }
 
   Stream<List<ForumReply>> streamForumReplies(String postId) {
@@ -275,7 +297,7 @@ class FirestoreService extends ChangeNotifier {
         .collection('forum')
         .doc(postId)
         .collection('replies')
-        .orderBy('timestamp', descending: true)
+        .orderBy('createdAt')
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => ForumReply.fromJson(doc.data()..['id'] = doc.id))
@@ -285,14 +307,14 @@ class FirestoreService extends ChangeNotifier {
   Future<void> addForumReply(String postId, ForumReply reply) async {
     if (_db == null) throw Exception("Firestore not initialized");
     final data = reply.toJson();
-    data['timestamp'] = FieldValue.serverTimestamp();
+    data['createdAt'] = FieldValue.serverTimestamp();
     
     final batch = _db!.batch();
     final replyRef = _db!.collection('forum').doc(postId).collection('replies').doc();
     batch.set(replyRef, data);
     
     batch.update(_db!.collection('forum').doc(postId), {
-      'replyCount': FieldValue.increment(1),
+      'commentsCount': FieldValue.increment(1),
     });
     
     await batch.commit();

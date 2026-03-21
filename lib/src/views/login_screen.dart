@@ -226,6 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             keyboardType: (_selectedRole != 'student' || _useEmail) 
                               ? TextInputType.emailAddress 
                               : TextInputType.number,
+                            textInputAction: TextInputAction.next,
                           ),
                           const SizedBox(height: 24),
 
@@ -240,6 +241,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             isPassword: true,
                             obscureText: _obscurePassword,
                             onToggleVisibility: () => setState(() => _obscurePassword = !_obscurePassword),
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => _handleLogin(),
                           ),
                           const SizedBox(height: 12),
                           const SizedBox(height: 32),
@@ -423,7 +426,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-      ),
     );
   }
 
@@ -535,6 +537,8 @@ class _LoginScreenState extends State<LoginScreen> {
     VoidCallback? onToggleVisibility,
     TextInputType? keyboardType,
     required bool isDark,
+    TextInputAction? textInputAction,
+    Function(String)? onSubmitted,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -548,6 +552,8 @@ class _LoginScreenState extends State<LoginScreen> {
           onToggleVisibility: onToggleVisibility,
           keyboardType: keyboardType,
           isDark: isDark,
+          textInputAction: textInputAction,
+          onSubmitted: onSubmitted,
         ),
       ],
     );
@@ -562,6 +568,8 @@ class _LoginScreenState extends State<LoginScreen> {
     VoidCallback? onToggleVisibility,
     TextInputType? keyboardType,
     required bool isDark,
+    TextInputAction? textInputAction,
+    Function(String)? onSubmitted,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -575,6 +583,8 @@ class _LoginScreenState extends State<LoginScreen> {
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
+        textInputAction: textInputAction,
+        onSubmitted: onSubmitted,
         style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1E293B)),
         decoration: InputDecoration(
           hintText: hintText,
@@ -582,6 +592,7 @@ class _LoginScreenState extends State<LoginScreen> {
           prefixIcon: Icon(icon, color: isDark ? Colors.white38 : Colors.grey[500], size: 20),
           suffixIcon: isPassword
               ? IconButton(
+                  focusNode: FocusNode(skipTraversal: true),
                   icon: Icon(
                     obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                     color: isDark ? Colors.white38 : Colors.grey[500],

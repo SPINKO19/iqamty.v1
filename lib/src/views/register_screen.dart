@@ -207,22 +207,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           icon: Icons.person_outline_rounded,
                           isDark: isDark,
                           lang: lang,
+                          textInputAction: TextInputAction.next,
                         ),
                         const SizedBox(height: 20),
-                        
                         _buildTextField(
-                          controller: _nameController,
-                          label: lang.getText('full_name_label'),
-                          icon: Icons.person_outline_rounded,
-                          isDark: isDark,
-                          lang: lang,
-                        ),
-                        const SizedBox(height: 20),
-                        _buildTextFieldBody(
                           controller: _emailController,
+                          label: lang.getText('email_label'),
                           icon: Icons.email_outlined,
                           isDark: isDark,
+                          keyboardType: TextInputType.emailAddress,
                           lang: lang,
+                          textInputAction: TextInputAction.next,
                         ),
                         const SizedBox(height: 20),
 
@@ -233,6 +228,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             icon: Icons.home_work_outlined,
                             isDark: isDark,
                             lang: lang,
+                            textInputAction: TextInputAction.next,
                           ),
                           const SizedBox(height: 20),
                           Row(
@@ -244,6 +240,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   icon: Icons.grid_view_rounded,
                                   isDark: isDark,
                                   lang: lang,
+                                  textInputAction: TextInputAction.next,
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -255,6 +252,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   isDark: isDark,
                                   keyboardType: TextInputType.number,
                                   lang: lang,
+                                  textInputAction: TextInputAction.next,
                                 ),
                               ),
                             ],
@@ -269,6 +267,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             icon: Icons.business_center_outlined,
                             isDark: isDark,
                             lang: lang,
+                            textInputAction: TextInputAction.next,
                           ),
                           const SizedBox(height: 20),
                         ],
@@ -281,6 +280,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           obscure: _obscurePassword,
                           onToggleVisibility: () => setState(() => _obscurePassword = !_obscurePassword),
                           lang: lang,
+                          textInputAction: TextInputAction.next,
                         ),
                         const SizedBox(height: 20),
                         _buildTextField(
@@ -292,6 +292,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           obscure: _obscureConfirmPassword,
                           onToggleVisibility: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                           lang: lang,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _handleRegister(),
                         ),
                         const SizedBox(height: 32),
                         SizedBox(
@@ -369,6 +371,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     VoidCallback? onToggleVisibility,
     TextInputType? keyboardType,
     required LanguageProvider lang,
+    TextInputAction? textInputAction,
+    Function(String)? onSubmitted,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,6 +396,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           isPassword: isPassword,
           onToggleVisibility: onToggleVisibility,
           lang: lang,
+          textInputAction: textInputAction,
+          onSubmitted: onSubmitted,
         ),
       ],
     );
@@ -406,16 +412,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     VoidCallback? onToggleVisibility,
     TextInputType? keyboardType,
     required LanguageProvider lang,
+    TextInputAction? textInputAction,
+    Function(String)? onSubmitted,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onSubmitted,
       style: TextStyle(color: isDark ? Colors.white : Colors.black),
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
         suffixIcon: isPassword
             ? IconButton(
+                focusNode: FocusNode(skipTraversal: true),
                 icon: Icon(
                   obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
                   color: isDark ? Colors.white38 : Colors.black38,
