@@ -38,9 +38,10 @@ class AppRouter {
                      authProvider.currentUserData?['role'] ?? 'student';
 
         final isLoginRoute = state.matchedLocation == '/login';
+        final isRegisterRoute = state.matchedLocation == '/register';
         final isBannedRoute = state.matchedLocation == '/banned';
 
-        if (!isAuthenticated && !isLoginRoute) {
+        if (!isAuthenticated && !isLoginRoute && !isRegisterRoute) {
           return '/login';
         }
 

@@ -305,59 +305,71 @@ class ServiceRequest {
 
 class ForumPost {
   final String? id;
-  final String userId;
+  final String type;
+  final String title;
+  final String content;
+  final String authorId;
   final String authorName;
-  final String text;
-  final String? imageUrl;
-  final bool isPoll;
+  final DateTime createdAt;
+  final int likesCount;
+  final int commentsCount;
+  final bool isPinned;
+  final List<String>? attachments;
   final List<PollOption>? pollOptions;
-  final List<String> likedBy; // List of user IDs
-  final int replyCount;
-  final bool isOfficial;
-  final DateTime timestamp;
+  final int votersCount;
+  final List<String> likedBy; // kept for robust local toggling
 
   ForumPost({
     this.id,
-    required this.userId,
+    required this.type,
+    this.title = '',
+    required this.content,
+    required this.authorId,
     required this.authorName,
-    required this.text,
-    this.imageUrl,
-    this.isPoll = false,
+    required this.createdAt,
+    this.likesCount = 0,
+    this.commentsCount = 0,
+    this.isPinned = false,
+    this.attachments,
     this.pollOptions,
+    this.votersCount = 0,
     this.likedBy = const [],
-    this.replyCount = 0,
-    this.isOfficial = false,
-    required this.timestamp,
   });
 
   factory ForumPost.fromJson(Map<String, dynamic> json) {
     return ForumPost(
       id: json['id'],
-      userId: json['userId'] ?? '',
+      type: json['type'] ?? (json['isOfficial'] == true ? 'announcement' : json['isPoll'] == true ? 'poll' : 'post'),
+      title: json['title'] ?? '',
+      content: json['content'] ?? json['text'] ?? '',
+      authorId: json['authorId'] ?? json['userId'] ?? '',
       authorName: json['authorName'] ?? '',
-      text: json['text'] ?? '',
-      imageUrl: json['imageUrl'],
-      isPoll: json['isPoll'] ?? false,
+      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      likesCount: json['likesCount'] ?? (json['likedBy'] as List?)?.length ?? 0,
+      commentsCount: json['commentsCount'] ?? json['replyCount'] ?? 0,
+      isPinned: json['isPinned'] ?? false,
+      attachments: (json['attachments'] as List?)?.map((e) => e.toString()).toList() ?? (json['imageUrl'] != null ? [json['imageUrl']] : null),
       pollOptions: (json['pollOptions'] as List?)?.map((e) => PollOption.fromJson(e)).toList(),
+      votersCount: json['votersCount'] ?? 0,
       likedBy: List<String>.from(json['likedBy'] ?? []),
-      replyCount: json['replyCount'] ?? 0,
-      isOfficial: json['isOfficial'] ?? false,
-      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'userId': userId,
+      'type': type,
+      'title': title,
+      'content': content,
+      'authorId': authorId,
       'authorName': authorName,
-      'text': text,
-      'imageUrl': imageUrl,
-      'isPoll': isPoll,
+      'likesCount': likesCount,
+      'commentsCount': commentsCount,
+      'isPinned': isPinned,
+      'attachments': attachments,
       'pollOptions': pollOptions?.map((e) => e.toJson()).toList(),
+      'votersCount': votersCount,
       'likedBy': likedBy,
-      'replyCount': replyCount,
-      'isOfficial': isOfficial,
-      // timestamp is added by the server
+      // createdAt is added by the server
     };
   }
 }
@@ -390,35 +402,39 @@ class PollOption {
 
 class ForumReply {
   final String? id;
-  final String userId;
+  final String content;
+  final String authorId;
   final String authorName;
-  final String text;
-  final DateTime timestamp;
+  final DateTime createdAt;
+  final String? parentReplyId;
 
   ForumReply({
     this.id,
-    required this.userId,
+    required this.content,
+    required this.authorId,
     required this.authorName,
-    required this.text,
-    required this.timestamp,
+    required this.createdAt,
+    this.parentReplyId,
   });
 
   factory ForumReply.fromJson(Map<String, dynamic> json) {
     return ForumReply(
       id: json['id'],
-      userId: json['userId'] ?? '',
+      content: json['content'] ?? json['text'] ?? '',
+      authorId: json['authorId'] ?? json['userId'] ?? '',
       authorName: json['authorName'] ?? '',
-      text: json['text'] ?? '',
-      timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      parentReplyId: json['parentReplyId'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'userId': userId,
+      'content': content,
+      'authorId': authorId,
       'authorName': authorName,
-      'text': text,
-      // timestamp is added by the server
+      'parentReplyId': parentReplyId,
+      // createdAt is added by the server
     };
   }
 }
