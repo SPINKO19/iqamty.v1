@@ -170,6 +170,13 @@ class HomeScreen extends StatelessWidget {
                           color: const Color(0xFF8B5CF6),
                           onTap: () => context.go('/documents'),
                         ),
+                        _QuickActionCard(
+                          title: lp.getText('sports_and_showers'),
+                          subtitle: lp.getText('sports_subtitle'),
+                          icon: Icons.sports_volleyball_rounded,
+                          color: const Color(0xFFF59E0B),
+                          onTap: () => context.go('/sports'),
+                        ),
                       ],
                     );
                   },

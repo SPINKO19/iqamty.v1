@@ -11,6 +11,7 @@ import '../views/complaints_view.dart';
 import '../views/requests_view.dart';
 import '../views/documents_view.dart';
 import '../views/forum_view.dart';
+import '../views/sports_program_view.dart';
 import '../views/chat_view.dart';
 import '../views/worker_dashboard.dart';
 import '../views/admin_dashboard.dart';
@@ -95,6 +96,7 @@ class AppRouter {
             GoRoute(path: '/complaints', pageBuilder: (context, state) => const NoTransitionPage(child: ComplaintsView())),
           GoRoute(path: '/requests', pageBuilder: (context, state) => const NoTransitionPage(child: RequestsView())),
           GoRoute(path: '/transport', pageBuilder: (context, state) => const NoTransitionPage(child: PlaceholderScreen(title: 'Transport'))),
+          GoRoute(path: '/sports', pageBuilder: (context, state) => const NoTransitionPage(child: SportsProgramView())),
           GoRoute(path: '/documents', pageBuilder: (context, state) => const NoTransitionPage(child: DocumentsView())),
             GoRoute(path: '/community', pageBuilder: (context, state) => const NoTransitionPage(child: ForumView())),
             GoRoute(path: '/chat', pageBuilder: (context, state) => const NoTransitionPage(child: ChatView())),

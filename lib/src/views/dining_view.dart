@@ -15,6 +15,12 @@ class DiningView extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lp = context.watch<LanguageProvider>();
 
+    final now = DateTime.now();
+    final currentTimeInMinutes = now.hour * 60 + now.minute;
+    final bool isRestaurantOpen = (currentTimeInMinutes >= 420 && currentTimeInMinutes <= 510) || // 07:00 - 08:30
+                                  (currentTimeInMinutes >= 720 && currentTimeInMinutes <= 840) || // 12:00 - 14:00
+                                  (currentTimeInMinutes >= 1110 && currentTimeInMinutes <= 1230); // 18:30 - 20:30
+
     return Scaffold(
       backgroundColor: isDark ? Colors.black : const Color(0xFFF8FAFC),
       body: CustomScrollView(
@@ -99,17 +105,20 @@ class DiningView extends StatelessWidget {
                             Container(
                               width: 10,
                               height: 10,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF10B981),
+                              decoration: BoxDecoration(
+                                color: isRestaurantOpen ? const Color(0xFF10B981) : const Color(0xFFEF4444),
                                 shape: BoxShape.circle,
                                 boxShadow: [
-                                  BoxShadow(color: Color(0xFF10B981), blurRadius: 4),
+                                  BoxShadow(
+                                    color: isRestaurantOpen ? const Color(0xFF10B981) : const Color(0xFFEF4444), 
+                                    blurRadius: 4
+                                  ),
                                 ],
                               ),
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              lp.getText('restaurant_open'),
+                              isRestaurantOpen ? lp.getText('restaurant_open') : (lp.currentLocale.languageCode == 'ar' ? 'المطعم مغلق' : (lp.currentLocale.languageCode == 'en' ? 'Restaurant Closed' : 'Restaurant Fermé')),
                               style: GoogleFonts.inter(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,

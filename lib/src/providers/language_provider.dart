@@ -282,6 +282,20 @@ class LanguageProvider extends ChangeNotifier {
     'write_reply': 'Write a reply...',
     'no_posts': 'No posts yet. Be the first to share something!',
     'official_announcement': 'OFFICIAL',
+    
+    // Sports & Showers
+    'sports_and_showers': 'Sports & Showers',
+    'sports_subtitle': 'Program and showers',
+    'sports_program': 'Sports Hall Program',
+    'mens_showers': 'Men\'s Showers',
+    'womens_showers': 'Women\'s Showers',
+    'schedule_tba': 'Schedule to be announced',
+    'team_registration': 'Team Registration',
+    'football': 'Football',
+    'volleyball': 'Volleyball',
+    'basketball': 'Basketball',
+    'join_team': 'Join Team',
+    'registration_sent_msg': 'Registration request sent successfully!',
   };
 
   // ─── FRENCH ───
@@ -529,6 +543,20 @@ class LanguageProvider extends ChangeNotifier {
     'write_reply': 'Écrire une réponse...',
     'no_posts': 'Aucun post pour le moment. Soyez le premier à partager !',
     'official_announcement': 'OFFICIEL',
+
+    // Sports & Showers
+    'sports_and_showers': 'Sports & Douches',
+    'sports_subtitle': 'Programme et douches',
+    'sports_program': 'Programme de la Salle de Sport',
+    'mens_showers': 'Douches Hommes',
+    'womens_showers': 'Douches Filles',
+    'schedule_tba': 'Horaires à venir',
+    'team_registration': 'Inscription aux équipes',
+    'football': 'Football',
+    'volleyball': 'Volleyball',
+    'basketball': 'Basketball',
+    'join_team': 'S\'inscrire',
+    'registration_sent_msg': 'Demande d\'inscription envoyée avec succès !',
 
     // Worker Dashboard
     'worker_space': 'Espace Travailleur',
@@ -779,5 +807,19 @@ class LanguageProvider extends ChangeNotifier {
     'replies': 'الردود',
     'write_reply': 'اكتب رداً...',
     'no_posts': 'لا توجد منشورات بعد. كن أول من يشارك شيئاً!',
+
+    // Sports & Showers
+    'sports_and_showers': 'الرياضة والاستحمام',
+    'sports_subtitle': 'البرنامج والاستحمام',
+    'sports_program': 'برنامج القاعة الرياضية',
+    'mens_showers': 'حمامات الذكور',
+    'womens_showers': 'حمامات الإناث',
+    'schedule_tba': 'سيتم إضافة الأوقات لاحقاً',
+    'team_registration': 'التسجيل في الفرق الرياضية',
+    'football': 'كرة القدم',
+    'volleyball': 'الكرة الطائرة',
+    'basketball': 'كرة السلة',
+    'join_team': 'انضم للفريق',
+    'registration_sent_msg': 'تم إرسال طلب التسجيل بنجاح!',
   };
 }

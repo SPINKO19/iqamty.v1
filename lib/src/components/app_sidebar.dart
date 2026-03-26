@@ -231,7 +231,7 @@ class AppSidebar extends StatelessWidget {
     final isSelected = !isLogout && (currentRoute == data.route || (data.route != '/' && currentRoute.startsWith(data.route)));
     
     final color = isLogout ? AppColors.error : (isSelected ? AppColors.primary : const Color(0xFF6B7280));
-    final bgColor = isSelected ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent;
+    final bgColor = isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent;
 
     // Determine the icon to show. If selected, you might want to switch to filled icon, but for now we'll just tint it.
     final iconData = isSelected ? _getFilledIcon(data.icon) : data.icon;
@@ -252,7 +252,7 @@ class AppSidebar extends StatelessWidget {
             }
           },
           borderRadius: BorderRadius.circular(12),
-          hoverColor: context.appBorder.withValues(alpha: 0.5),
+          hoverColor: context.appBorder.withOpacity(0.5),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
