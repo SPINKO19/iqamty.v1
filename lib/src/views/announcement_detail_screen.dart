@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
 
@@ -35,24 +36,15 @@ class AnnouncementDetailScreen extends StatelessWidget {
             stretch: true,
             backgroundColor: isDark ? AppColors.backgroundDark : primaryColor,
             elevation: 0,
-            leading: Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Material(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    child: InkWell(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Icon(Icons.arrow_back_ios_new_rounded,
-                            color: Colors.white, size: 20),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/');
+                }
+              },
             ),
             flexibleSpace: FlexibleSpaceBar(
               stretchModes: const [

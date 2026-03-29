@@ -119,6 +119,9 @@ class LanguageProvider extends ChangeNotifier {
     'register_button': 'Create Account',
     'err_passwords_mismatch': 'Passwords do not match',
     'err_register_failed': 'Registration failed',
+    'smart_residence': 'University Residence Platform',
+    'forgot_password': 'Forgot password?',
+    'biometric_login': 'Biometric Login',
 
     // Management & Statuses
     'status_received': 'Received',
@@ -382,6 +385,9 @@ class LanguageProvider extends ChangeNotifier {
     'register_button': 'Créer un compte',
     'err_passwords_mismatch': 'Les mots de passe ne correspondent pas',
     'err_register_failed': 'Échec de l\'inscription',
+    'smart_residence': 'Plateforme de Résidence Universitaire',
+    'forgot_password': 'Mot de passe oublié ?',
+    'biometric_login': 'Connexion biométrique',
 
     // Profile
     'my_profile': 'Mon Profil',
@@ -453,7 +459,7 @@ class LanguageProvider extends ChangeNotifier {
     'service_of': 'Service de',
     'restaurant_open': 'Restaurant Ouvert',
     'today': "Aujourd'hui",
-    'breakfast': 'Petit Déjeuner',
+    'breakfast': 'Petit-déjeuner',
     'dinner': 'Dîner',
     'in_progress': 'EN COURS',
     'menu_composition': 'COMPOSITION DU MENU',
@@ -651,6 +657,9 @@ class LanguageProvider extends ChangeNotifier {
     'register_button': 'إنشاء حساب',
     'err_passwords_mismatch': 'كلمات المرور غير متطابقة',
     'err_register_failed': 'فشل التسجيل',
+    'smart_residence': 'منصة الإقامة الجامعية',
+    'forgot_password': 'نسيت كلمة المرور؟',
+    'biometric_login': 'تسجيل بصمة',
 
     // Profile
     'my_profile': 'ملفي الشخصي',
@@ -733,7 +742,7 @@ class LanguageProvider extends ChangeNotifier {
     'service_of': 'خدمة',
     'restaurant_open': 'المطعم مفتوح',
     'today': 'اليوم',
-    'breakfast': 'فطور الصباح',
+    'breakfast': 'الفطور',
     'dinner': 'العشاء',
     'in_progress': 'جاري',
     'menu_composition': 'تركيبة الوجبة',

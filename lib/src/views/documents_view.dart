@@ -34,7 +34,7 @@ class DocumentsView extends StatelessWidget {
             'Formulaire de départ',
             'DOCX • 500 KB',
             Icons.description,
-            Colors.blue,
+            const Color(0xFF2D6A4F),
             '',
           ),
         ],

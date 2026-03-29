@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import '../models/types.dart';
 
 class FirestoreService extends ChangeNotifier {
@@ -32,19 +33,51 @@ class FirestoreService extends ChangeNotifier {
 
   // Dining
   Stream<List<Meal>> getTodayMeals() {
+    return getMealsForDate(DateTime.now());
+  }
+
+  Stream<List<Meal>> getMealsForDate(DateTime date) {
     if (_db == null) return Stream.value([]);
-    final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day);
-    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final dateStr = DateFormat('yyyy-MM-dd').format(date);
 
     return _db!
         .collection('meals')
-        .where('date', isGreaterThanOrEqualTo: startOfDay)
-        .where('date', isLessThanOrEqualTo: endOfDay)
+        .where('date', isEqualTo: dateStr)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => Meal.fromJson(doc.data()..['id'] = doc.id))
             .toList());
+  }
+
+  // New stream for weekly summary/dots
+  Stream<List<Meal>> getMealsForWeek(DateTime startDate) {
+    if (_db == null) return Stream.value([]);
+    final startOfWeek = DateFormat('yyyy-MM-dd').format(startDate);
+    final endOfWeek = DateFormat('yyyy-MM-dd').format(startDate.add(const Duration(days: 6)));
+
+    return _db!
+        .collection('meals')
+        .where('date', isGreaterThanOrEqualTo: startOfWeek)
+        .where('date', isLessThanOrEqualTo: endOfWeek)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Meal.fromJson(doc.data()..['id'] = doc.id))
+            .toList());
+  }
+
+  Future<void> toggleMealReservation(String mealId, String userId, bool isReserving) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final docRef = _db!.collection('meals').doc(mealId);
+
+    if (isReserving) {
+      await docRef.update({
+        'reservedBy': FieldValue.arrayUnion([userId])
+      });
+    } else {
+      await docRef.update({
+        'reservedBy': FieldValue.arrayRemove([userId])
+      });
+    }
   }
   // Complaints
   Future<void> submitComplaint(Complaint complaint) async {
@@ -141,7 +174,7 @@ class FirestoreService extends ChangeNotifier {
     if (_db == null) throw Exception("Firestore not initialized");
     final data = {
       'status': status.toString(),
-      if (adminComment != null) 'adminComment': adminComment,
+      'adminComment': ?adminComment,
     };
     await _db!.collection('complaints').doc(complaintId).update(data);
   }

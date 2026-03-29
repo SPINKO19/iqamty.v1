@@ -8,6 +8,12 @@ import '../providers/theme_provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 
+// Brand dark-green matching the reference screenshot
+const _kGreen = Color(0xFF2D6A4F);
+const _kBorder = Color(0xFFE2E8E4);
+const _kBgGreenTop = Color(0xFF2D6A4F);
+const _kBgGreenBottom = Color(0xFFE8F2EA);
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -22,7 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _useEmail = false;
   String _selectedRole = 'student';
 
-
   @override
   void dispose() {
     _matriculeController.dispose();
@@ -30,6 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // ── unchanged login logic ──────────────────────────────────────────────────
   void _handleLogin() async {
     final identifier = _matriculeController.text.trim();
     final password = _passwordController.text;
@@ -43,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     final auth = context.read<AuthProvider>();
-    final success = _useEmail 
+    final success = _useEmail
         ? await auth.loginWithEmail(identifier, password)
         : await auth.login(identifier, password);
 
@@ -57,330 +63,346 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _handleBiometricLogin() {
+    // Biometric handler – extend when auth_service supports it
+    final lp = context.read<LanguageProvider>();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(lp.getText('biometric_login'))),
+    );
+  }
+
+  // ── build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final isLoading = context.watch<AuthProvider>().isLoading;
     final themeProvider = context.watch<ThemeProvider>();
-    final isDark = themeProvider.themeMode == ThemeMode.dark;
+    final isDark = themeProvider.isDarkMode;
     final lp = context.watch<LanguageProvider>();
-    
+
     return Scaffold(
-      backgroundColor: isDark ? Colors.lightBlue.shade900 : const Color(0xFFF8FAFC),
       body: Stack(
         children: [
-          // Background Glow effect for professional look
-          if (isDark)
-            Positioned(
-              top: -100,
-              right: -100,
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary.withValues(alpha: 0.1),
+          // ── Split background: dark green top, white bottom ──
+          Column(
+            children: [
+              Expanded(
+                flex: 35,
+                child: Container(
+                  color: isDark ? const Color(0xFF0A1A0D) : _kBgGreenTop,
                 ),
               ),
-            ),
-          
+              Expanded(
+                flex: 65,
+                child: Container(
+                  color: isDark ? const Color(0xFF121212) : _kBgGreenBottom,
+                ),
+              ),
+            ],
+          ),
           SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Language selector at the top
-                    _buildLanguageSelector(context),
-                    const SizedBox(height: 40),
+            child: Stack(
+              children: [
+                // ── Language selector – top right ──
+                Positioned(
+                  top: 14,
+                  right: 16,
+                  child: _buildLangRow(lp, isDark),
+                ),
 
-                    // Main Login Card
-                    Container(
-                      constraints: const BoxConstraints(maxWidth: 450),
-                      padding: const EdgeInsets.all(40),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.lightBlue.shade800 : Colors.white,
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
-                            blurRadius: 40,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                        border: Border.all(
-                          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Top-Left Role Selector
-                          Row(
-                            children: [
-                              _buildMiniRoleSelector(lp, isDark),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
+                // ── Theme toggle – top left ──
+                Positioned(
+                  top: 8,
+                  left: 12,
+                  child: _themeToggleBtn(themeProvider, isDark),
+                ),
 
-                          // Logo
-                          Center(
-                            child: Container(
-                              width: 100,
-                              height: 100,
+                // ── Scrollable centered content ──
+                Positioned.fill(
+                  top: 56,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(
+                      top: 24,
+                      bottom: 32,
+                      left: 20,
+                      right: 20,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 400),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // ── White card ──
+                            Container(
+                              width: double.infinity,
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
+                                color: isDark ? const Color(0xFF1C2B1E) : const Color(0xFFFFFFFF),
+                                borderRadius: BorderRadius.circular(28),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.primary.withValues(alpha: 0.2),
-                                    blurRadius: 30,
-                                    offset: const Offset(0, 10),
+                                    color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                                    blurRadius: 32,
+                                    spreadRadius: 0,
+                                    offset: const Offset(0, 8),
                                   ),
                                 ],
                               ),
-                              child: ClipOval(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Image.asset(
-                                    'assets/images/logo.png',
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Text(
-                            'IQAMTY',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              color: isDark ? Colors.white : const Color(0xFF1E293B),
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Smart Platform for Residence',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 48),
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    // ── Logo circle INSIDE card ──
+                                    Center(child: _buildLogoCircle(isDark)),
+                                    const SizedBox(height: 16),
 
-
-                          // Login Method Toggle (Only for Students)
-                          if (_selectedRole == 'student') ...[
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: _toggleButton(
-                                      label: lp.getText('login_matricule'),
-                                      isSelected: !_useEmail,
-                                      onTap: () => setState(() => _useEmail = false),
-                                      isDark: isDark,
+                                    // Title + subtitle
+                                    Text(
+                                      'IQAMTY',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w900,
+                                        color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                                        letterSpacing: 2.5,
+                                      ),
                                     ),
-                                  ),
-                                  Expanded(
-                                    child: _toggleButton(
-                                      label: lp.getText('login_email'),
-                                      isSelected: _useEmail,
-                                      onTap: () => setState(() => _useEmail = true),
-                                      isDark: isDark,
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      lp.getText('smart_residence'),
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        color: isDark
+                                            ? Colors.white60
+                                            : const Color(0xFF6B7280),
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-                          ],
+                                    const SizedBox(height: 20),
 
-                          // Matricule / Email Field
-                          _buildLabel(
-                            (_selectedRole != 'student' || _useEmail) 
-                              ? lp.getText('email_label') 
-                              : lp.getText('matricule_label'), 
-                            isDark
-                          ),
-                          const SizedBox(height: 8),
-                          _buildTextFieldBody(
-                            controller: _matriculeController,
-                            hintText: (_selectedRole != 'student' || _useEmail) 
-                              ? 'email@exemple.com' 
-                              : 'e.g. 2024310542',
-                            icon: (_selectedRole != 'student' || _useEmail) 
-                              ? Icons.email_outlined 
-                              : Icons.badge_outlined,
-                            isDark: isDark,
-                            keyboardType: (_selectedRole != 'student' || _useEmail) 
-                              ? TextInputType.emailAddress 
-                              : TextInputType.number,
-                            textInputAction: TextInputAction.next,
-                          ),
-                          const SizedBox(height: 24),
+                                    // ── Role tabs ──
+                                    _buildRoleTabs(lp, isDark),
+                                    const SizedBox(height: 18),
 
-                          // Password Field
-                          _buildLabel(lp.getText('password_label'), isDark),
-                          const SizedBox(height: 8),
-                          _buildTextField(
-                            controller: _passwordController,
-                            hintText: '••••••••',
-                            icon: Icons.lock_outline_rounded,
-                            isDark: isDark,
-                            isPassword: true,
-                            obscureText: _obscurePassword,
-                            onToggleVisibility: () => setState(() => _obscurePassword = !_obscurePassword),
-                            textInputAction: TextInputAction.done,
-                            onSubmitted: (_) => _handleLogin(),
-                          ),
-                          const SizedBox(height: 12),
-                          const SizedBox(height: 32),
+                                    // ── Login type toggle (students only) ──
+                                    if (_selectedRole == 'student') ...[
+                                      _buildTypeToggle(lp, isDark),
+                                      const SizedBox(height: 18),
+                                    ],
 
-                          // Login Button
-                          SizedBox(
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: isLoading ? null : _handleLogin,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                    )
-                                  : Row(
+                                    // ── Matricule / Email field ──
+                                    _buildField(
+                                      controller: _matriculeController,
+                                      hint: (_selectedRole != 'student' || _useEmail)
+                                          ? 'email@exemple.com'
+                                          : lp.getText('matricule_label'),
+                                      icon: (_selectedRole != 'student' || _useEmail)
+                                          ? Icons.alternate_email_rounded
+                                          : Icons.tag_rounded,
+                                      isDark: isDark,
+                                      keyboardType: (_selectedRole != 'student' || _useEmail)
+                                          ? TextInputType.emailAddress
+                                          : TextInputType.number,
+                                      textInputAction: TextInputAction.next,
+                                    ),
+                                    const SizedBox(height: 12),
+
+                                    // ── Password field ──
+                                    _buildField(
+                                      controller: _passwordController,
+                                      hint: lp.getText('password_label'),
+                                      icon: Icons.lock_outline_rounded,
+                                      isDark: isDark,
+                                      isPassword: true,
+                                      obscureText: _obscurePassword,
+                                      onToggleVisibility: () =>
+                                          setState(() => _obscurePassword = !_obscurePassword),
+                                      textInputAction: TextInputAction.done,
+                                      onSubmitted: (_) => _handleLogin(),
+                                    ),
+                                    const SizedBox(height: 20),
+
+                                    // ── Se connecter button ──
+                                    SizedBox(
+                                      height: 52,
+                                      child: ElevatedButton(
+                                        onPressed: isLoading ? null : _handleLogin,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: _kGreen,
+                                          foregroundColor: Colors.white,
+                                          disabledBackgroundColor:
+                                              _kGreen.withValues(alpha: 0.5),
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(14),
+                                          ),
+                                        ),
+                                        child: isLoading
+                                            ? const SizedBox(
+                                                width: 22,
+                                                height: 22,
+                                                child: CircularProgressIndicator(
+                                                  color: Colors.white,
+                                                  strokeWidth: 2.5,
+                                                ),
+                                              )
+                                            : Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Text(
+                                                    lp.getText('login_button'),
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 15,
+                                                      fontWeight: FontWeight.w700,
+                                                      letterSpacing: 0.3,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  const Text(
+                                                    '→',
+                                                    style: TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight: FontWeight.bold),
+                                                  ),
+                                                ],
+                                              ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+
+                                    // ── Biometric button ──
+                                    SizedBox(
+                                      height: 52,
+                                      child: OutlinedButton(
+                                        onPressed: _handleBiometricLogin,
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: _kGreen,
+                                          side: BorderSide(
+                                            color: isDark
+                                                ? _kGreen.withValues(alpha: 0.7)
+                                                : _kGreen,
+                                            width: 1.5,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(14),
+                                          ),
+                                          backgroundColor: isDark
+                                              ? Colors.transparent
+                                              : Colors.white,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.fingerprint_rounded,
+                                                color: _kGreen, size: 22),
+                                            const SizedBox(width: 10),
+                                            Text(
+                                              lp.getText('biometric_login'),
+                                              style: GoogleFonts.inter(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: _kGreen,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 14),
+
+                                    // ── Forgot password ──
+                                    Center(
+                                      child: GestureDetector(
+                                        onTap: () {},
+                                        child: Text(
+                                          lp.getText('forgot_password'),
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            color: isDark
+                                                ? Colors.white54
+                                                : const Color(0xFF6B7280),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    // ── Register link ──
+                                    Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Text(
-                                          lp.getText('login_button'),
+                                          lp.getText('no_account'),
                                           style: GoogleFonts.inter(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                            color: isDark
+                                                ? Colors.white54
+                                                : const Color(0xFF6B7280),
                                           ),
                                         ),
-                                        const SizedBox(width: 10),
-                                        const Icon(Icons.arrow_forward, size: 20),
+                                        const SizedBox(width: 4),
+                                        GestureDetector(
+                                          onTap: () => context.go('/register'),
+                                          child: Text(
+                                            lp.getText('register'),
+                                            style: GoogleFonts.inter(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w800,
+                                              color: _kGreen,
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                     ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                lp.getText('no_account'),
-                                style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                  ],
                                 ),
                               ),
-                              TextButton(
-                                onPressed: () => context.go('/register'),
-                                child: Text(
-                                  lp.getText('register'),
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
+                            ),
+
+                            // ── DEV QUICK ACCESS ──────────────────────────────────
+                            if (kDebugMode) ...[
+                              const SizedBox(height: 28),
+                              Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.04)
+                                      : Colors.white.withValues(alpha: 0.45),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : Colors.grey.withValues(alpha: 0.2),
                                   ),
                                 ),
+                                child: _DevSection(isDark: isDark),
                               ),
                             ],
-                          ),
-                        ],
-                      ),
-                    ),
 
-                    // DEV QUICK ACCESS
-                    if (kDebugMode) ...[
-                      const SizedBox(height: 40),
-                      Container(
-                        constraints: const BoxConstraints(maxWidth: 450),
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.02) : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: isDark ? Colors.white10 : Colors.grey.withValues(alpha: 0.2)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.bug_report_outlined, size: 18, color: AppColors.primary),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'DEV QUICK ACCESS',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.5,
-                                    color: isDark ? Colors.white54 : Colors.blueGrey,
-                                  ),
-                                ),
-                              ],
+                            const SizedBox(height: 28),
+                            Text(
+                              '© 2026  ${lp.getText('secure_gateway')}',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(
+                                fontSize: 9,
+                                letterSpacing: 1.5,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? Colors.white24
+                                    : _kGreen.withValues(alpha: 0.4),
+                              ),
                             ),
-                            const SizedBox(height: 20),
-                            _devButton(context, 'Enter as Student', Icons.school_outlined, AppColors.primary, 'student', '/'),
-                            const SizedBox(height: 12),
-                            _devButton(context, 'Enter as Worker', Icons.handyman_outlined, Colors.orange, 'worker', '/worker-dashboard'),
-                            const SizedBox(height: 12),
-                            _devButton(context, 'Enter as Admin', Icons.admin_panel_settings_outlined, AppColors.error, 'administrator', '/admin'),
+                            const SizedBox(height: 16),
                           ],
                         ),
                       ),
-                    ],
-
-                    const SizedBox(height: 40),
-                    Text(
-                      '© 2026 ${lp.getText('secure_gateway')}',
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        letterSpacing: 2,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white24 : Colors.grey[400],
-                      ),
                     ),
-                    const SizedBox(height: 24),
-                    
-                    // Theme Switcher now at the bottom
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
-                        borderRadius: BorderRadius.circular(50),
-                        border: Border.all(color: isDark ? Colors.white10 : Colors.grey.withValues(alpha: 0.1)),
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          isDark ? Icons.wb_sunny_outlined : Icons.nights_stay_outlined,
-                          color: isDark ? Colors.amber : const Color(0xFF1E293B),
-                          size: 20,
-                        ),
-                        onPressed: () => themeProvider.setThemeMode(!isDark ? AppThemeMode.dark : AppThemeMode.normal),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
@@ -388,195 +410,159 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildLanguageSelector(BuildContext context) {
-    final lp = context.watch<LanguageProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _langButton(context, 'FR', 'fr', lp, isDark),
-        const SizedBox(width: 8),
-        _langButton(context, 'EN', 'en', lp, isDark),
-        const SizedBox(width: 8),
-        _langButton(context, 'عر', 'ar', lp, isDark),
-      ],
-    );
-  }
-
-  Widget _langButton(BuildContext context, String label, String code, LanguageProvider lp, bool isDark) {
-    final isSelected = lp.currentLocale.languageCode == code;
-    return GestureDetector(
-      onTap: () => lp.setLocale(code),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : (isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFE2E8F0)),
+  // ── Logo circle, sits inside card ─────────────────────────────────────────
+  Widget _buildLogoCircle(bool isDark) {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2D6A4F) : _kGreen,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _kGreen.withValues(alpha: 0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
           ),
+        ],
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.25),
+          width: 2,
         ),
-        child: Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : (isDark ? Colors.white54 : Colors.grey[600]),
-          ),
-        ),
+      ),
+      child: const Icon(
+        Icons.school_rounded,
+        color: Colors.white,
+        size: 40,
       ),
     );
   }
 
-  Widget _buildMiniRoleSelector(LanguageProvider lp, bool isDark) {
+  // ── Role pill tabs ────────────────────────────────────────────────────────
+  Widget _buildRoleTabs(LanguageProvider lp, bool isDark) {
+    final roles = [
+      ('student', lp.getText('student')),
+      ('worker', lp.getText('worker')),
+      ('administrator', lp.getText('administrator')),
+    ];
     return Container(
-      padding: const EdgeInsets.all(2),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(10),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.06)
+            : const Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        children: roles.map((entry) {
+          final (role, label) = entry;
+          final sel = _selectedRole == role;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() {
+                _selectedRole = role;
+                if (role != 'student') _useEmail = true;
+              }),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 9),
+                decoration: BoxDecoration(
+                  color: sel ? _kGreen : Colors.transparent,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: sel ? FontWeight.w800 : FontWeight.w500,
+                    color: sel
+                        ? Colors.white
+                        : (isDark
+                            ? Colors.white54
+                            : const Color(0xFF6B7280)),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // ── Matricule / Email toggle ──────────────────────────────────────────────
+  Widget _buildTypeToggle(LanguageProvider lp, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : _kBorder,
+        ),
+      ),
+      child: Row(
         children: [
-          _roleToggleSmallButton('student', lp.getText('student'), isDark),
-          _roleToggleSmallButton('worker', lp.getText('worker'), isDark),
-          _roleToggleSmallButton('administrator', lp.getText('administrator'), isDark),
+          _typePill(lp.getText('login_matricule'), !_useEmail,
+              () => setState(() => _useEmail = false), isDark),
+          _typePill(lp.getText('login_email'), _useEmail,
+              () => setState(() => _useEmail = true), isDark),
         ],
       ),
     );
   }
 
-  Widget _roleToggleSmallButton(String role, String label, bool isDark) {
-    bool isSelected = _selectedRole == role;
-    return GestureDetector(
-      onTap: () => setState(() {
-        _selectedRole = role;
-        if (role != 'student') {
-          _useEmail = true;
-        }
-      }),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 10,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? Colors.white : (isDark ? Colors.white38 : Colors.grey[600]),
+  Widget _typePill(String label, bool sel, VoidCallback onTap, bool isDark) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: sel ? _kGreen : Colors.transparent,
+            borderRadius: BorderRadius.circular(50),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+              color: sel
+                  ? Colors.white
+                  : (isDark ? Colors.white54 : const Color(0xFF6B7280)),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _toggleButton({
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected 
-              ? (isDark ? AppColors.primary : Colors.white)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: isSelected && !isDark
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected
-                ? (isDark ? Colors.white : AppColors.primary)
-                : (isDark ? Colors.white38 : Colors.grey[500]),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLabel(String text, bool isDark) {
-    return Text(
-      text,
-      style: GoogleFonts.inter(
-        fontSize: 12,
-        fontWeight: FontWeight.bold,
-        color: isDark ? Colors.white38 : Colors.black38,
-        letterSpacing: 1,
-      ),
-    );
-  }
-
-  Widget _buildTextField({
+  // ── Input field ───────────────────────────────────────────────────────────
+  Widget _buildField({
     required TextEditingController controller,
-    required String hintText,
+    required String hint,
     required IconData icon,
+    required bool isDark,
     bool isPassword = false,
     bool obscureText = false,
     VoidCallback? onToggleVisibility,
     TextInputType? keyboardType,
-    required bool isDark,
-    TextInputAction? textInputAction,
-    Function(String)? onSubmitted,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildTextFieldBody(
-          controller: controller,
-          hintText: hintText,
-          icon: icon,
-          isPassword: isPassword,
-          obscureText: obscureText,
-          onToggleVisibility: onToggleVisibility,
-          keyboardType: keyboardType,
-          isDark: isDark,
-          textInputAction: textInputAction,
-          onSubmitted: onSubmitted,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextFieldBody({
-    required TextEditingController controller,
-    required String hintText,
-    required IconData icon,
-    bool isPassword = false,
-    bool obscureText = false,
-    VoidCallback? onToggleVisibility,
-    TextInputType? keyboardType,
-    required bool isDark,
     TextInputAction? textInputAction,
     Function(String)? onSubmitted,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(16),
+        color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F8F2),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : _kBorder,
         ),
       ),
       child: TextField(
@@ -585,30 +571,196 @@ class _LoginScreenState extends State<LoginScreen> {
         keyboardType: keyboardType,
         textInputAction: textInputAction,
         onSubmitted: onSubmitted,
-        style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1E293B)),
+        style: GoogleFonts.inter(
+          fontSize: 14,
+          color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+        ),
         decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(color: isDark ? Colors.white24 : Colors.grey[500], fontSize: 14),
-          prefixIcon: Icon(icon, color: isDark ? Colors.white38 : Colors.grey[500], size: 20),
+          hintText: hint,
+          hintStyle: GoogleFonts.inter(
+            fontSize: 14,
+            color: isDark
+                ? Colors.white30
+                : const Color(0xFF9CA3AF),
+          ),
+          prefixIcon: Icon(
+            icon,
+            size: 20,
+            color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
+          ),
           suffixIcon: isPassword
               ? IconButton(
                   focusNode: FocusNode(skipTraversal: true),
                   icon: Icon(
-                    obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                    color: isDark ? Colors.white38 : Colors.grey[500],
+                    obscureText
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
                     size: 20,
+                    color: isDark
+                        ? Colors.white38
+                        : const Color(0xFF9CA3AF),
                   ),
                   onPressed: onToggleVisibility,
                 )
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         ),
       ),
     );
   }
 
-  Widget _devButton(BuildContext context, String label, IconData icon, Color color, String role, String route) {
+  // ── Language pills ────────────────────────────────────────────────────────
+  Widget _buildLangRow(LanguageProvider lp, bool isDark) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _langPill('FR', 'fr', lp, isDark),
+        const SizedBox(width: 6),
+        _langPill('EN', 'en', lp, isDark),
+        const SizedBox(width: 6),
+        _langPill('عر', 'ar', lp, isDark),
+      ],
+    );
+  }
+
+  Widget _langPill(
+      String label, String code, LanguageProvider lp, bool isDark) {
+    final sel = lp.currentLocale.languageCode == code;
+    return GestureDetector(
+      onTap: () => lp.setLocale(code),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: sel
+              ? Colors.white
+              : (isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.15)),
+          borderRadius: BorderRadius.circular(50),
+          border: Border.all(
+            color: sel
+                ? Colors.white
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.transparent),
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: sel ? _kGreen : Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Theme toggle button ───────────────────────────────────────────────────
+  Widget _themeToggleBtn(ThemeProvider themeProvider, bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : Colors.transparent,
+        ),
+      ),
+      child: IconButton(
+        icon: Icon(
+          isDark ? Icons.wb_sunny_outlined : Icons.nights_stay_outlined,
+          color: isDark ? Colors.amber : Colors.white,
+          size: 20,
+        ),
+        onPressed: () => themeProvider.setThemeMode(
+            !isDark ? AppThemeMode.dark : AppThemeMode.normal),
+      ),
+    );
+  }
+}
+
+// ── DEV QUICK ACCESS section (extracted widget to keep build() clean) ───────
+class _DevSection extends StatefulWidget {
+  final bool isDark;
+  const _DevSection({required this.isDark});
+
+  @override
+  State<_DevSection> createState() => _DevSectionState();
+}
+
+class _DevSectionState extends State<_DevSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                Icon(Icons.settings_outlined,
+                    size: 16,
+                    color: widget.isDark ? Colors.white38 : Colors.blueGrey),
+                const SizedBox(width: 8),
+                Text(
+                  'DEV QUICK ACCESS',
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.5,
+                    color: widget.isDark ? Colors.white38 : Colors.blueGrey,
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  _expanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  size: 18,
+                  color: widget.isDark ? Colors.white38 : Colors.blueGrey,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_expanded)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              children: [
+                _devBtn(context, 'Enter as Student', Icons.school_outlined,
+                    AppColors.primary, 'student', '/'),
+                const SizedBox(height: 10),
+                _devBtn(context, 'Enter as Worker', Icons.handyman_outlined,
+                    Colors.orange, 'worker', '/worker-dashboard'),
+                const SizedBox(height: 10),
+                _devBtn(
+                    context,
+                    'Enter as Admin',
+                    Icons.admin_panel_settings_outlined,
+                    AppColors.error,
+                    'administrator',
+                    '/admin'),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _devBtn(BuildContext context, String label, IconData icon, Color color,
+      String role, String route) {
     return InkWell(
       onTap: () async {
         final auth = context.read<AuthProvider>();
@@ -618,11 +770,11 @@ class _LoginScreenState extends State<LoginScreen> {
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withValues(alpha: 0.3)),
-          color: color.withValues(alpha: 0.05),
+          color: color.withValues(alpha: 0.06),
         ),
         child: Row(
           children: [
@@ -631,10 +783,12 @@ class _LoginScreenState extends State<LoginScreen> {
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 14),
+                style: TextStyle(
+                    color: color, fontWeight: FontWeight.w600, fontSize: 14),
               ),
             ),
-            Icon(Icons.arrow_forward_ios, color: color.withValues(alpha: 0.5), size: 14),
+            Icon(Icons.arrow_forward_ios,
+                color: color.withValues(alpha: 0.5), size: 13),
           ],
         ),
       ),

@@ -1,0 +1,40 @@
+ERROR|COMPILE_TIME_ERROR|INVALID_CONSTANT|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\complaints_view.dart|34|18|8|Invalid constant value.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\complaints_view.dart|34|18|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\complaints_view.dart|34|27|5|Expected to find ','.
+ERROR|COMPILE_TIME_ERROR|EXTRA_POSITIONAL_ARGUMENTS|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\complaints_view.dart|34|27|17|Too many positional arguments: 0 expected, but 2 found.
+ERROR|COMPILE_TIME_ERROR|INVALID_CONSTANT|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\complaints_view.dart|39|20|8|Invalid constant value.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\complaints_view.dart|39|20|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\complaints_view.dart|39|29|5|Expected to find ','.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\dining_view.dart|55|20|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\dining_view.dart|55|29|5|Expected to find ','.
+ERROR|COMPILE_TIME_ERROR|EXTRA_POSITIONAL_ARGUMENTS|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\dining_view.dart|55|29|17|Too many positional arguments: 0 expected, but 1 found.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\home_screen.dart|273|39|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\home_screen.dart|273|48|5|Expected to find ','.
+ERROR|COMPILE_TIME_ERROR|EXTRA_POSITIONAL_ARGUMENTS|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\home_screen.dart|273|48|17|Too many positional arguments: 0 expected, but 1 found.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\home_screen.dart|342|36|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\home_screen.dart|342|45|5|Expected to find ','.
+ERROR|COMPILE_TIME_ERROR|EXTRA_POSITIONAL_ARGUMENTS_COULD_BE_NAMED|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\home_screen.dart|342|45|17|Too many positional arguments: 0 expected, but 1 found.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\home_screen.dart|386|8|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\home_screen.dart|386|17|5|Expected to find ')'.
+ERROR|COMPILE_TIME_ERROR|INVALID_CONSTANT|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\notifications_view.dart|33|18|8|Invalid constant value.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\notifications_view.dart|33|18|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\notifications_view.dart|33|27|5|Expected to find ','.
+ERROR|COMPILE_TIME_ERROR|EXTRA_POSITIONAL_ARGUMENTS|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\notifications_view.dart|33|27|17|Too many positional arguments: 0 expected, but 2 found.
+ERROR|COMPILE_TIME_ERROR|INVALID_CONSTANT|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\notifications_view.dart|34|17|8|Invalid constant value.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\notifications_view.dart|34|17|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\notifications_view.dart|34|26|5|Expected to find ','.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\profile_screen.dart|25|20|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\profile_screen.dart|25|29|5|Expected to find ','.
+ERROR|COMPILE_TIME_ERROR|EXTRA_POSITIONAL_ARGUMENTS|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\profile_screen.dart|25|29|17|Too many positional arguments: 0 expected, but 1 found.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\profile_screen.dart|210|67|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\profile_screen.dart|210|76|5|Expected to find ','.
+ERROR|COMPILE_TIME_ERROR|EXTRA_POSITIONAL_ARGUMENTS|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\profile_screen.dart|210|76|17|Too many positional arguments: 0 expected, but 1 found.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\requests_view.dart|20|134|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\requests_view.dart|20|143|5|Expected to find ','.
+ERROR|COMPILE_TIME_ERROR|EXTRA_POSITIONAL_ARGUMENTS|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\requests_view.dart|20|143|17|Too many positional arguments: 0 expected, but 1 found.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\requests_view.dart|53|19|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\requests_view.dart|53|28|5|Expected to find ','.
+ERROR|COMPILE_TIME_ERROR|EXTRA_POSITIONAL_ARGUMENTS|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\views\\requests_view.dart|53|28|17|Too many positional arguments: 0 expected, but 1 found.
+ERROR|COMPILE_TIME_ERROR|UNDEFINED_IDENTIFIER|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\widgets\\side_drawer.dart|34|112|8|Undefined name 'Appconst'.
+ERROR|SYNTACTIC_ERROR|EXPECTED_TOKEN|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\widgets\\side_drawer.dart|34|121|5|Expected to find ','.
+ERROR|COMPILE_TIME_ERROR|EXTRA_POSITIONAL_ARGUMENTS|C:\\Users\\14382\\iqamty.v1\\lib\\src\\core\\iq\\iqamty_app\\lib\\src\\widgets\\side_drawer.dart|34|121|17|Too many positional arguments: 0 expected, but 1 found.

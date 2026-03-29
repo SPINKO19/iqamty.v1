@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 enum Status {
   received,
@@ -157,31 +158,67 @@ class DocumentModel {
 
 class Meal {
   final String? id;
-  final String menu;
+  final String menu; // Fallback or full menu string
+  final List<String> menuItems;
   final String type; // Breakfast, Lunch, Dinner
   final DateTime date;
+  final String startTime;
+  final String endTime;
+  final List<String> reservedBy; // List of student matricules/ids
 
   Meal({
     this.id,
     required this.menu,
+    this.menuItems = const [],
     required this.type,
     required this.date,
+    this.startTime = '',
+    this.endTime = '',
+    this.reservedBy = const [],
   });
 
+  bool isReserved(String userId) => reservedBy.contains(userId);
+
+  String get mealType => type.toLowerCase();
+
   factory Meal.fromJson(Map<String, dynamic> json) {
+    DateTime parsedDate;
+    final dateValue = json['date'];
+    if (dateValue is Timestamp) {
+      parsedDate = dateValue.toDate();
+    } else if (dateValue is String) {
+      // Expecting yyyy-MM-dd
+      try {
+        parsedDate = DateTime.parse(dateValue);
+      } catch (e) {
+        parsedDate = DateTime.now();
+      }
+    } else {
+      parsedDate = DateTime.now();
+    }
+
     return Meal(
       id: json['id'],
       menu: json['menu'] ?? '',
-      type: json['type'] ?? '',
-      date: (json['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      menuItems: List<String>.from(json['menuItems'] ?? []),
+      type: json['type'] ?? json['mealType'] ?? '',
+      date: parsedDate,
+      startTime: json['startTime'] ?? '',
+      endTime: json['endTime'] ?? '',
+      reservedBy: List<String>.from(json['reservedBy'] ?? []),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'menu': menu,
+      'menuItems': menuItems,
       'type': type,
-      'date': Timestamp.fromDate(date),
+      'mealType': type,
+      'date': DateFormat('yyyy-MM-dd').format(date),
+      'startTime': startTime,
+      'endTime': endTime,
+      'reservedBy': reservedBy,
     };
   }
 }
@@ -259,6 +296,7 @@ class ServiceRequest {
   final String description;
   final String status; // pending, reviewed, completed
   final String? imageUrl;
+  final String priority; // Haute, Normale, Faible
   final DateTime createdAt;
   final String? adminResponseText;
   final String? adminResponseImageUrl;
@@ -270,6 +308,7 @@ class ServiceRequest {
     required this.description,
     required this.status,
     this.imageUrl,
+    this.priority = 'Normale',
     required this.createdAt,
     this.adminResponseText,
     this.adminResponseImageUrl,
@@ -283,6 +322,7 @@ class ServiceRequest {
       description: json['description'] ?? json['details'] ?? '',
       status: json['status'] ?? 'pending',
       imageUrl: json['imageUrl'],
+      priority: json['priority'] ?? 'Normale',
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       adminResponseText: json['adminResponseText'],
       adminResponseImageUrl: json['adminResponseImageUrl'],
@@ -296,6 +336,7 @@ class ServiceRequest {
       'description': description,
       'status': status,
       'imageUrl': imageUrl,
+      'priority': priority,
       'adminResponseText': adminResponseText,
       'adminResponseImageUrl': adminResponseImageUrl,
       // createdAt is added by the server
@@ -528,3 +569,51 @@ class ChatMessage {
     };
   }
 }
+
+class NotificationModel {
+  final String id;
+  final String userId;
+  final String title;
+  final String body;
+  final String? type;
+  final bool isRead;
+  final bool isDeleted;
+  final DateTime createdAt;
+
+  NotificationModel({
+    required this.id,
+    required this.userId,
+    required this.title,
+    required this.body,
+    this.type,
+    this.isRead = false,
+    this.isDeleted = false,
+    required this.createdAt,
+  });
+
+  factory NotificationModel.fromJson(Map<String, dynamic> json, String id) {
+    return NotificationModel(
+      id: id,
+      userId: json['userId'] ?? '',
+      title: json['title'] ?? '',
+      body: json['body'] ?? '',
+      type: json['type'],
+      isRead: json['isRead'] ?? false,
+      isDeleted: json['isDeleted'] ?? false,
+      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'userId': userId,
+      'title': title,
+      'body': body,
+      'type': type,
+      'isRead': isRead,
+      'isDeleted': isDeleted,
+      'createdAt': Timestamp.fromDate(createdAt),
+    };
+  }
+}
+

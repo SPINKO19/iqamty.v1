@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:go_router/go_router.dart';
 import '../services/firestore_service.dart';
 import '../services/cloudinary_service.dart';
 import '../providers/auth_provider.dart';
@@ -24,6 +25,16 @@ class ComplaintsView extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? Colors.black : const Color(0xFFF8FAFC),
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
         elevation: 0,
         backgroundColor: Colors.transparent,
         title: Text(
@@ -245,7 +256,7 @@ class _ModernComplaintCard extends StatelessWidget {
 
   Color _getStatusColor(Status status) {
     switch (status) {
-      case Status.received: return const Color(0xFF3B82F6);
+      case Status.received: return const Color(0xFF2D6A4F);
       case Status.inProgress: return const Color(0xFFF59E0B);
       case Status.resolved: return const Color(0xFF10B981);
       case Status.approved: return const Color(0xFF10B981);
@@ -290,6 +301,8 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
       if (_imageFile != null) {
         imageUrl = await CloudinaryService.uploadImage(_imageFile!);
       }
+
+      if (!mounted) return;
 
       final auth = context.read<AuthProvider>();
       final firestore = context.read<FirestoreService>();

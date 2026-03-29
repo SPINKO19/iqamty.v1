@@ -1,84 +1,74 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
+
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../services/firestore_service.dart';
 import '../models/types.dart';
-import '../core/theme/colors.dart';
+
 import 'package:go_router/go_router.dart';
+
+const _kGreen = Color(0xFF2D6A4F);
+const _kHeaderGreen = Color(0xFF2D6A4F);
+const _kOrange = Color(0xFFF4A261);
+const _kBgMint = Color(0xFFE8F2EA);
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final student = context.watch<AuthProvider>().currentStudent;
+    final auth = context.watch<AuthProvider>();
+    final student = auth.currentStudent;
+    final userData = auth.currentUserData;
     final firestore = context.watch<FirestoreService>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF121212) : _kBgMint,
+      
+      // -- bottom navigation bar --
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.go('/create-request'),
+        backgroundColor: _kGreen,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add_rounded, size: 32),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8,
+        elevation: 10,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavIcon(Icons.home_rounded, lp.getText('dashboard'), true, () => context.go('/'), isDark),
+              _buildNavIcon(Icons.restaurant_rounded, lp.getText('restoration'), false, () => context.go('/dining'), isDark),
+              const SizedBox(width: 48), // Space for FAB
+              _buildNavIcon(Icons.assignment_rounded, lp.getText('requests'), false, () => context.go('/requests'), isDark),
+              _buildNavIcon(Icons.person_rounded, lp.getText('profile'), false, () => context.go('/profile'), isDark),
+            ],
+          ),
+        ),
+      ),
+
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
           // Header Modern Design
           SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark 
-                    ? [const Color(0xFF121212), Colors.black]
-                    : [const Color(0xFF121212), const Color(0xFF000000)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.2),
-                    blurRadius: 30,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          lp.getText('welcome'),
-                          style: GoogleFonts.inter(
-                            color: Colors.white70,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          student?.prenomFr ?? lp.getText('student'),
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildHeaderActions(context, student, isDark),
-                ],
-              ),
+            child: Column(
+              children: [
+                _buildHeaderSection(context, student, lp, isDark),
+                _buildInfoCardsRow(student, userData, isDark),
+              ],
             ),
           ),
 
@@ -86,36 +76,36 @@ class HomeScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Announcements Section
                 _buildSectionHeader(context, lp.getText('recent_announcements'), lp, onPressed: () {}),
                 const SizedBox(height: 16),
                 SizedBox(
-                  height: 170,
+                  height: 160,
                   child: StreamBuilder<List<Announcement>>(
                     stream: firestore.getAnnouncements(),
                     builder: (context, snapshot) {
                       final announcements = snapshot.data ?? [];
                       if (announcements.isEmpty) {
-                        return _buildEmptyState(context, Icons.campaign_rounded, lp.getText('no_announcements'));
+                        return _buildEmptyState(context, Icons.campaign_rounded, lp.getText('no_announcements'), isDark);
                       }
                       return ListView.separated(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
                         itemCount: announcements.length,
                         separatorBuilder: (context, index) => const SizedBox(width: 16),
-                        itemBuilder: (context, index) => _AnnouncementCard(announcement: announcements[index]),
+                        itemBuilder: (context, index) => _AnnouncementCard(announcement: announcements[index], isDark: isDark),
                       );
                     },
                   ),
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 36),
 
                 // Quick Actions Grid
                 _buildSectionHeader(context, lp.getText('quick_actions_title'), lp),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final crossAxisCount = constraints.maxWidth > 800 ? 4 : 2;
@@ -138,6 +128,7 @@ class HomeScreen extends StatelessWidget {
                               icon: Icons.report_problem_rounded,
                               color: const Color(0xFFEF4444),
                               badgeCount: count,
+                              isDark: isDark,
                               onTap: () => context.go('/complaints'),
                             );
                           },
@@ -146,7 +137,8 @@ class HomeScreen extends StatelessWidget {
                           title: lp.getText('restoration'),
                           subtitle: lp.getText('menu_of_the_day'),
                           icon: Icons.restaurant_rounded,
-                          color: const Color(0xFFEF4444),
+                          color: const Color(0xFFEF4444), 
+                          isDark: isDark,
                           onTap: () => context.go('/dining'),
                         ),
                         StreamBuilder<List<ServiceRequest>>(
@@ -157,8 +149,9 @@ class HomeScreen extends StatelessWidget {
                               title: 'Transport',
                               subtitle: lp.getText('technical_services'),
                               icon: Icons.directions_bus_outlined,
-                              color: const Color(0xFF3B82F6),
+                              color: const Color(0xFF2D6A4F),
                               badgeCount: count,
+                              isDark: isDark,
                               onTap: () => context.go('/transport'),
                             );
                           },
@@ -168,6 +161,7 @@ class HomeScreen extends StatelessWidget {
                           subtitle: lp.getText('docs_and_certs'),
                           icon: Icons.description_rounded,
                           color: const Color(0xFF8B5CF6),
+                          isDark: isDark,
                           onTap: () => context.go('/documents'),
                         ),
                         _QuickActionCard(
@@ -175,6 +169,7 @@ class HomeScreen extends StatelessWidget {
                           subtitle: lp.getText('sports_subtitle'),
                           icon: Icons.sports_volleyball_rounded,
                           color: const Color(0xFFF59E0B),
+                          isDark: isDark,
                           onTap: () => context.go('/sports'),
                         ),
                       ],
@@ -182,22 +177,40 @@ class HomeScreen extends StatelessWidget {
                   },
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 36),
 
-                // Today's Menu Preview
-                _buildSectionHeader(context, lp.getText('today_menu_available'), lp),
-                const SizedBox(height: 20),
-                StreamBuilder<List<Meal>>(
-                  stream: firestore.getTodayMeals(),
+                // Recent Activity
+                _buildSectionHeader(context, lp.getText('recent_activity') == 'recent_activity' ? 'Activité récente' : lp.getText('recent_activity'), lp),
+                const SizedBox(height: 16),
+                StreamBuilder<List<ServiceRequest>>(
+                  stream: firestore.getMyRequests(student?.id?.toString() ?? ''),
                   builder: (context, snapshot) {
-                    final meals = snapshot.data ?? [];
-                    if (meals.isEmpty) {
-                      return _buildMealMock(context, lp);
+                    final activities = snapshot.data ?? [];
+                    if (activities.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: Text(
+                            lp.getText('no_data') == 'no_data' ? 'Aucune activité récente.' : lp.getText('no_data'),
+                            style: GoogleFonts.inter(color: isDark ? Colors.white54 : Colors.black45, fontSize: 13),
+                          ),
+                        ),
+                      );
                     }
-                    return _MealPreviewCard(meal: meals.first);
+                    
+                    final recent = activities.take(5).toList();
+                    return ListView.separated(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: recent.length,
+                      separatorBuilder: (context, index) => const SizedBox(height: 16),
+                      itemBuilder: (context, index) => _ActivityListItem(request: recent[index], isDark: isDark),
+                    );
                   },
                 ),
-                const SizedBox(height: 48),
+                
+                const SizedBox(height: 80), 
               ]),
             ),
           ),
@@ -206,52 +219,160 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderActions(BuildContext context, dynamic student, bool isDark) {
-    return Row(
-      children: [
-        Stack(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 24),
+  Widget _buildNavIcon(IconData icon, String label, bool isSelected, VoidCallback onTap, bool isDark) {
+    final color = isSelected ? _kGreen : (isDark ? Colors.white54 : Colors.black45);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(50),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: color,
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             ),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                width: 10,
-                height: 10,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderSection(BuildContext context, dynamic student, LanguageProvider lp, bool isDark) {
+    final String prenom = student?.prenomFr ?? '';
+    final String nom = student?.nomFr ?? '';
+    final String fullName = '$prenom $nom'.trim().isEmpty ? lp.getText('student') : '$prenom $nom';
+    
+    final String initials = (prenom.isNotEmpty ? prenom[0].toUpperCase() : '') + (nom.isNotEmpty ? nom[0].toUpperCase() : 'S');
+    
+    return Container(
+      color: _kHeaderGreen,
+      padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // Hamburger menu
+              Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black, width: 2),
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.menu_rounded, color: Colors.white),
+                  onPressed: () {
+                    if (Scaffold.maybeOf(context)?.hasDrawer ?? false) {
+                      Scaffold.of(context).openDrawer();
+                    } else {
+                      Scaffold.maybeOf(context)?.openDrawer();
+                    }
+                  },
                 ),
               ),
+              const Expanded(
+                child: Center(
+                  child: Text(
+                    'IQAMTY',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+              // Notifications
+              _buildNotificationBell(isDark),
+              const SizedBox(width: 12),
+              // Avatar with initials
+              GestureDetector(
+                onTap: () => context.go('/profile'),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initials,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          // Welcome text
+          Text(
+            lp.getText('welcome') == 'welcome' ? 'Bienvenue,' : '${lp.getText('welcome')},',
+            style: GoogleFonts.inter(
+              color: Colors.white70,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
             ),
-          ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Text(
+                fullName,
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text('👋', style: TextStyle(fontSize: 24)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationBell(bool isDark) {
+    return Stack(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.notifications_none_rounded, 
+            color: Colors.white,
+            size: 24
+          ),
         ),
-        const SizedBox(width: 16),
-        GestureDetector(
-          onTap: () => context.go('/profile'),
+        Positioned(
+          top: 10,
+          right: 12,
           child: Container(
-            padding: const EdgeInsets.all(2),
+            width: 8,
+            height: 8,
             decoration: BoxDecoration(
+              color: const Color(0xFFEF4444),
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary, width: 2),
-            ),
-            child: CircleAvatar(
-              radius: 22,
-              backgroundColor: Colors.white10,
-              backgroundImage: student?.photoBase64 != null 
-                ? MemoryImage(base64Decode(student!.photoBase64!))
-                : (student?.photo != null ? NetworkImage(student!.photo!) : null) as ImageProvider?,
-              child: student?.photoBase64 == null && student?.photo == null
-                ? const Icon(Icons.person_rounded, color: Colors.white70)
-                : null,
+              border: Border.all(color: _kHeaderGreen, width: 1.5),
             ),
           ),
         ),
@@ -259,7 +380,162 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildInfoCardsRow(dynamic student, Map<String, dynamic>? userData, bool isDark) {
+    final String chambre = student?.chambre?.toString() ?? '204 B';
+    final String residence = student?.residence?.toString() ?? 'Résidence A';
+    final bool isBanned = student?.isBanned == true;
+    final int days = userData?['joursRestants'] ?? userData?['remainingDays'] ?? 127;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Card 1: Ma Chambre
+          _buildInfoCard(
+            title: 'Ma Chambre',
+            value: chambre,
+            icon: Icons.home_outlined,
+            isDark: isDark,
+            bgColor: const Color(0xFF245F40), // matching dark green of card
+            textColor: Colors.white,
+            iconColor: Colors.white,
+          ),
+          const SizedBox(width: 12),
+          // Card 2: Résidence
+          _buildInfoCard(
+            title: 'Résidence',
+            value: residence,
+            icon: Icons.domain_rounded,
+            isDark: isDark,
+            bgColor: isDark ? const Color(0xFF1C2B1E) : Colors.white,
+            textColor: isDark ? Colors.white : const Color(0xFF1A1A2E),
+            iconColor: const Color(0xFF2D6A4F),
+          ),
+          const SizedBox(width: 12),
+          // Card 3: Statut
+          _buildStatusCard(isDark, !isBanned),
+          const SizedBox(width: 12),
+          // Card 4: Jours restants
+          _buildInfoCard(
+            title: 'Jours restants',
+            value: days.toString(),
+            icon: Icons.calendar_today_rounded,
+            isDark: isDark,
+            bgColor: isDark ? const Color(0xFF3B271B) : const Color(0xFFFFF7EC),
+            textColor: _kOrange,
+            iconColor: _kOrange,
+            titleColor: _kOrange,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required bool isDark,
+    required Color bgColor,
+    required Color textColor,
+    required Color iconColor,
+    Color? titleColor,
+  }) {
+    return Container(
+      width: 130,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: isDark || bgColor != Colors.white ? [] : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: iconColor, size: 24),
+          const SizedBox(height: 24),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: titleColor ?? textColor.withValues(alpha: 0.7),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              color: textColor,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCard(bool isDark, bool isActive) {
+    return Container(
+      width: 130,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: isDark ? [] : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF2D6A4F), size: 24),
+          const SizedBox(height: 24),
+          Text(
+            'Statut',
+            style: GoogleFonts.inter(
+              color: isDark ? Colors.white54 : const Color(0xFF6B7280),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: isActive ? Colors.green.withValues(alpha: 0.15) : Colors.red.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              isActive ? 'Actif ✓' : 'Inactif',
+              style: GoogleFonts.inter(
+                color: isActive ? Colors.green[700] : Colors.red[700],
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSectionHeader(BuildContext context, String title, LanguageProvider lp, {VoidCallback? onPressed}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -268,7 +544,7 @@ class HomeScreen extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: context.appTextPrimary,
+            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
             letterSpacing: -0.5,
           ),
         ),
@@ -276,7 +552,7 @@ class HomeScreen extends StatelessWidget {
           TextButton(
             onPressed: onPressed,
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary,
+              foregroundColor: _kGreen,
               textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold),
             ),
             child: Text(lp.getText('view_all')),
@@ -285,13 +561,12 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, IconData icon, String message) {
+  Widget _buildEmptyState(BuildContext context, IconData icon, String message, bool isDark) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: context.appCard,
+        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: context.appBorder),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -301,7 +576,7 @@ class HomeScreen extends StatelessWidget {
           Text(
             message,
             style: GoogleFonts.inter(
-              color: context.appTextSecondary,
+              color: isDark ? Colors.white54 : const Color(0xFF6B7280),
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -310,76 +585,20 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-
-Widget _buildMealMock(BuildContext context, LanguageProvider lp) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: context.appCard,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: context.appBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(Icons.lunch_dining_rounded, color: AppColors.primary, size: 32),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  lp.getText('lunch_available'),
-                  style: GoogleFonts.inter(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 11,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Couscous aux légumes',
-                  style: GoogleFonts.inter(
-                    color: context.appTextPrimary,
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right_rounded, color: context.appTextSecondary),
-        ],
-      ),
-    );
-  }
 }
 
 class _AnnouncementCard extends StatelessWidget {
   final Announcement announcement;
-  const _AnnouncementCard({required this.announcement});
+  final bool isDark;
+  const _AnnouncementCard({required this.announcement, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
     return SizedBox(
-      width: 280,
+      width: 260,
       child: Material(
-        color: context.appCard,
+        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         child: InkWell(
           onTap: () => context.go('/announcement', extra: announcement),
@@ -388,12 +607,11 @@ class _AnnouncementCard extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: context.appBorder),
-              boxShadow: [
+              boxShadow: isDark ? null : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
                 ),
               ],
             ),
@@ -405,13 +623,13 @@ class _AnnouncementCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: _kGreen.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        lp.getText('actualite'),
+                        lp.getText('actualite') == 'actualite' ? 'NEWS' : lp.getText('actualite').toUpperCase(),
                         style: GoogleFonts.inter(
-                          color: AppColors.primary,
+                          color: _kGreen,
                           fontSize: 10,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1,
@@ -419,10 +637,10 @@ class _AnnouncementCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    Icon(Icons.push_pin_rounded, size: 16, color: AppColors.primary.withValues(alpha: 0.5)),
+                    Icon(Icons.push_pin_rounded, size: 16, color: isDark ? Colors.white30 : const Color(0xFF9CA3AF)),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const Spacer(),
                 Text(
                   announcement.title,
                   maxLines: 2,
@@ -430,20 +648,20 @@ class _AnnouncementCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
-                    color: context.appTextPrimary,
+                    color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                     height: 1.3,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    Icon(Icons.access_time_filled_rounded, size: 14, color: context.appTextSecondary.withValues(alpha: 0.5)),
+                    Icon(Icons.access_time_filled_rounded, size: 12, color: isDark ? Colors.white30 : const Color(0xFF9CA3AF)),
                     const SizedBox(width: 6),
                     Text(
                       _formatTimeAgo(announcement.timestamp),
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: context.appTextSecondary.withValues(alpha: 0.6),
+                        color: isDark ? Colors.white54 : const Color(0xFF6B7280),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -473,6 +691,7 @@ class _QuickActionCard extends StatelessWidget {
   final Color color;
   final int badgeCount;
   final VoidCallback onTap;
+  final bool isDark;
 
   const _QuickActionCard({
     required this.title,
@@ -481,20 +700,20 @@ class _QuickActionCard extends StatelessWidget {
     required this.color,
     this.badgeCount = 0,
     required this.onTap,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: context.appCard,
+        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: context.appBorder),
-        boxShadow: [
+        boxShadow: isDark ? null : [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -506,7 +725,7 @@ class _QuickActionCard extends StatelessWidget {
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -515,26 +734,28 @@ class _QuickActionCard extends StatelessWidget {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Icon(icon, color: color, size: 28),
+                      child: Icon(icon, color: color, size: 24),
                     ),
-                    const SizedBox(height: 16),
+                    const Spacer(),
                     Text(
                       title,
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: context.appTextPrimary,
+                        fontSize: 14,
+                        color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                         letterSpacing: -0.3,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: context.appTextSecondary,
+                        fontSize: 10,
+                        color: isDark ? Colors.white54 : const Color(0xFF6B7280),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -543,8 +764,8 @@ class _QuickActionCard extends StatelessWidget {
               ),
               if (badgeCount > 0)
                 Positioned(
-                  top: 16,
-                  right: 16,
+                  top: 14,
+                  right: 14,
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: const BoxDecoration(
@@ -565,65 +786,79 @@ class _QuickActionCard extends StatelessWidget {
   }
 }
 
-class _MealPreviewCard extends StatelessWidget {
-  final Meal meal;
-  const _MealPreviewCard({required this.meal});
+class _ActivityListItem extends StatelessWidget {
+  final ServiceRequest request;
+  final bool isDark;
+  
+  const _ActivityListItem({required this.request, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: context.appCard,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: context.appBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    Color dotColor = Colors.orange; 
+    if (request.status.toLowerCase() == 'completed' || request.status.toLowerCase() == 'resolved') {
+      dotColor = Colors.green;
+    } else if (request.status.toLowerCase() == 'inprogress' || request.status.toLowerCase() == 'reviewed') {
+      dotColor = const Color(0xFF2D6A4F); 
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            width: 10,
+            height: 10,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
+              color: dotColor,
+              shape: BoxShape.circle,
             ),
-            child: Icon(Icons.restaurant_menu_rounded, color: AppColors.primary, size: 32),
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  meal.type.toUpperCase(),
+                  request.category,
                   style: GoogleFonts.inter(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 11,
-                    letterSpacing: 1,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
-                  meal.menu,
+                  request.description,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: context.appTextPrimary,
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: isDark ? Colors.white54 : const Color(0xFF6B7280),
                   ),
                 ),
               ],
             ),
           ),
-          Icon(Icons.chevron_right_rounded, color: context.appTextSecondary),
+          const SizedBox(width: 12),
+          Text(
+            _formatTimeAgo(request.createdAt),
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: isDark ? Colors.white38 : const Color(0xFF9CA3AF),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  String _formatTimeAgo(DateTime time) {
+    final diff = DateTime.now().difference(time);
+    if (diff.inDays > 0) return '${diff.inDays}j';
+    if (diff.inHours > 0) return '${diff.inHours}h';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}m';
+    return 'Maintenant';
   }
 }

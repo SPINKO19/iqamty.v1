@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../models/types.dart';
 import '../services/firestore_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
-import '../core/theme/colors.dart';
 
-class RequestListScreen extends StatelessWidget {
+class RequestListScreen extends StatefulWidget {
   final String category;
 
   const RequestListScreen({super.key, required this.category});
+
+  @override
+  State<RequestListScreen> createState() => _RequestListScreenState();
+}
+
+class _RequestListScreenState extends State<RequestListScreen> {
+  String _selectedFilter = 'Tous'; // 'Tous', 'En cours', 'Résolus'
 
   String _getCategoryTitle(String category, LanguageProvider lp) {
     switch (category.toLowerCase()) {
@@ -35,49 +42,131 @@ class RequestListScreen extends StatelessWidget {
     final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
     final firestore = context.watch<FirestoreService>();
 
+    const kMediumGreen = Color(0xFF2D6A4F);
+    const kLightMint = Color(0xFFD8F3DC);
+
     return Scaffold(
-      backgroundColor: context.appBackground,
+      backgroundColor: kLightMint,
       appBar: AppBar(
-        title: Text(_getCategoryTitle(category, lp), style: TextStyle(color: context.appTextPrimary)),
-        backgroundColor: context.appCard,
-        iconTheme: IconThemeData(color: context.appTextPrimary),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
+        title: Text(
+          _getCategoryTitle(widget.category, lp),
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        backgroundColor: const Color(0xFF2D6A4F),
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        centerTitle: true,
       ),
-      body: StreamBuilder<List<ServiceRequest>>(
-        stream: firestore.getMyRequests(userId, category: category),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Column(
+        children: [
+          // Filter Tabs
+          Container(
+            color: const Color(0xFF2D6A4F),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: Row(
+              children: [
+                _buildFilterChip('Tous'),
+                const SizedBox(width: 8),
+                _buildFilterChip('En cours'),
+                const SizedBox(width: 8),
+                _buildFilterChip('Résolus'),
+              ],
+            ),
+          ),
+          
+          // Request List
+          Expanded(
+            child: StreamBuilder<List<ServiceRequest>>(
+              stream: firestore.getMyRequests(userId, category: widget.category),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          final requests = snapshot.data ?? [];
+                var requests = snapshot.data ?? [];
 
-          if (requests.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.assignment_late_outlined, size: 80, color: context.appTextSecondary.withValues(alpha: 0.3)),
-                  const SizedBox(height: 16),
-                  Text(
-                    lp.getText('no_requests_found').isEmpty ? "Vous n'avez encore fait aucune demande." : lp.getText('no_requests_found'),
-                    style: TextStyle(color: context.appTextSecondary, fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                // Secondary Filtering logic
+                if (_selectedFilter == 'En cours') {
+                  requests = requests.where((r) => r.status.toLowerCase() != 'completed' && r.status.toLowerCase() != 'résolu').toList();
+                } else if (_selectedFilter == 'Résolus') {
+                  requests = requests.where((r) => r.status.toLowerCase() == 'completed' || r.status.toLowerCase() == 'résolu').toList();
+                }
+
+                if (requests.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.assignment_late_outlined, size: 80, color: Colors.grey.withValues(alpha: 0.3)),
+                        const SizedBox(height: 16),
+                        Text(
+                          lp.getText('no_requests_found').isEmpty ? "Aucune demande trouvée." : lp.getText('no_requests_found'),
+                          style: const TextStyle(color: Colors.grey, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  itemCount: requests.length,
+                  itemBuilder: (context, index) {
+                    return _RequestCard(request: requests[index]);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.pushNamed(context, '/create-request', arguments: widget.category),
+        backgroundColor: kMediumGreen,
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label) {
+    final isSelected = _selectedFilter == label;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedFilter = label),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF2D6A4F) : Colors.white,
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(
+              color: isSelected ? Colors.transparent : Colors.grey.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                color: isSelected ? Colors.white : Colors.black87,
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: requests.length,
-            itemBuilder: (context, index) {
-              final request = requests[index];
-              return _RequestCard(request: request);
-            },
-          );
-        },
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -88,147 +177,207 @@ class _RequestCard extends StatelessWidget {
 
   const _RequestCard({required this.request});
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return Colors.orange;
-      case 'reviewed':
-        return Colors.blue;
-      case 'completed':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: context.appCard,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.appBorder),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 15,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _getCategoryIcon(request.category),
-                    color: AppColors.primary,
-                    size: 24,
-                  ),
-                ),
+                // Icon Box
+                _buildIconBox(),
                 const SizedBox(width: 16),
+                
+                // Content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        request.category.toUpperCase(),
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.primary,
-                          letterSpacing: 1,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              request.category.toUpperCase(),
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.grey,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          _buildStatusChip(),
+                        ],
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 8),
                       Text(
-                        _formatDate(request.createdAt),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: context.appTextSecondary,
+                        request.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(request.status).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    request.status.toUpperCase(),
-                    style: TextStyle(
-                      color: _getStatusColor(request.status),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 16),
-            Text(
-              request.description,
-              style: TextStyle(
-                fontSize: 14,
-                color: context.appTextPrimary,
-                height: 1.5,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (request.imageUrl != null) ...[
-              const SizedBox(height: 16),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  request.imageUrl!,
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 150,
-                    color: context.appBackground,
-                    child: const Icon(Icons.broken_image_outlined),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _formatDate(request.createdAt),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
-            ],
+                _buildPriorityIndicator(),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  String _formatDate(DateTime dt) {
-    return '${dt.day}/${dt.month}/${dt.year}';
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
+  Widget _buildIconBox() {
+    IconData icon;
+    Color color;
+    
+    switch (request.category.toLowerCase()) {
       case 'repair':
       case 'réparation':
-        return Icons.build_outlined;
+        icon = Icons.plumbing_rounded;
+        color = const Color(0xFF3B82F6); // Blue
+        break;
       case 'cleaning':
       case 'nettoyage':
-        return Icons.cleaning_services_outlined;
+        icon = Icons.ac_unit_rounded;
+        color = const Color(0xFF14B8A6); // Teal
+        break;
       case 'housing':
       case 'hébergement':
-        return Icons.hotel_outlined;
+        icon = Icons.electrical_services_rounded;
+        color = const Color(0xFFF59E0B); // Yellow/Orange
+        break;
       default:
-        return Icons.help_outline;
+        icon = Icons.assignment_rounded;
+        color = const Color(0xFF10B981); // Green
     }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Icon(icon, color: color, size: 26),
+    );
+  }
+
+  Widget _buildStatusChip() {
+    String label;
+    Color color;
+    
+    switch (request.status.toLowerCase()) {
+      case 'pending':
+      case 'en attente':
+        label = 'En attente';
+        color = Colors.orange;
+        break;
+      case 'reviewed':
+      case 'en cours':
+        label = 'En cours';
+        color = Colors.blue;
+        break;
+      case 'completed':
+      case 'résolu':
+        label = 'Résolu';
+        color = Colors.green;
+        break;
+      default:
+        label = request.status;
+        color = Colors.grey;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 11,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriorityIndicator() {
+    Color color;
+    switch (request.priority) {
+      case 'Haute':
+        color = Colors.red;
+        break;
+      case 'Normale':
+        color = Colors.orange;
+        break;
+      case 'Faible':
+        color = Colors.green;
+        break;
+      default:
+        color = Colors.grey;
+    }
+
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          request.priority,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime dt) {
+    return '${dt.day}/${dt.month}/${dt.year}';
   }
 }

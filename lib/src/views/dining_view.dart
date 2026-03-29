@@ -1,384 +1,152 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../services/firestore_service.dart';
+import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../models/types.dart';
-import '../core/theme/colors.dart';
 
-class DiningView extends StatelessWidget {
+class DiningView extends StatefulWidget {
   const DiningView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final firestore = context.watch<FirestoreService>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lp = context.watch<LanguageProvider>();
+  State<DiningView> createState() => _DiningViewState();
+}
 
-    final now = DateTime.now();
-    final currentTimeInMinutes = now.hour * 60 + now.minute;
-    final bool isRestaurantOpen = (currentTimeInMinutes >= 420 && currentTimeInMinutes <= 510) || // 07:00 - 08:30
-                                  (currentTimeInMinutes >= 720 && currentTimeInMinutes <= 840) || // 12:00 - 14:00
-                                  (currentTimeInMinutes >= 1110 && currentTimeInMinutes <= 1230); // 18:30 - 20:30
+class _DiningViewState extends State<DiningView> {
+  DateTime _selectedDate = DateTime.now();
+  late DateTime _startOfWeek;
+
+  @override
+  void initState() {
+    super.initState();
+    // Monday as start of week
+    _startOfWeek = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+  }
+
+  String _getWeekRangeString() {
+    final endOfWeek = _startOfWeek.add(const Duration(days: 6));
+    final DateFormat formatter = DateFormat('d');
+    final DateFormat fullFormatter = DateFormat('d MMMM yyyy', 'fr');
+    return 'Semaine du ${formatter.format(_startOfWeek)} au ${fullFormatter.format(endOfWeek)}';
+  }
+
+  String _getDayLetter(int index) {
+    // Days labels L M M J V S D
+    final letters = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    return letters[index];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const kDarkGreen = Color(0xFF2D6A4F);
+    const kLightMint = Color(0xFFD8F3DC);
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : const Color(0xFFF8FAFC),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark 
-                    ? [const Color(0xFF121212), Colors.black]
-                    : [const Color(0xFF121212), const Color(0xFF000000)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFEF4444).withValues(alpha: 0.2),
-                    blurRadius: 30,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+      backgroundColor: kLightMint,
+      body: Column(
+        children: [
+          // Header Section
+          Container(
+            color: kDarkGreen,
+            padding: const EdgeInsets.only(top: 60, bottom: 24),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(16),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                        onPressed: () {
+                          if (context.canPop()) {
+                            context.pop();
+                          } else {
+                            context.go('/');
+                          }
+                        },
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.2),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.all(8),
                         ),
-                        child: const Icon(Icons.restaurant_menu_rounded, color: Color(0xFFEF4444), size: 30),
                       ),
                       const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              lp.getText('service_of'),
-                              style: GoogleFonts.inter(
-                                color: Colors.white70,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              lp.getText('dining_service'),
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: isRestaurantOpen ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: isRestaurantOpen ? const Color(0xFF10B981) : const Color(0xFFEF4444), 
-                                    blurRadius: 4
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              isRestaurantOpen ? lp.getText('restaurant_open') : (lp.currentLocale.languageCode == 'ar' ? 'المطعم مغلق' : (lp.currentLocale.languageCode == 'en' ? 'Restaurant Closed' : 'Restaurant Fermé')),
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          lp.getText('today'),
-                          style: GoogleFonts.inter(
-                            color: Colors.white60,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          StreamBuilder<List<Meal>>(
-            stream: firestore.getTodayMeals(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator())));
-              }
-              if (snapshot.hasError) {
-                return SliverToBoxAdapter(child: Center(child: Text('Erreur: ${snapshot.error}')));
-              }
-              final meals = snapshot.data ?? [];
-              if (meals.isEmpty) {
-                return SliverToBoxAdapter(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(40.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.restaurant_menu_outlined, size: 64, color: Colors.grey),
-                          const SizedBox(height: 16),
                           Text(
-                            'Aucun repas prévu pour aujourd\'hui',
-                            style: GoogleFonts.inter(color: Colors.grey, fontSize: 16),
+                            'Restauration',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _getWeekRangeString(),
+                            style: GoogleFonts.inter(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                );
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.all(24),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final meal = meals[index];
-                      final type = meal.type;
-                      final menu = meal.menu;
-
-                      String time = '';
-                      String title = '';
-                      IconData icon = Icons.restaurant;
-                      Color color = const Color(0xFFEF4444);
-
-                      if (type == 'Breakfast' || type == 'Petit-déjeuner') {
-                        time = '07:00 - 08:30';
-                        title = lp.getText('breakfast');
-                        icon = Icons.coffee_rounded;
-                        color = const Color(0xFFF59E0B);
-                      } else if (type == 'Lunch' || type == 'Déjeuner') {
-                        time = '12:00 - 14:00';
-                        title = lp.getText('lunch');
-                        icon = Icons.lunch_dining_rounded;
-                        color = color;
-                      } else if (type == 'Dinner' || type == 'Dîner') {
-                        time = '18:30 - 20:00';
-                        title = lp.getText('dinner');
-                        icon = Icons.dinner_dining_rounded;
-                        color = const Color(0xFF6366F1);
-                      } else {
-                        title = type;
-                      }
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: _buildModernMealCard(
-                          context,
-                          lp: lp,
-                          title: title,
-                          time: time,
-                          menu: menu,
-                          icon: icon,
-                          color: color,
-                          isHighlight: type == 'Lunch' || type == 'Déjeuner',
-                        ),
-                      );
-                    },
-                    childCount: meals.length,
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildModernMealCard(
-    BuildContext context, {
-    required LanguageProvider lp,
-    required String title,
-    required String time,
-    required String menu,
-    required IconData icon,
-    required Color color,
-    bool isHighlight = false,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.appCard,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: isHighlight ? color.withValues(alpha: 0.3) : context.appBorder,
-          width: isHighlight ? 2 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(icon, color: color, size: 26),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 17,
-                          color: context.appTextPrimary,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        time,
-                        style: GoogleFonts.inter(
-                          color: context.appTextSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
                     ],
                   ),
                 ),
-                if (isHighlight)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      lp.getText('in_progress'),
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(20),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.03),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(28),
-                bottomRight: Radius.circular(28),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  lp.getText('menu_composition'),
-                  style: GoogleFonts.inter(
-                    color: color,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  menu,
-                  style: GoogleFonts.inter(
-                    color: context.appTextPrimary,
-                    fontSize: 15,
-                    height: 1.5,
-                    fontWeight: FontWeight.w500,
+                const SizedBox(height: 24),
+                // Day Selector
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: List.generate(7, (index) {
+                      final date = _startOfWeek.add(Duration(days: index));
+                      final isSelected = DateUtils.isSameDay(date, _selectedDate);
+                      
+                      return GestureDetector(
+                        onTap: () => setState(() => _selectedDate = date),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.white : Colors.transparent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              _getDayLetter(index),
+                              style: GoogleFonts.inter(
+                                color: isSelected ? kDarkGreen : Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _showRatingDialog(context, title),
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: List.generate(5, (index) => 
-                        Icon(Icons.star_rounded, color: index < 4 ? Colors.amber : Colors.grey.withValues(alpha: 0.3), size: 18)
-                      ),
-                    ),
-                    Text(
-                      lp.getText('rate_meal'),
-                      style: GoogleFonts.inter(
-                        color: AppColors.primary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+
+          // Main Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+              child: Column(
+                children: [
+                  _buildWeeklySummaryCard(),
+                  const SizedBox(height: 24),
+                  _buildMealsList(),
+                ],
               ),
             ),
           ),
@@ -387,78 +155,127 @@ class DiningView extends StatelessWidget {
     );
   }
 
-  void _showRatingDialog(BuildContext context, String mealName) {
-    int rating = 0;
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: context.appCard,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: Text(
-                'Noter $mealName',
-                style: TextStyle(color: context.appTextPrimary, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+  Widget _buildWeeklySummaryCard() {
+    final firestore = context.watch<FirestoreService>();
+    final auth = context.watch<AuthProvider>();
+    final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
+
+    return StreamBuilder<List<Meal>>(
+      stream: firestore.getMealsForWeek(_startOfWeek),
+      builder: (context, snapshot) {
+        final meals = snapshot.data ?? [];
+        final reservedDayIndices = <int>{};
+        for (var meal in meals) {
+          if (meal.isReserved(userId)) {
+            final diff = meal.date.difference(_startOfWeek).inDays;
+            if (diff >= 0 && diff < 7) {
+              reservedDayIndices.add(diff);
+            }
+          }
+        }
+        
+        final reservedCount = reservedDayIndices.length;
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 15,
+                offset: const Offset(0, 4),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Comment était votre repas ?',
-                    style: TextStyle(color: context.appTextSecondary),
+                    'Cette semaine',
+                    style: GoogleFonts.inter(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      return IconButton(
-                        icon: Icon(
-                          index < rating ? Icons.star_rounded : Icons.star_outline_rounded,
-                          color: Colors.amber,
-                          size: 40,
-                        ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () {
-                          setState(() {
-                            rating = index + 1;
-                          });
-                        },
-                      );
-                    }).map((w) => Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: w)).toList(),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$reservedCount / 7 repas réservés',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black,
+                    ),
                   ),
                 ],
               ),
-              actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Annuler', style: TextStyle(color: context.appTextSecondary, fontWeight: FontWeight.w600)),
-                ),
-                ElevatedButton(
-                  onPressed: rating > 0
-                      ? () {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Merci pour votre évaluation !'),
-                              backgroundColor: AppColors.success,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    minimumSize: const Size(100, 44),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              Row(
+                children: List.generate(7, (index) {
+                  final isReserved = reservedDayIndices.contains(index);
+                  return Container(
+                    margin: const EdgeInsets.only(left: 6),
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: isReserved ? const Color(0xFF10B981) : const Color(0xFFE5E7EB),
+                      shape: BoxShape.circle,
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMealsList() {
+    final firestore = context.watch<FirestoreService>();
+    final auth = context.watch<AuthProvider>();
+    final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
+
+    return StreamBuilder<List<Meal>>(
+      stream: firestore.getMealsForDate(_selectedDate),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final meals = snapshot.data ?? [];
+        if (meals.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 40),
+              child: Column(
+                children: [
+                  const Icon(Icons.restaurant_menu_rounded, size: 48, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Aucun menu pour ce jour',
+                    style: GoogleFonts.inter(color: Colors.grey, fontWeight: FontWeight.bold),
                   ),
-                  child: const Text('Envoyer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            );
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Fixed Sort order: breakfast (0), lunch (1), dinner (2)
+        const order = {'breakfast': 0, 'lunch': 1, 'dinner': 2};
+        meals.sort((a, b) => (order[a.mealType] ?? 3).compareTo(order[b.mealType] ?? 3));
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: meals.length,
+          itemBuilder: (context, index) {
+            return _MealCard(meal: meals[index], userId: userId);
           },
         );
       },
@@ -466,3 +283,188 @@ class DiningView extends StatelessWidget {
   }
 }
 
+class _MealCard extends StatelessWidget {
+  final Meal meal;
+  final String userId;
+
+  const _MealCard({required this.meal, required this.userId});
+
+  String _getMealDisplayName(LanguageProvider lp) {
+    return lp.getText(meal.mealType);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const kDarkGreen = Color(0xFF2D6A4F);
+    final isReserved = meal.isReserved(userId);
+    final firestore = context.read<FirestoreService>();
+    final lp = context.watch<LanguageProvider>();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildIconBox(),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getMealDisplayName(lp),
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${meal.startTime} — ${meal.endTime}',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: meal.menuItems.map((item) => _buildMenuChip(item)).toList(),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: isReserved
+                      ? OutlinedButton(
+                          onPressed: () => firestore.toggleMealReservation(meal.id!, userId, false),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF10B981)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            backgroundColor: const Color(0xFFD8F3DC).withValues(alpha: 0.3),
+                          ),
+                          child: Text(
+                            'Annuler la réservation',
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF2D6A4F),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        )
+                      : ElevatedButton(
+                          onPressed: () => firestore.toggleMealReservation(meal.id!, userId, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kDarkGreen,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          child: Text(
+                            'Réserver ce repas',
+                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          ),
+          if (isReserved)
+            Positioned(
+              top: 20,
+              right: 20,
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF10B981),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconBox() {
+    IconData icon;
+    Color color;
+    Color bgColor;
+
+    switch (meal.mealType) {
+      case 'breakfast':
+        icon = Icons.free_breakfast;
+        color = const Color(0xFFF4A261);
+        bgColor = const Color(0xFFFFF3E0);
+        break;
+      case 'lunch':
+        icon = Icons.wb_sunny;
+        color = const Color(0xFF42A5F5);
+        bgColor = const Color(0xFFE3F2FD);
+        break;
+      case 'dinner':
+        icon = Icons.nightlight_round;
+        color = const Color(0xFF7E57C2);
+        bgColor = const Color(0xFFEDE7F6);
+        break;
+      default:
+        icon = Icons.restaurant_rounded;
+        color = Colors.grey;
+        bgColor = Colors.grey.withValues(alpha: 0.1);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Icon(icon, color: color, size: 24),
+    );
+  }
+
+  Widget _buildMenuChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFD8F3DC).withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          color: const Color(0xFF2D6A4F),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
