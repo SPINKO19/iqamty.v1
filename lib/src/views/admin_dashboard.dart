@@ -11,7 +11,7 @@ class AdminDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeProvider>().themeMode == ThemeMode.dark;
+    final isDark = context.watch<ThemeProvider>().isDarkMode;
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
@@ -311,7 +311,7 @@ class AdminDashboard extends StatelessWidget {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
         final themeProvider = context.watch<ThemeProvider>();
-        final isDark = themeProvider.themeMode == ThemeMode.dark;
+        final isDark = themeProvider.isDarkMode;
         final lp2 = context.watch<LanguageProvider>();
 
         return Padding(

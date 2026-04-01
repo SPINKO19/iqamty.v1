@@ -27,7 +27,7 @@ class WorkerDashboard extends StatelessWidget {
             const SizedBox(height: 16),
             _buildTaskCard('Réparation Plomberie', 'Bloc J - Chambre 414', lp.getText('urgent_status'), Colors.red),
             const SizedBox(height: 12),
-            _buildTaskCard('Vérification Électricité', 'Bloc A - Couloir 2', lp.getText('new_status'), Colors.blue),
+            _buildTaskCard('Vérification Électricité', 'Bloc A - Couloir 2', lp.getText('new_status'), const Color(0xFF2D6A4F)),
           ],
         ),
       ),

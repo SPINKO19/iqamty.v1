@@ -3,7 +3,12 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
+import '../services/firestore_service.dart';
+import '../models/types.dart';
 import '../core/theme/colors.dart';
+
+const _kDarkGreen = Color(0xFF2D6A4F);
+const _kMintGreen = Color(0xFFD8F3DC);
 
 class AppSidebar extends StatelessWidget {
   final Widget child;
@@ -45,9 +50,9 @@ class AppSidebar extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'IQAMTY', 
+                    'IQAMTY',
                     style: TextStyle(
-                      fontWeight: FontWeight.w900, 
+                      fontWeight: FontWeight.w900,
                       color: context.appTextPrimary,
                       letterSpacing: 1.2,
                     ),
@@ -68,9 +73,8 @@ class AppSidebar extends StatelessWidget {
 
   Widget _buildSidebar(BuildContext context, {required bool isDesktop}) {
     final languageProvider = context.watch<LanguageProvider>();
-    final role = context.watch<AuthProvider>().currentStudent?.role 
-              ?? context.watch<AuthProvider>().currentUserData?['role'] 
-              ?? 'student';
+    final auth = context.watch<AuthProvider>();
+    final role = auth.currentStudent?.role ?? auth.currentUserData?['role'] ?? 'student';
 
     List<dynamic> items;
     if (role == 'administrator') {
@@ -78,55 +82,147 @@ class AppSidebar extends StatelessWidget {
     } else if (role == 'worker') {
       items = _workerItems(context, languageProvider);
     } else {
-      items = _studentItems(context, languageProvider);
+      items = _studentItems(context, languageProvider, auth);
     }
 
     final currentRoute = GoRouterState.of(context).uri.toString();
 
-    final drawer = Drawer(
-      width: isDesktop ? 280 : 300,
-      backgroundColor: context.appCard,
-      elevation: isDesktop ? 0 : 16,
-      shape: isDesktop ? const RoundedRectangleBorder(borderRadius: BorderRadius.zero) : null,
+    // Redesigned Top Header
+    final prenom = auth.currentStudent?.prenomFr ?? '';
+    final nom = auth.currentStudent?.nomFr ?? '';
+    final fullName = '$prenom $nom'.trim().isEmpty ? 'Utilisateur' : '$prenom $nom';
+    final initials = (prenom.isNotEmpty ? prenom[0].toUpperCase() : '') + (nom.isNotEmpty ? nom[0].toUpperCase() : 'U');
+    final chambre = auth.currentStudent?.chambre?.toString() ?? 'N/A';
+
+    final header = Container(
+      color: _kDarkGreen,
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 48, bottom: 24),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        Container(
-          height: 100,
-          alignment: Alignment.bottomLeft,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Row(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(6.0),
-                  child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
-                ),
+              Row(
+                children: [
+                  const Icon(Icons.school_outlined, color: Colors.white, size: 22),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'IQAMTY',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'v2.1',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-                const SizedBox(width: 16),
-                Text(
-                  'IQAMTY', 
-                  style: TextStyle(
-                    color: context.appTextPrimary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
+              if (!isDesktop) ...[
+                GestureDetector(
+                  onTap: () {
+                    if (Scaffold.maybeOf(context)?.hasDrawer ?? false) {
+                      Scaffold.of(context).closeDrawer();
+                    }
+                  },
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close_rounded, color: Colors.white, size: 16),
                   ),
                 ),
               ],
-            ),
+            ],
           ),
-          
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    width: 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    initials,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      fullName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Chambre $chambre',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
 
-
+    final drawer = Drawer(
+      width: isDesktop ? 280 : 300,
+      backgroundColor: Colors.white,
+      elevation: isDesktop ? 0 : 16,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      child: Column(
+        children: [
+          header,
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.only(top: 8, bottom: 20),
               children: items.map<Widget>((dynamic item) {
                 if (item is _NavItemData) {
                   return _buildNavItem(context, item, currentRoute);
@@ -137,19 +233,24 @@ class AppSidebar extends StatelessWidget {
               }).toList(),
             ),
           ),
-          Divider(height: 1, color: context.appBorder),
+          Divider(height: 1, color: const Color(0xFFE5E7EB)),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(
               children: [
                 _buildNavItem(
-                  context, 
-                  _NavItemData(Icons.settings_outlined, languageProvider.getText('settings'), '/settings'),
+                  context,
+                  _NavItemData(Icons.notifications_none_rounded, 'Notifications', '/notifications'),
                   currentRoute,
                 ),
                 _buildNavItem(
-                  context, 
-                  _NavItemData(Icons.logout_rounded, languageProvider.getText('logout'), '/logout'),
+                  context,
+                  _NavItemData(Icons.settings_outlined, 'Paramètres', '/settings'),
+                  currentRoute,
+                ),
+                _buildNavItem(
+                  context,
+                  _NavItemData(Icons.logout_rounded, 'Déconnexion', '/logout'),
                   currentRoute,
                   isLogout: true,
                 ),
@@ -171,57 +272,80 @@ class AppSidebar extends StatelessWidget {
     return drawer;
   }
 
-  List<dynamic> _studentItems(BuildContext context, LanguageProvider lp) {
+  List<dynamic> _studentItems(BuildContext context, LanguageProvider lp, AuthProvider auth) {
+    final firestore = context.watch<FirestoreService>();
+    final studentId = auth.currentStudent?.id?.toString() ?? '';
+
     return [
-      _NavHeaderData(lp.getText('platform')),
-      _NavItemData(Icons.home_outlined, lp.getText('dashboard'), '/'),
-      _NavItemData(Icons.restaurant_outlined, lp.getText('restoration'), '/dining'),
-      
-      const SizedBox(height: 16),
-      _NavHeaderData(lp.getText('services')),
-      _NavItemData(Icons.report_problem_outlined, lp.getText('complaints'), '/complaints'),
-      _NavItemData(Icons.handyman_outlined, lp.getText('requests'), '/requests'),
-      
-      const SizedBox(height: 16),
-      _NavHeaderData(lp.getText('network')),
-      _NavItemData(Icons.forum_outlined, lp.getText('community'), '/community'),
-      _NavItemData(Icons.chat_bubble_outline_rounded, lp.getText('messages'), '/chat'),
-      _NavItemData(Icons.person_outline_rounded, lp.getText('profile'), '/profile'),
+      _NavHeaderData('PLATEFORME'),
+      _NavItemData(Icons.home_outlined, 'Dashboard', '/'),
+      _NavItemData(Icons.restaurant_outlined, 'Restauration', '/dining'),
+
+      const SizedBox(height: 8),
+      _NavHeaderData('SERVICES'),
+      StreamBuilder<List<Complaint>>(
+        stream: firestore.getMyComplaints(studentId),
+        builder: (context, snapshot) {
+          final count = snapshot.data?.where((c) => c.status != Status.resolved).length ?? 0;
+          return _buildNavItem(
+            context,
+            _NavItemData(
+              Icons.warning_amber_rounded,
+              'Réclamations',
+              '/complaints',
+              badgeCount: count,
+              badgeColor: const Color(0xFFEF4444),
+            ),
+            GoRouterState.of(context).uri.toString(),
+          );
+        },
+      ),
+      _NavItemData(Icons.assignment_outlined, 'Demandes', '/requests'),
+
+      const SizedBox(height: 8),
+      _NavHeaderData('RÉSEAU'),
+      _NavItemData(Icons.people_outline, 'Communauté', '/community'),
+      _NavItemData(
+        Icons.chat_bubble_outline_rounded,
+        'Messages',
+        '/chat',
+        badgeCount: 5, // Fallback/Existing count requirement as requested
+        badgeColor: const Color(0xFF3B82F6),
+      ),
+      _NavItemData(Icons.person_outline_rounded, 'Profil', '/profile'),
     ];
   }
 
   List<dynamic> _adminItems(BuildContext context, LanguageProvider lp) {
     return [
-      _NavHeaderData(lp.getText('platform')),
-      _NavItemData(Icons.dashboard_outlined, lp.getText('admin_dashboard'), '/admin'),
-      
-      const SizedBox(height: 16),
-      _NavHeaderData(lp.getText('management')),
-      _NavItemData(Icons.report_problem_outlined, lp.getText('complaints'), '/admin/complaints'),
-      _NavItemData(Icons.handyman_outlined, lp.getText('requests'), '/admin/requests'),
-      _NavItemData(Icons.people_outline_rounded, lp.getText('users'), '/admin/users'),
+      _NavHeaderData('PLATFORM'),
+      _NavItemData(Icons.dashboard_outlined, 'Dashboard', '/admin'),
+
+      const SizedBox(height: 8),
+      _NavHeaderData('MANAGEMENT'),
+      _NavItemData(Icons.report_problem_outlined, 'Complaints', '/admin/complaints'),
+      _NavItemData(Icons.handyman_outlined, 'Requests', '/admin/requests'),
+      _NavItemData(Icons.people_outline_rounded, 'Users', '/admin/users'),
     ];
   }
 
   List<dynamic> _workerItems(BuildContext context, LanguageProvider lp) {
     return [
-      _NavHeaderData(lp.getText('platform')),
-      _NavItemData(Icons.build_outlined, lp.getText('worker_dashboard'), '/worker-dashboard'),
+      _NavHeaderData('PLATFORM'),
+      _NavItemData(Icons.build_outlined, 'Worker Dashboard', '/worker-dashboard'),
     ];
   }
 
-  
-
   Widget _buildNavHeader(BuildContext context, _NavHeaderData data) {
     return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 12),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 16, bottom: 8),
       child: Text(
-        data.title,
+        data.title.toUpperCase(),
         style: const TextStyle(
-          color: Color(0xFF6B7280), // Dark grey
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1.5,
+          color: Color(0xFF9CA3AF),
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
         ),
       ),
     );
@@ -229,62 +353,64 @@ class AppSidebar extends StatelessWidget {
 
   Widget _buildNavItem(BuildContext context, _NavItemData data, String currentRoute, {bool isLogout = false}) {
     final isSelected = !isLogout && (currentRoute == data.route || (data.route != '/' && currentRoute.startsWith(data.route)));
-    
-    final color = isLogout ? AppColors.error : (isSelected ? AppColors.primary : const Color(0xFF6B7280));
-    final bgColor = isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent;
 
-    // Determine the icon to show. If selected, you might want to switch to filled icon, but for now we'll just tint it.
+    final textColor = isLogout ? const Color(0xFFEF4444) : (isSelected ? _kDarkGreen : const Color(0xFF4B5563));
+    final iconColor = isLogout ? const Color(0xFFEF4444) : (isSelected ? _kDarkGreen : const Color(0xFF6B7280));
+    final bgColor = isSelected ? _kMintGreen : Colors.transparent;
     final iconData = isSelected ? _getFilledIcon(data.icon) : data.icon;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            if (isLogout) {
-              _showLogoutConfirmation(context);
-            } else {
-              if (Scaffold.maybeOf(context)?.hasDrawer ?? false) {
-                Scaffold.of(context).closeDrawer();
-              }
-              context.go(data.route);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          if (isLogout) {
+            _showLogoutConfirmation(context);
+          } else {
+            if (Scaffold.maybeOf(context)?.hasDrawer ?? false) {
+              Scaffold.of(context).closeDrawer();
             }
-          },
-          borderRadius: BorderRadius.circular(12),
-          hoverColor: context.appBorder.withOpacity(0.5),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(iconData, color: color, size: 22),
-                const SizedBox(width: 14),
-                Expanded(
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (context.mounted) {
+                context.go(data.route);
+              }
+            });
+          }
+        },
+        child: Container(
+          color: bgColor,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          child: Row(
+            children: [
+              Icon(iconData, size: 20, color: iconColor),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  data.title,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (data.badgeCount != null && data.badgeCount! > 0)
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: data.badgeColor ?? const Color(0xFFEF4444),
+                    shape: BoxShape.circle,
+                  ),
                   child: Text(
-                    data.title,
-                    style: TextStyle(
-                      color: isLogout ? AppColors.error : (isSelected ? AppColors.primary : const Color(0xFF6B7280)),
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      fontSize: 14,
+                    data.badgeCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      height: 1,
                     ),
                   ),
                 ),
-                if (isSelected)
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
@@ -295,8 +421,11 @@ class AppSidebar extends StatelessWidget {
     if (hollowIcon == Icons.home_outlined) return Icons.home_rounded;
     if (hollowIcon == Icons.restaurant_outlined) return Icons.restaurant_rounded;
     if (hollowIcon == Icons.report_problem_outlined) return Icons.report_problem_rounded;
+    if (hollowIcon == Icons.warning_amber_rounded) return Icons.warning_rounded;
+    if (hollowIcon == Icons.assignment_outlined) return Icons.assignment_rounded;
     if (hollowIcon == Icons.handyman_outlined) return Icons.handyman_rounded;
     if (hollowIcon == Icons.forum_outlined) return Icons.forum_rounded;
+    if (hollowIcon == Icons.people_outline) return Icons.people_rounded;
     if (hollowIcon == Icons.chat_bubble_outline_rounded) return Icons.chat_bubble_rounded;
     if (hollowIcon == Icons.person_outline_rounded) return Icons.person_rounded;
     if (hollowIcon == Icons.dashboard_outlined) return Icons.dashboard_rounded;
@@ -322,7 +451,7 @@ class AppSidebar extends StatelessWidget {
               Navigator.pop(context);
               context.read<AuthProvider>().logout();
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
             child: Text(lp.getText('confirm')),
           ),
         ],
@@ -340,5 +469,8 @@ class _NavItemData {
   final IconData icon;
   final String title;
   final String route;
-  _NavItemData(this.icon, this.title, this.route);
+  final int? badgeCount;
+  final Color? badgeColor;
+  
+  _NavItemData(this.icon, this.title, this.route, {this.badgeCount, this.badgeColor});
 }

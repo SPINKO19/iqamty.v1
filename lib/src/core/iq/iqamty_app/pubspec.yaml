@@ -1,0 +1,33 @@
+name: iqamty
+description: IQAMTY - Plateforme de Résidence Universitaire
+publish_to: 'none'
+version: 2.1.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Navigation
+  go_router: ^14.2.7
+
+  # State management
+  provider: ^6.1.2
+
+  # Animations
+  flutter_animate: ^4.5.0
+
+  # Google Fonts
+  google_fonts: ^6.2.1
+
+  # Icons (using cupertino + material, no lucide_icons needed)
+  cupertino_icons: ^1.0.8
+
+flutter:
+  uses-material-design: true
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0

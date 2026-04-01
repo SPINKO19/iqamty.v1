@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/theme/colors.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/theme_provider.dart';
 import '../providers/language_provider.dart';
 
@@ -23,6 +24,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
         title: Text(languageProvider.getText('settings'), style: TextStyle(color: context.appTextPrimary)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -347,7 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildColorPicker(BuildContext context, ThemeProvider themeProvider, TextTheme textTheme) {
     final colors = [
-      const Color(0xFF0EA5E9), // Sky Blue
+      const Color(0xFF2D6A4F), // Medium Green
       const Color(0xFF8B5CF6), // Purple
       const Color(0xFFEC4899), // Pink
       const Color(0xFF10B981), // Emerald
@@ -368,7 +379,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Wrap(
             spacing: 12,
             children: colors.map((color) {
-              final isSelected = themeProvider.styledPrimaryColor.value == color.value;
+              final isSelected = themeProvider.styledPrimaryColor.toARGB32() == color.toARGB32();
               return GestureDetector(
                 onTap: () => themeProvider.setStyledColor(color),
                 child: Container(

@@ -60,8 +60,8 @@ class SportsProgramView extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withOpacity(0.1),
-                          Colors.black.withOpacity(0.7),
+                          Colors.black.withValues(alpha: 0.1),
+                          Colors.black.withValues(alpha: 0.7),
                         ],
                       ),
                     ),
@@ -149,7 +149,7 @@ class SportsProgramView extends StatelessWidget {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -165,7 +165,7 @@ class SportsProgramView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: AppColors.primary, size: 20),
@@ -190,12 +190,12 @@ class SportsProgramView extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02),
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.02),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.access_time_rounded, size: 14, color: AppColors.primary.withOpacity(0.7)),
+                    Icon(Icons.access_time_rounded, size: 14, color: AppColors.primary.withValues(alpha: 0.7)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -223,7 +223,7 @@ class SportsProgramView extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: AppColors.primary, size: 24),
@@ -268,7 +268,7 @@ class SportsProgramView extends StatelessWidget {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -279,7 +279,7 @@ class SportsProgramView extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: AppColors.primary),

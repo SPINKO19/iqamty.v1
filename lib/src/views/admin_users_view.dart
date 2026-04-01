@@ -32,7 +32,7 @@ class AdminUsersView extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Row(
               children: [
-                _buildSmallStat(context, lp.getText('total'), '1,240', Colors.blue),
+                _buildSmallStat(context, lp.getText('total'), '1,240', const Color(0xFF2D6A4F)),
                 const SizedBox(width: 12),
                 _buildSmallStat(context, lp.getText('active'), '1,180', Colors.green),
                 const SizedBox(width: 12),

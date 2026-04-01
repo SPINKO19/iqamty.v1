@@ -44,9 +44,11 @@ class _SimplePostInputState extends State<_SimplePostInput> {
         createdAt: DateTime.now(),
       );
       await firestore.addForumPost(post);
+      if (!mounted) return;
       _controller.clear();
       FocusScope.of(context).unfocus();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       if (mounted) setState(() => _isPosting = false);
@@ -71,7 +73,7 @@ class _SimplePostInputState extends State<_SimplePostInput> {
                 hintText: lp.getText('post_text_hint'),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                 filled: true,
-                fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               maxLines: null,
@@ -82,7 +84,7 @@ class _SimplePostInputState extends State<_SimplePostInput> {
               ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
               : IconButton(
                   onPressed: _submit,
-                  icon: const Icon(Icons.send, color: AppColors.primary),
+                  icon: Icon(Icons.send, color: AppColors.primary),
                 ),
         ],
       ),
@@ -90,9 +92,8 @@ class _SimplePostInputState extends State<_SimplePostInput> {
   }
 }
 
-}
-
 String _formatTime(DateTime time) {
+
   final now = DateTime.now();
   final diff = now.difference(time);
   if (diff.inMinutes < 1) return 'Just now';
@@ -128,7 +129,7 @@ class ForumView extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
+        body: TabBarView(
           children: [
             _FeedTab(postType: 'announcement'),
             _FeedTab(postType: 'post'),
@@ -177,7 +178,7 @@ class _FeedTab extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.withOpacity(0.5)),
+                    Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.withValues(alpha: 0.5)),
                     const SizedBox(height: 16),
                     Text(
                       'No ${postType}s yet', 
@@ -229,7 +230,7 @@ class _FeedTab extends StatelessWidget {
               backgroundColor: AppColors.primary,
               onPressed: () {
                  if (postType == 'announcement' && userData?['role'] != 'administrator') {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Only admins can post announcements')));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Only admins can post announcements')));
                     return;
                  }
                  _showCreateSheet(context, postType);
@@ -273,7 +274,7 @@ class _PostCardState extends State<_PostCard> {
     String badgeText;
     switch(widget.post.type) {
       case 'announcement': badgeColor = Colors.red; badgeText = '📢 Announcement'; break;
-      case 'poll': badgeColor = Colors.blue; badgeText = '🗳️ Poll'; break;
+      case 'poll': badgeColor = const Color(0xFF2D6A4F); badgeText = '🗳️ Poll'; break;
       default: badgeColor = Colors.grey; badgeText = '💬 Post'; break;
     }
 
@@ -282,9 +283,9 @@ class _PostCardState extends State<_PostCard> {
     Widget card = Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isOfficial ? AppColors.primary.withOpacity(0.05) : (isDark ? const Color(0xFF1E1E2E) : Colors.white),
+        color: isOfficial ? AppColors.primary.withValues(alpha: 0.05) : (isDark ? const Color(0xFF1E1E2E) : Colors.white),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isOfficial ? AppColors.primary.withOpacity(0.3) : Colors.transparent),
+        border: Border.all(color: isOfficial ? AppColors.primary.withValues(alpha: 0.3) : Colors.transparent),
         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
       ),
       child: Column(
@@ -311,7 +312,7 @@ class _PostCardState extends State<_PostCard> {
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: badgeColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                 child: Text(badgeText, style: TextStyle(color: badgeColor, fontSize: 10, fontWeight: FontWeight.bold)),
               ),
             ],
@@ -349,7 +350,7 @@ class _PostCardState extends State<_PostCard> {
 
     if (widget.post.type == 'announcement') {
       return card.animate(onPlay: (controller) => controller.repeat(reverse: true))
-          .tint(color: Colors.red.withOpacity(0.05), duration: 2.seconds);
+          .tint(color: Colors.red.withValues(alpha: 0.05), duration: 2.seconds);
     }
     return card;
   }
@@ -373,7 +374,7 @@ class _PostCardState extends State<_PostCard> {
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
@@ -382,7 +383,7 @@ class _PostCardState extends State<_PostCard> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 500),
                     decoration: BoxDecoration(
-                      color: hasVoted ? AppColors.primary.withOpacity(0.2) : Colors.blue.withOpacity(0.1),
+                      color: hasVoted ? AppColors.primary.withValues(alpha: 0.2) : const Color(0xFF2D6A4F).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -492,6 +493,7 @@ class _RepliesSheetState extends State<_RepliesSheet> {
       parentReplyId: _replyingToId,
     );
     await context.read<FirestoreService>().addForumReply(widget.post.id!, reply);
+    if (!mounted) return;
     _replyController.clear();
     setState(() {
       _replyingToId = null;
@@ -570,7 +572,7 @@ class _RepliesSheetState extends State<_RepliesSheet> {
                    if (_replyingToId != null) ...[
                      Row(
                        children: [
-                         Text('Replying to $_replyingToName', style: const TextStyle(fontSize: 12, color: AppColors.primary)),
+                         Text('Replying to $_replyingToName', style: TextStyle(fontSize: 12, color: AppColors.primary)),
                          const Spacer(),
                          IconButton(icon: const Icon(Icons.close, size: 16), onPressed: () => setState(() => _replyingToId = null)),
                        ],
@@ -585,7 +587,7 @@ class _RepliesSheetState extends State<_RepliesSheet> {
                             hintText: 'Write a comment...',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                             filled: true,
-                            fillColor: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                            fillColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           ),
                           maxLines: null,
@@ -594,7 +596,7 @@ class _RepliesSheetState extends State<_RepliesSheet> {
                       const SizedBox(width: 8),
                       _isLoading
                           ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                          : IconButton(onPressed: _submitReply, icon: const Icon(Icons.send, color: AppColors.primary)),
+                          : IconButton(onPressed: _submitReply, icon: Icon(Icons.send, color: AppColors.primary)),
                     ],
                   ),
                 ],
@@ -685,7 +687,7 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
     if (widget.postType == 'poll') {
       opts = _pollOptControllers.map((c) => c.text.trim()).where((t) => t.isNotEmpty).map((t) => PollOption(text: t, votedBy: [])).toList();
       if (opts.length < 2) {
-         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('At least 2 poll options required')));
+         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('At least 2 poll options required')));
          setState(() => _isLoading = false);
          return;
       }

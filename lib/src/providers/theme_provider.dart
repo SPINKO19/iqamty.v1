@@ -7,8 +7,8 @@ enum AppThemeMode { normal, dark, styled }
 class ThemeProvider extends ChangeNotifier {
   AppThemeMode _themeMode = AppThemeMode.normal;
   Color _styledPrimaryColor = const Color(0xFF8B5CF6); // Default purple for styled
-  Color _styledBackgroundColor = const Color(0xFF171717); 
-  Color _styledCardColor = const Color(0xFF262626);
+  final Color _styledBackgroundColor = const Color(0xFF171717); 
+  final Color _styledCardColor = const Color(0xFF262626);
 
   AppThemeMode get themeMode => _themeMode;
   Color get styledPrimaryColor => _styledPrimaryColor;
@@ -40,7 +40,7 @@ class ThemeProvider extends ChangeNotifier {
       notifyListeners();
     }
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('styled_primary', primary.value);
+    await prefs.setInt('styled_primary', primary.toARGB32());
   }
 
   void _applyThemeColors() {
@@ -49,7 +49,7 @@ class ThemeProvider extends ChangeNotifier {
       AppColors.backgroundDark = _styledBackgroundColor;
       AppColors.cardDark = _styledCardColor;
     } else {
-      AppColors.primary = const Color(0xFF0EA5E9); // Default Sky Blue
+      AppColors.primary = const Color(0xFF2D6A4F); // Default Medium Green
       AppColors.backgroundDark = const Color(0xFF0F172A); // Default Slate 900
       AppColors.cardDark = const Color(0xFF1E293B); // Default Slate 800
     }

@@ -81,7 +81,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -156,7 +156,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     width: 70,
                     height: 70,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -192,7 +192,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary.withOpacity(0.6),
+                      color: AppColors.primary.withValues(alpha: 0.6),
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -435,7 +435,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               )
             : null,
         filled: true,
-        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -443,7 +443,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFE2E8F0),
+            color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
           ),
         ),
         focusedBorder: OutlineInputBorder(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static Color primary = const Color(0xFF0EA5E9); // Sky Blue
+  static Color primary = const Color(0xFF2D6A4F); // Medium Green
   static Color success = const Color(0xFF10B981); // Emerald Green (more modern)
   static Color error = const Color(0xFFEF4444); // Modern Red
   static Color warning = const Color(0xFFF59E0B); // Modern Amber
