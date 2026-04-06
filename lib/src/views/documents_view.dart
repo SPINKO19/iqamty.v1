@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../core/theme/colors.dart';
 
 class DocumentsView extends StatelessWidget {
@@ -7,7 +8,20 @@ class DocumentsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Documents'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Documents'), 
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

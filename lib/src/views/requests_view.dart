@@ -16,6 +16,16 @@ class RequestsView extends StatelessWidget {
         title: Text(lp.getText('my_requests'), style: TextStyle(color: context.appTextPrimary)),
         backgroundColor: context.appCard,
         centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
