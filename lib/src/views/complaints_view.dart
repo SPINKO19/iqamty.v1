@@ -401,6 +401,7 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
           _buildModernTextField(
             controller: _titleController,
             hint: lp.getText('complaint_title_hint'),
+            context: context,
           ),
           const SizedBox(height: 24),
           _buildFieldLabel(lp.getText('detailed_description')),
@@ -410,6 +411,7 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
               controller: _descController,
               hint: lp.getText('describe_problem_hint'),
               maxLines: null,
+              context: context,
             ),
           ),
           const SizedBox(height: 24),
@@ -468,15 +470,15 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
     );
   }
 
-  Widget _buildModernTextField({required TextEditingController context, required String hint, int? maxLines = 1, required BuildContext buildContext}) {
-    final isDark = Theme.of(buildContext).brightness == Brightness.dark;
+  Widget _buildModernTextField({required TextEditingController controller, required String hint, int? maxLines = 1, required BuildContext context}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
       ),
       child: TextField(
-        controller: context,
+        controller: controller,
         maxLines: maxLines,
         style: GoogleFonts.inter(color: isDark ? Colors.white : Colors.black),
         decoration: InputDecoration(

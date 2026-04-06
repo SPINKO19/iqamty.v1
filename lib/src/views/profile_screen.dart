@@ -277,7 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       height: 285,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : cardBg,
+        color: context.isDark ? AppColors.cardDark : cardBg,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(

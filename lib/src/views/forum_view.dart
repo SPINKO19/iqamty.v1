@@ -61,8 +61,8 @@ class _SimplePostInputState extends State<_SimplePostInput> {
     return Container(
       padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).viewInsets.bottom + 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E2E) : Colors.white,
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
+        color: context.appCard,
+        boxShadow: context.isDark ? null : const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
       ),
       child: Row(
         children: [
@@ -73,7 +73,7 @@ class _SimplePostInputState extends State<_SimplePostInput> {
                 hintText: lp.getText('post_text_hint'),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                 filled: true,
-                fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                fillColor: context.isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               maxLines: null,
@@ -283,10 +283,10 @@ class _PostCardState extends State<_PostCard> {
     Widget card = Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isOfficial ? AppColors.primary.withValues(alpha: 0.05) : (isDark ? const Color(0xFF1E1E2E) : Colors.white),
+        color: isOfficial ? AppColors.primary.withValues(alpha: 0.05) : context.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isOfficial ? AppColors.primary.withValues(alpha: 0.3) : Colors.transparent),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
+        border: Border.all(color: isOfficial ? AppColors.primary.withValues(alpha: 0.3) : context.appBorder),
+        boxShadow: isDark ? null : const [BoxShadow(color: Colors.black12, blurRadius: 10)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -8,6 +8,7 @@ import '../services/firestore_service.dart';
 import '../models/types.dart';
 
 import 'package:go_router/go_router.dart';
+import '../core/theme/colors.dart';
 
 const _kGreen = Color(0xFF2D6A4F);
 const _kHeaderGreen = Color(0xFF2D6A4F);
@@ -27,7 +28,7 @@ class HomeScreen extends StatelessWidget {
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : _kBgMint,
+      backgroundColor: context.appBackground,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -36,7 +37,7 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               children: [
                 _buildHeaderSection(context, student, lp, isDark),
-                _buildInfoCardsRow(student, userData, isDark),
+                _buildInfoCardsRow(context, student, userData, isDark),
               ],
             ),
           ),
@@ -325,7 +326,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCardsRow(dynamic student, Map<String, dynamic>? userData, bool isDark) {
+  Widget _buildInfoCardsRow(BuildContext context, dynamic student, Map<String, dynamic>? userData, bool isDark) {
     final String chambre = student?.chambre?.toString() ?? '204 B';
     final String residence = student?.residence?.toString() ?? 'Résidence A';
     final bool isBanned = student?.isBanned == true;
