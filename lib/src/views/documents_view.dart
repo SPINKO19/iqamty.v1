@@ -8,11 +8,14 @@ class DocumentsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: const Text('Documents'), 
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text('Documents', style: TextStyle(color: context.appTextPrimary, fontWeight: FontWeight.bold)), 
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: context.appTextPrimary),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -86,7 +89,7 @@ class DocumentsView extends StatelessWidget {
                 Text(
                   info,
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: context.appTextSecondary,
                     fontSize: 12,
                   ),
                 ),

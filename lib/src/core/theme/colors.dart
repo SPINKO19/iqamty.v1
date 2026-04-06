@@ -14,14 +14,14 @@ class AppColors {
   static Color highlightLight = const Color(0xFFE0F2FE); // Sky 100
   static Color alertBgLight = const Color(0xFFFEF2F2); // Red 50
 
-  // Dark Theme
-  static Color backgroundDark = const Color(0xFF0F172A); // Slate 900
-  static Color cardDark = const Color(0xFF1E293B); // Slate 800
-  static Color textPrimaryDark = const Color(0xFFF8FAFC); // Slate 50
-  static Color textSecondaryDark = const Color(0xFF94A3B8); // Slate 400
-  static Color borderColorDark = const Color(0xFF334155); // Slate 700
-  static Color highlightDark = const Color(0xFF0C4A6E); // Sky 900
-  static Color alertBgDark = const Color(0xFF450A0A); // Red 900
+  // Night Mode (Deep Green Aesthetic from user image)
+  static Color backgroundDark = const Color(0xFF0D120E); // Very dark green-black
+  static Color cardDark = const Color(0xFF161D19); // Night green card
+  static Color textPrimaryDark = const Color(0xFFF1F5F2); // Minty off-white
+  static Color textSecondaryDark = const Color(0xFF8CA193); // Desaturated sage
+  static Color borderColorDark = const Color(0xFF222E28); // Subtle dark boundary
+  static Color highlightDark = const Color(0xFF245F40); // Deep forest highlight
+  static Color alertBgDark = const Color(0xFF3F1313); // Deep muted red
 
   // Deprecated direct properties
   static Color backgroundLightOld = backgroundLight;

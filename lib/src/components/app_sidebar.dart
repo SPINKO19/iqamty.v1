@@ -165,7 +165,7 @@ class AppSidebar extends StatelessWidget {
 
     final drawer = Drawer(
       width: 300,
-      backgroundColor: Colors.white,
+      backgroundColor: context.appBackground,
       elevation: 16,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Column(
@@ -184,7 +184,7 @@ class AppSidebar extends StatelessWidget {
               }).toList(),
             ),
           ),
-          Divider(height: 1, color: const Color(0xFFE5E7EB)),
+          Divider(height: 1, color: context.appBorder),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(

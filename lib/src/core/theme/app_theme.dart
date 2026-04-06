@@ -84,8 +84,8 @@ class AppTheme {
         displayLarge: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.textPrimaryDark),
         titleLarge: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimaryDark),
         titleMedium: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimaryDark),
-        bodyLarge: GoogleFonts.inter(fontSize: 16, color: AppColors.textPrimaryDark.withValues(alpha: 0.9)),
-        bodyMedium: GoogleFonts.inter(fontSize: 14, color: AppColors.textSecondaryDark),
+        bodyLarge: GoogleFonts.inter(fontSize: 15, color: AppColors.textPrimaryDark),
+        bodyMedium: GoogleFonts.inter(fontSize: 13, color: AppColors.textSecondaryDark),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

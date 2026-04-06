@@ -85,11 +85,14 @@ class ComplaintsView extends StatelessWidget {
             );
           }
 
-          return ListView.separated(
+    return ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             itemCount: complaints.length,
             separatorBuilder: (context, index) => const SizedBox(height: 20),
-            itemBuilder: (context, index) => _ModernComplaintCard(complaint: complaints[index]),
+            itemBuilder: (context, index) {
+              final complaint = complaints[index];
+              return _ModernComplaintCard(complaint: complaint);
+            },
           );
         },
       ),
@@ -228,7 +231,7 @@ class _ModernComplaintCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  lp.getText('details'),
+                  lp.getText('details') == 'details' ? 'Détails' : lp.getText('details'),
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -465,15 +468,17 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
     );
   }
 
-  Widget _buildModernTextField({required TextEditingController controller, required String hint, int? maxLines = 1}) {
+  Widget _buildModernTextField({required TextEditingController context, required String hint, int? maxLines = 1, required BuildContext buildContext}) {
+    final isDark = Theme.of(buildContext).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9).withValues(alpha: 0.5),
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
       ),
       child: TextField(
-        controller: controller,
+        controller: context,
         maxLines: maxLines,
+        style: GoogleFonts.inter(color: isDark ? Colors.white : Colors.black),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: GoogleFonts.inter(color: Colors.grey, fontSize: 14),
