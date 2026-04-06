@@ -75,7 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         : '$safeNomFr $safePrenomFr'.trim();
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : const Color(0xFFF8FAFC),
+      backgroundColor: context.appBackground,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -212,7 +212,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               ),
               child: CircleAvatar(
                 radius: 54,
-                backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                backgroundColor: context.appCard,
                 child: CircleAvatar(
                   radius: 50,
                   backgroundColor: Colors.grey[200],

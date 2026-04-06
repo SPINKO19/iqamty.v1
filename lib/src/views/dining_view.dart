@@ -45,7 +45,7 @@ class _DiningViewState extends State<DiningView> {
     const kLightMint = Color(0xFFD8F3DC);
 
     return Scaffold(
-      backgroundColor: kLightMint,
+      backgroundColor: context.appBackground,
       body: Column(
         children: [
           // Header Section
@@ -179,7 +179,7 @@ class _DiningViewState extends State<DiningView> {
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.appCard,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
@@ -303,7 +303,7 @@ class _MealCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(

@@ -23,7 +23,7 @@ class ComplaintsView extends StatelessWidget {
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : const Color(0xFFF8FAFC),
+      backgroundColor: context.appBackground,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),

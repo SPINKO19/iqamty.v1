@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../services/firestore_service.dart';
 import '../models/types.dart';
+import '../core/theme/colors.dart';
 
 import 'package:go_router/go_router.dart';
 
@@ -27,7 +28,7 @@ class HomeScreen extends StatelessWidget {
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : _kBgMint,
+      backgroundColor: context.appBackground,
       
       // -- bottom navigation bar --
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -40,7 +41,7 @@ class HomeScreen extends StatelessWidget {
         child: const Icon(Icons.add_rounded, size: 32),
       ),
       bottomNavigationBar: BottomAppBar(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: context.appCard,
         shape: const CircularNotchedRectangle(),
         notchMargin: 8,
         elevation: 10,
@@ -490,7 +491,7 @@ class HomeScreen extends StatelessWidget {
       width: 130,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(24),
         boxShadow: isDark ? [] : [
           BoxShadow(
@@ -565,7 +566,7 @@ class HomeScreen extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -598,7 +599,7 @@ class _AnnouncementCard extends StatelessWidget {
     return SizedBox(
       width: 260,
       child: Material(
-        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(24),
         child: InkWell(
           onTap: () => context.go('/announcement', extra: announcement),
@@ -707,7 +708,7 @@ class _QuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(24),
         boxShadow: isDark ? null : [
           BoxShadow(

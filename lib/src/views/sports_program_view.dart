@@ -14,7 +14,7 @@ class SportsProgramView extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : const Color(0xFFF8FAFC),
+      backgroundColor: context.appBackground,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -23,7 +23,7 @@ class SportsProgramView extends StatelessWidget {
             expandedHeight: 250.0,
             pinned: true,
             stretch: true,
-            backgroundColor: isDark ? const Color(0xFF121212) : AppColors.primary,
+            backgroundColor: isDark ? context.appBackground : AppColors.primary,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
               onPressed: () {
