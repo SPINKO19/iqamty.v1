@@ -6,7 +6,6 @@ import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../services/firestore_service.dart';
 import '../models/types.dart';
-import '../core/theme/colors.dart';
 
 import 'package:go_router/go_router.dart';
 
@@ -28,38 +27,7 @@ class HomeScreen extends StatelessWidget {
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
-      backgroundColor: context.appBackground,
-      
-      // -- bottom navigation bar --
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/create-request'),
-        backgroundColor: _kGreen,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add_rounded, size: 32),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        color: context.appCard,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
-        elevation: 10,
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavIcon(Icons.home_rounded, lp.getText('dashboard'), true, () => context.go('/'), isDark),
-              _buildNavIcon(Icons.restaurant_rounded, lp.getText('restoration'), false, () => context.go('/dining'), isDark),
-              const SizedBox(width: 48), // Space for FAB
-              _buildNavIcon(Icons.assignment_rounded, lp.getText('requests'), false, () => context.go('/requests'), isDark),
-              _buildNavIcon(Icons.person_rounded, lp.getText('profile'), false, () => context.go('/profile'), isDark),
-            ],
-          ),
-        ),
-      ),
-
+      backgroundColor: isDark ? const Color(0xFF121212) : _kBgMint,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -213,30 +181,6 @@ class HomeScreen extends StatelessWidget {
                 
                 const SizedBox(height: 80), 
               ]),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavIcon(IconData icon, String label, bool isSelected, VoidCallback onTap, bool isDark) {
-    final color = isSelected ? _kGreen : (isDark ? Colors.white54 : Colors.black45);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(50),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              color: color,
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
         ],
@@ -447,6 +391,7 @@ class HomeScreen extends StatelessWidget {
   }) {
     return Container(
       width: 130,
+      height: 130,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: bgColor,
@@ -461,25 +406,36 @@ class HomeScreen extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Icon(icon, color: iconColor, size: 24),
-          const SizedBox(height: 24),
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              color: titleColor ?? textColor.withValues(alpha: 0.7),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: GoogleFonts.inter(
-              color: textColor,
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: titleColor ?? textColor.withValues(alpha: 0.7),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  style: GoogleFonts.inter(
+                    color: textColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -489,9 +445,10 @@ class HomeScreen extends StatelessWidget {
   Widget _buildStatusCard(bool isDark, bool isActive) {
     return Container(
       width: 130,
+      height: 130,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
+        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: isDark ? [] : [
           BoxShadow(
@@ -503,32 +460,43 @@ class HomeScreen extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF2D6A4F), size: 24),
-          const SizedBox(height: 24),
-          Text(
-            'Statut',
-            style: GoogleFonts.inter(
-              color: isDark ? Colors.white54 : const Color(0xFF6B7280),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: isActive ? Colors.green.withValues(alpha: 0.15) : Colors.red.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              isActive ? 'Actif ✓' : 'Inactif',
-              style: GoogleFonts.inter(
-                color: isActive ? Colors.green[700] : Colors.red[700],
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Statut',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: isDark ? Colors.white54 : const Color(0xFF6B7280),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isActive ? Colors.green.withValues(alpha: 0.15) : Colors.red.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    isActive ? 'Actif ✓' : 'Inactif',
+                    style: GoogleFonts.inter(
+                      color: isActive ? Colors.green[700] : Colors.red[700],
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -566,7 +534,7 @@ class HomeScreen extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: context.appCard,
+        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -599,7 +567,7 @@ class _AnnouncementCard extends StatelessWidget {
     return SizedBox(
       width: 260,
       child: Material(
-        color: context.appCard,
+        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         child: InkWell(
           onTap: () => context.go('/announcement', extra: announcement),
@@ -708,7 +676,7 @@ class _QuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: context.appCard,
+        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: isDark ? null : [
           BoxShadow(

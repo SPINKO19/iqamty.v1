@@ -17,31 +17,14 @@ class AppSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 768;
-
-        if (isDesktop) {
-          return Scaffold(
-            backgroundColor: context.appBackground,
-            body: Row(
-              children: [
-                _buildSidebar(context, isDesktop: true),
-                Expanded(child: child),
-              ],
-            ),
-          );
-        } else {
-          return Scaffold(
-            drawer: _buildSidebar(context, isDesktop: false),
-            body: child,
-          );
-        }
-      },
+    return Scaffold(
+      backgroundColor: context.appBackground,
+      drawer: _buildSidebar(context),
+      body: child,
     );
   }
 
-  Widget _buildSidebar(BuildContext context, {required bool isDesktop}) {
+  Widget _buildSidebar(BuildContext context) {
     final languageProvider = context.watch<LanguageProvider>();
     final auth = context.watch<AuthProvider>();
     final role = auth.currentStudent?.role ?? auth.currentUserData?['role'] ?? 'student';
@@ -97,24 +80,22 @@ class AppSidebar extends StatelessWidget {
                   ),
                 ],
               ),
-              if (!isDesktop) ...[
-                GestureDetector(
-                  onTap: () {
-                    if (Scaffold.maybeOf(context)?.hasDrawer ?? false) {
-                      Scaffold.of(context).closeDrawer();
-                    }
-                  },
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.close_rounded, color: Colors.white, size: 16),
+              GestureDetector(
+                onTap: () {
+                  if (Scaffold.maybeOf(context)?.hasDrawer ?? false) {
+                    Scaffold.of(context).closeDrawer();
+                  }
+                },
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
                   ),
+                  child: const Icon(Icons.close_rounded, color: Colors.white, size: 16),
                 ),
-              ],
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -183,9 +164,9 @@ class AppSidebar extends StatelessWidget {
     );
 
     final drawer = Drawer(
-      width: isDesktop ? 280 : 300,
+      width: 300,
       backgroundColor: Colors.white,
-      elevation: isDesktop ? 0 : 16,
+      elevation: 16,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Column(
         children: [
@@ -231,14 +212,6 @@ class AppSidebar extends StatelessWidget {
       ),
     );
 
-    if (isDesktop) {
-      return Container(
-        decoration: BoxDecoration(
-          border: Border(right: BorderSide(color: context.appBorder, width: 1)),
-        ),
-        child: drawer,
-      );
-    }
     return drawer;
   }
 
