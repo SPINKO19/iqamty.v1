@@ -27,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _useEmail = false;
   String _selectedRole = 'student';
+  bool _showRolePills = false;
 
   @override
   void dispose() {
@@ -61,14 +62,6 @@ class _LoginScreenState extends State<LoginScreen> {
         SnackBar(content: Text(error ?? lp.getText('err_login_failed'))),
       );
     }
-  }
-
-  void _handleBiometricLogin() {
-    // Biometric handler – extend when auth_service supports it
-    final lp = context.read<LanguageProvider>();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(lp.getText('biometric_login'))),
-    );
   }
 
   // ── build ──────────────────────────────────────────────────────────────────
@@ -181,27 +174,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                     const SizedBox(height: 20),
 
-                                    // ── Role tabs ──
-                                    _buildRoleTabs(lp, isDark),
+                                    // ── Role pills ──
+                                    _buildRolePills(lp, isDark),
                                     const SizedBox(height: 18),
-
-                                    // ── Login type toggle (students only) ──
-                                    if (_selectedRole == 'student') ...[
-                                      _buildTypeToggle(lp, isDark),
-                                      const SizedBox(height: 18),
-                                    ],
 
                                     // ── Matricule / Email field ──
                                     _buildField(
                                       controller: _matriculeController,
-                                      hint: (_selectedRole != 'student' || _useEmail)
+                                      hint: _selectedRole != 'student'
                                           ? 'email@exemple.com'
                                           : lp.getText('matricule_label'),
-                                      icon: (_selectedRole != 'student' || _useEmail)
+                                      icon: _selectedRole != 'student'
                                           ? Icons.alternate_email_rounded
                                           : Icons.tag_rounded,
                                       isDark: isDark,
-                                      keyboardType: (_selectedRole != 'student' || _useEmail)
+                                      keyboardType: _selectedRole != 'student'
                                           ? TextInputType.emailAddress
                                           : TextInputType.number,
                                       textInputAction: TextInputAction.next,
@@ -270,46 +257,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                               ),
                                       ),
                                     ),
-                                    const SizedBox(height: 12),
-
-                                    // ── Biometric button ──
-                                    SizedBox(
-                                      height: 52,
-                                      child: OutlinedButton(
-                                        onPressed: _handleBiometricLogin,
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: _kGreen,
-                                          side: BorderSide(
-                                            color: isDark
-                                                ? _kGreen.withValues(alpha: 0.7)
-                                                : _kGreen,
-                                            width: 1.5,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(14),
-                                          ),
-                                          backgroundColor: isDark
-                                              ? Colors.transparent
-                                              : Colors.white,
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(Icons.fingerprint_rounded,
-                                                color: _kGreen, size: 22),
-                                            const SizedBox(width: 10),
-                                            Text(
-                                              lp.getText('biometric_login'),
-                                              style: GoogleFonts.inter(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w700,
-                                                color: _kGreen,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
                                     const SizedBox(height: 14),
 
                                     // ── Forgot password ──
@@ -327,35 +274,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 16),
-
-                                    // ── Register link ──
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          lp.getText('no_account'),
-                                          style: GoogleFonts.inter(
-                                            fontSize: 13,
-                                            color: isDark
-                                                ? Colors.white54
-                                                : const Color(0xFF6B7280),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        GestureDetector(
-                                          onTap: () => context.go('/register'),
-                                          child: Text(
-                                            lp.getText('register'),
-                                            style: GoogleFonts.inter(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w800,
-                                              color: _kGreen,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
                                     ),
                                   ],
                                 ),
@@ -438,105 +356,107 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── Role pill tabs ────────────────────────────────────────────────────────
-  Widget _buildRoleTabs(LanguageProvider lp, bool isDark) {
+  // ── Expandable role pills ─────────────────────────────────────────────────
+  Widget _buildRolePills(LanguageProvider lp, bool isDark) {
     final roles = [
       ('student', lp.getText('student')),
       ('worker', lp.getText('worker')),
       ('administrator', lp.getText('administrator')),
     ];
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.06)
-            : const Color(0xFFF0F0F0),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: roles.map((entry) {
-          final (role, label) = entry;
-          final sel = _selectedRole == role;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() {
-                _selectedRole = role;
-                if (role != 'student') _useEmail = true;
-              }),
+    final selectedLabel = roles.firstWhere((r) => r.$1 == _selectedRole).$2;
+    final otherRoles = roles.where((r) => r.$1 != _selectedRole).toList();
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TapRegion(
+        onTapOutside: (_) {
+          if (_showRolePills) setState(() => _showRolePills = false);
+        },
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Main pill (always visible) ──
+            GestureDetector(
+              onTap: () => setState(() => _showRolePills = !_showRolePills),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 9),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: sel ? _kGreen : Colors.transparent,
-                  borderRadius: BorderRadius.circular(9),
+                  color: _kGreen,
+                  borderRadius: BorderRadius.circular(50),
                 ),
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: sel ? FontWeight.w800 : FontWeight.w500,
-                    color: sel
-                        ? Colors.white
-                        : (isDark
-                            ? Colors.white54
-                            : const Color(0xFF6B7280)),
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedRotation(
+                      turns: _showRolePills ? 0.25 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      selectedLabel,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          );
-        }).toList(),
-      ),
-    );
-  }
 
-  // ── Matricule / Email toggle ──────────────────────────────────────────────
-  Widget _buildTypeToggle(LanguageProvider lp, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF0F0F0),
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : _kBorder,
-        ),
-      ),
-      child: Row(
-        children: [
-          _typePill(lp.getText('login_matricule'), !_useEmail,
-              () => setState(() => _useEmail = false), isDark),
-          _typePill(lp.getText('login_email'), _useEmail,
-              () => setState(() => _useEmail = true), isDark),
-        ],
-      ),
-    );
-  }
-
-  Widget _typePill(String label, bool sel, VoidCallback onTap, bool isDark) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: sel ? _kGreen : Colors.transparent,
-            borderRadius: BorderRadius.circular(50),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
-              color: sel
-                  ? Colors.white
-                  : (isDark ? Colors.white54 : const Color(0xFF6B7280)),
-            ),
-          ),
+            // ── Other pills (slide out to the right) ──
+            ...otherRoles.map((entry) {
+              return AnimatedSize(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeInOut,
+                alignment: Alignment.centerLeft,
+                child: _showRolePills
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: GestureDetector(
+                          onTap: () => setState(() {
+                            _selectedRole = entry.$1;
+                            _showRolePills = false;
+                            _useEmail = entry.$1 != 'student';
+                          }),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : const Color(0xFFF0F0F0),
+                              borderRadius: BorderRadius.circular(50),
+                              border: Border.all(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.12)
+                                    : _kBorder,
+                              ),
+                            ),
+                            child: Text(
+                              entry.$2,
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: isDark
+                                    ? Colors.white70
+                                    : const Color(0xFF4B5563),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              );
+            }),
+          ],
         ),
       ),
     );
