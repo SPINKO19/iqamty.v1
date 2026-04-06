@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
+import 'package:go_router/go_router.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
