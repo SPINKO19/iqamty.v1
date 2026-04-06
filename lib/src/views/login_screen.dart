@@ -597,7 +597,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: IconButton(
         icon: Icon(
           isDark ? Icons.wb_sunny_outlined : Icons.nights_stay_outlined,
-          color: isDark ? Colors.amber : Colors.white,
+          color: isDark ? Colors.amber : _kGreen,
           size: 20,
         ),
         onPressed: () => themeProvider.setThemeMode(
