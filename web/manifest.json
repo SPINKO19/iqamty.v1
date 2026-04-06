@@ -1,11 +1,11 @@
 {
-    "name": "iqamty",
-    "short_name": "iqamty",
+    "name": "IQAMTY",
+    "short_name": "IQAMTY",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0A0A0A",
+    "theme_color": "#2D6A4F",
+    "description": "Student Residence Management Application",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

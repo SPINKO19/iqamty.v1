@@ -270,7 +270,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget _buildOfficialCard(BuildContext context, dynamic student, String name, String dob, bool isResidence) {
     final mainGreen = AppColors.primary;
     final cardBg = Colors.white;
-    const textDark = Color(0xFF1F2937); // Dark blue-grey for professional text
+    const textDark = Colors.white; // Changed to white for dark mode readability
     
     return Container(
       width: double.infinity,
@@ -325,10 +325,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        if (isResidence) 
-                          Image.asset('assets/images/dou_logo.png', height: 32, errorBuilder: (c, e, s) => Image.asset('assets/images/logo.png', height: 32, fit: BoxFit.contain))
-                        else
-                          Image.asset('assets/images/logo.png', height: 32, fit: BoxFit.contain),
+                        ClipOval(
+                          child: Image.asset('assets/logo/app_icon.png', height: 32, width: 32, fit: BoxFit.cover),
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'الجمهورية الجزائرية الديمقراطية الشعبية',
@@ -336,10 +335,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           style: GoogleFonts.notoKufiArabic(fontSize: 8.5, fontWeight: FontWeight.bold, color: textDark),
                         ),
                         const SizedBox(width: 8),
-                        if (isResidence) 
-                          Image.asset('assets/images/dou_logo.png', height: 32, errorBuilder: (c, e, s) => Image.asset('assets/images/logo.png', height: 32, fit: BoxFit.contain))
-                        else
-                          Image.asset('assets/images/logo.png', height: 32, fit: BoxFit.contain),
+                        ClipOval(
+                          child: Image.asset('assets/logo/app_icon.png', height: 32, width: 32, fit: BoxFit.cover),
+                        ),
                       ],
                     ),
                     Text(
@@ -350,7 +348,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     Text(
                       isResidence ? 'مديرية الخدمات الجامعية بجاية القصر' : 'المدرسة العليا لعلوم وتكنولوجيا الإعلام الآلي',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.notoKufiArabic(fontSize: 6.5, fontWeight: FontWeight.bold, color: mainGreen),
+                      style: GoogleFonts.notoKufiArabic(fontSize: 6.5, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ],
                 ),
@@ -358,7 +356,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 const SizedBox(height: 4),
                 Text(
                   isResidence ? 'بطاقة الإقامة' : 'بطاقة الطالب',
-                  style: GoogleFonts.notoKufiArabic(fontSize: 18, fontWeight: FontWeight.w900, color: mainGreen, letterSpacing: 0.8),
+                  style: GoogleFonts.notoKufiArabic(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.8),
                 ),
                 
                 const SizedBox(height: 4),
@@ -414,7 +412,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(Icons.qr_code_2_rounded, size: 45, color: mainGreen.withValues(alpha: 0.8)),
+                    Icon(Icons.qr_code_2_rounded, size: 45, color: Colors.white.withValues(alpha: 0.8)),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -424,7 +422,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         ),
                         Text(
                           'ID: ${student?.matricule ?? '202031045214'}',
-                          style: GoogleFonts.robotoMono(color: mainGreen, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
+                          style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
                         ),
                       ],
                     ),
