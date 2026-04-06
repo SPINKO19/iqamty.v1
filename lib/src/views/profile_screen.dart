@@ -187,11 +187,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 ),
                 
                 const SizedBox(height: 40),
-                Text(
-                  'Version 1.0.42 (Stable)',
-                  style: GoogleFonts.robotoMono(fontSize: 10, color: Colors.grey.withValues(alpha: 0.5)),
-                ),
-                const SizedBox(height: 40),
               ],
             ),
           ),
