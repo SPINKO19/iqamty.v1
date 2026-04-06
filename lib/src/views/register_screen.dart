@@ -81,7 +81,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF111811) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -435,7 +435,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               )
             : null,
         filled: true,
-        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+        fillColor: isDark ? const Color(0xFF111811) : Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,

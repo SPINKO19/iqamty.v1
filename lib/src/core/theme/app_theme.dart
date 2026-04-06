@@ -77,8 +77,20 @@ class AppTheme {
         primary: AppColors.primary,
         secondary: AppColors.success,
         surface: AppColors.cardDark,
+        onSurface: AppColors.textPrimaryDark,
+        onSecondary: Colors.white,
         error: AppColors.error,
         onPrimary: Colors.white,
+        onError: Colors.white,
+        surfaceContainerHighest: AppColors.cardDark,
+      ),
+      dialogBackgroundColor: AppColors.cardDark,
+      dividerColor: AppColors.borderColorDark,
+      canvasColor: AppColors.backgroundDark,
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: AppColors.cardDark,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textSecondaryDark,
       ),
       textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
         displayLarge: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.textPrimaryDark),
@@ -109,7 +121,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.cardDark,
+        fillColor: const Color(0xFF111811),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -128,6 +140,18 @@ class AppTheme {
           borderSide: BorderSide(color: AppColors.error, width: 1.0),
         ),
         hintStyle: GoogleFonts.inter(color: AppColors.textSecondaryDark, fontSize: 14),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
     );
   }

@@ -107,7 +107,7 @@ class HomeScreen extends StatelessWidget {
                           title: lp.getText('restoration'),
                           subtitle: lp.getText('menu_of_the_day'),
                           icon: Icons.restaurant_rounded,
-                          color: const Color(0xFFEF4444), 
+                          color: const Color(0xFF10B981), 
                           isDark: isDark,
                           onTap: () => context.go('/dining'),
                         ),
@@ -119,7 +119,7 @@ class HomeScreen extends StatelessWidget {
                               title: 'Transport',
                               subtitle: lp.getText('technical_services'),
                               icon: Icons.directions_bus_outlined,
-                              color: const Color(0xFF2D6A4F),
+                              color: const Color(0xFF3B82F6),
                               badgeCount: count,
                               isDark: isDark,
                               onTap: () => context.go('/transport'),
@@ -234,9 +234,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // Notifications
-              _buildNotificationBell(isDark),
-              const SizedBox(width: 12),
+              // Notifications removed as per user request
               // Avatar with initials
               GestureDetector(
                 onTap: () => context.go('/profile'),
@@ -289,40 +287,6 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildNotificationBell(bool isDark) {
-    return Stack(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          alignment: Alignment.center,
-          child: const Icon(
-            Icons.notifications_none_rounded, 
-            color: Colors.white,
-            size: 24
-          ),
-        ),
-        Positioned(
-          top: 10,
-          right: 12,
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEF4444),
-              shape: BoxShape.circle,
-              border: Border.all(color: _kHeaderGreen, width: 1.5),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
