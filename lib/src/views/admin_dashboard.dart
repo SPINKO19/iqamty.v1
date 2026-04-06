@@ -129,11 +129,20 @@ class AdminDashboard extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             children: [
-              _buildModernStatTile(context, lp.getText('total_students'), '1,240', Icons.people_rounded, '+12%', cardWidth, lp),
+              GestureDetector(
+                onTap: () => context.go('/admin/users'),
+                child: _buildModernStatTile(context, lp.getText('total_students'), '1,240', Icons.people_rounded, '+12%', cardWidth, lp),
+              ),
               const SizedBox(width: 16),
-              _buildModernStatTile(context, lp.getText('complaints_handled'), '150', Icons.check_circle_rounded, '+5%', cardWidth, lp),
+              GestureDetector(
+                onTap: () => context.go('/admin/complaints'),
+                child: _buildModernStatTile(context, lp.getText('complaints_handled'), '150', Icons.check_circle_rounded, '+5%', cardWidth, lp),
+              ),
               const SizedBox(width: 16),
-              _buildModernStatTile(context, lp.getText('free_rooms'), '25', Icons.meeting_room_rounded, '-2%', cardWidth, lp),
+              GestureDetector(
+                onTap: () => context.go('/admin/resources'),
+                child: _buildModernStatTile(context, lp.getText('free_rooms'), '25', Icons.meeting_room_rounded, '-2%', cardWidth, lp),
+              ),
             ],
           ),
         );
@@ -256,50 +265,62 @@ class AdminDashboard extends StatelessWidget {
       children: [
         Text(lp.getText('quick_management'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.appTextPrimary)),
         const SizedBox(height: 16),
-        _buildActionItem(context, lp.getText('manage_students'), '1,240 ${lp.getText('registered_users')}', Icons.people_outline_rounded),
-        _buildActionItem(context, lp.getText('manage_complaints'), '12 ${lp.getText('pending_complaints')}', Icons.report_problem_outlined),
-        _buildActionItem(context, lp.getText('meal_config'), lp.getText('modify_weekly_menu'), Icons.restaurant_menu_rounded),
-        _buildActionItem(context, lp.getText('global_announcements'), lp.getText('broadcast_message'), Icons.campaign_outlined),
+        _buildActionItem(context, lp.getText('manage_students'), '1,240 ${lp.getText('registered_users')}', Icons.people_outline_rounded, () => context.go('/admin/users')),
+        _buildActionItem(context, lp.getText('manage_complaints'), '12 ${lp.getText('pending_complaints')}', Icons.report_problem_outlined, () => context.go('/admin/complaints')),
+        _buildActionItem(context, lp.getText('meal_config'), lp.getText('modify_weekly_menu'), Icons.restaurant_menu_rounded, () => context.go('/admin/dining')),
+        _buildActionItem(context, lp.getText('global_announcements'), lp.getText('broadcast_message'), Icons.campaign_outlined, () => context.go('/admin/announcements')),
         const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(12)),
-          alignment: Alignment.center,
-          child: Text(lp.getText('add_task'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        InkWell(
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(lp.getText('feature_coming_soon'))),
+            );
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(12)),
+            alignment: Alignment.center,
+            child: Text(lp.getText('add_task'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildActionItem(BuildContext context, String title, String subtitle, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.appCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.appBorder),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: AppColors.primary, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                Text(subtitle, style: TextStyle(color: context.appTextSecondary, fontSize: 11)),
-              ],
+  Widget _buildActionItem(BuildContext context, String title, String subtitle, IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.appCard,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.appBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: AppColors.primary, size: 24),
             ),
-          ),
-          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: context.appTextSecondary),
-        ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(subtitle, style: TextStyle(color: context.appTextSecondary, fontSize: 11)),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: context.appTextSecondary),
+          ],
+        ),
       ),
     );
   }

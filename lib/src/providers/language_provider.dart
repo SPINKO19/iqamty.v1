@@ -299,6 +299,7 @@ class LanguageProvider extends ChangeNotifier {
     'basketball': 'Basketball',
     'join_team': 'Join Team',
     'registration_sent_msg': 'Registration request sent successfully!',
+    'feature_coming_soon': 'Feature coming soon!',
   };
 
   // ─── FRENCH ───
@@ -571,6 +572,7 @@ class LanguageProvider extends ChangeNotifier {
     'done_tasks': 'Terminés',
     'urgent_status': 'Urgent',
     'new_status': 'Nouveau',
+    'feature_coming_soon': 'Bientôt disponible !',
   };
 
   // ─── ARABIC ───
@@ -830,5 +832,6 @@ class LanguageProvider extends ChangeNotifier {
     'basketball': 'كرة السلة',
     'join_team': 'انضم للفريق',
     'registration_sent_msg': 'تم إرسال طلب التسجيل بنجاح!',
+    'feature_coming_soon': 'الميزة قيد التطوير!',
   };
 }
