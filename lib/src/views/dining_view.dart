@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import '../core/theme/colors.dart';
 import '../services/firestore_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';

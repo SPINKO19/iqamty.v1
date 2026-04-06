@@ -491,7 +491,7 @@ class HomeScreen extends StatelessWidget {
       width: 130,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: context.appCard,
+        color: isDark ? AppColors.cardDark : Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: isDark ? [] : [
           BoxShadow(
