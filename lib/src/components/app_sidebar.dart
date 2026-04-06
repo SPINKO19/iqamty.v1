@@ -33,36 +33,6 @@ class AppSidebar extends StatelessWidget {
           );
         } else {
           return Scaffold(
-            appBar: AppBar(
-              title: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'IQAMTY',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: context.appTextPrimary,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: context.appCard,
-              elevation: 0,
-              iconTheme: IconThemeData(color: context.appTextPrimary),
-            ),
             drawer: _buildSidebar(context, isDesktop: false),
             body: child,
           );
