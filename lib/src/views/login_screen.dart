@@ -87,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Expanded(
                 flex: 65,
                 child: Container(
-                  color: isDark ? const Color(0xFF121212) : _kBgGreenBottom,
+                  color: isDark ? AppColors.backgroundDark : _kBgGreenBottom,
                 ),
               ),
             ],

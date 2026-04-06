@@ -143,7 +143,7 @@ class SportsProgramView extends StatelessWidget {
 
   Widget _buildDayScheduleCard(BuildContext context, String day, List<String> slots, IconData icon) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final cardColor = isDark ? AppColors.cardDark : Colors.white;
     final borderColor = isDark ? const Color(0xFF333333) : const Color(0xFFE2E8F0);
 
     return Container(
@@ -264,7 +264,7 @@ class SportsProgramView extends StatelessWidget {
 
   Widget _buildTeamCard(BuildContext context, String teamName, IconData icon, LanguageProvider lp) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final cardColor = isDark ? AppColors.cardDark : Colors.white;
     final borderColor = isDark ? const Color(0xFF333333) : const Color(0xFFE2E8F0);
 
     return Container(

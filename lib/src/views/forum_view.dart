@@ -511,7 +511,7 @@ class _RepliesSheetState extends State<_RepliesSheet> {
       child: Container(
         margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 60),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+          color: context.appCard,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: Column(
@@ -564,7 +564,7 @@ class _RepliesSheetState extends State<_RepliesSheet> {
             
             Container(
               padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).viewInsets.bottom + 16),
-              decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E2E) : Colors.white, boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0,-2))]),
+              decoration: BoxDecoration(color: context.appCard, boxShadow: isDark ? null : const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0,-2))]),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,

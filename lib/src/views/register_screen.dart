@@ -131,7 +131,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDark 
-              ? [const Color(0xFF1E1E2E), const Color(0xFF11111B)]
+              ? [AppColors.backgroundDark, const Color(0xFF0A1A0D)]
               : [const Color(0xFFF8F9FE), const Color(0xFFE8EAF6)],
           ),
         ),

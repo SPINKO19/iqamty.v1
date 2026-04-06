@@ -49,9 +49,9 @@ class BottomNavBarScaffold extends StatelessWidget {
       body: child,
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
+        backgroundColor: context.appCard,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
+        unselectedItemColor: context.appTextSecondary,
         currentIndex: _calculateSelectedIndex(context),
         onTap: (int idx) => _onItemTapped(idx, context),
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
