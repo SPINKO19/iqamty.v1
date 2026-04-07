@@ -25,26 +25,7 @@ class ComplaintsView extends StatelessWidget {
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
-        ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        title: Text(
-          lp.getText('my_complaints'),
-          style: GoogleFonts.inter(
-            color: context.appTextPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
+        title: Text(lp.getText('my_complaints')),
       ),
       body: StreamBuilder<List<Complaint>>(
         stream: firestore.getMyComplaints(userId),
@@ -211,7 +192,7 @@ class _ModernComplaintCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withValues(alpha: 0.02) : const Color(0xFFF1F5F9).withValues(alpha: 0.5),
+              color: isDark ? const Color(0xFF111811) : const Color(0xFFF1F5F9).withValues(alpha: 0.5),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(24),
                 bottomRight: Radius.circular(24),
@@ -474,7 +455,7 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9).withValues(alpha: 0.5),
+        color: isDark ? const Color(0xFF111811) : const Color(0xFFF1F5F9).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
       ),
       child: TextField(
@@ -502,7 +483,7 @@ class _UploadPlaceholder extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 32),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF111811) : const Color(0xFFF1F5F9),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), style: BorderStyle.solid),
       ),
       child: Column(

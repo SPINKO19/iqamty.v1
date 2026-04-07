@@ -15,7 +15,7 @@ class AppColors {
   static Color alertBgLight = const Color(0xFFFEF2F2); // Red 50
 
   // Night Mode (Deep Green Aesthetic from user image)
-  static Color backgroundDark = const Color(0xFF0D120E); // Very dark green-black
+  static Color backgroundDark = const Color(0xFF0A0A0A); // Near-pure black
   static Color cardDark = const Color(0xFF161D19); // Night green card
   static Color textPrimaryDark = const Color(0xFFF1F5F2); // Minty off-white
   static Color textSecondaryDark = const Color(0xFF8CA193); // Desaturated sage

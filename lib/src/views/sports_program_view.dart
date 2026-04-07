@@ -23,7 +23,7 @@ class SportsProgramView extends StatelessWidget {
             expandedHeight: 250.0,
             pinned: true,
             stretch: true,
-            backgroundColor: isDark ? context.appBackground : AppColors.primary,
+            backgroundColor: AppColors.primary,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
               onPressed: () {

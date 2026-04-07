@@ -73,9 +73,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0A0A0A) : null,
       body: Stack(
         children: [
-          // ── Split background: dark green top, white bottom ──
+          // ── Split background: dark green top, black bottom ──
           Column(
             children: [
               Expanded(
@@ -87,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Expanded(
                 flex: 65,
                 child: Container(
-                  color: isDark ? AppColors.backgroundDark : _kBgGreenBottom,
+                  color: isDark ? const Color(0xFF0A0A0A) : _kBgGreenBottom,
                 ),
               ),
             ],
@@ -389,7 +390,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     AnimatedRotation(
-                      turns: _showRolePills ? 0.25 : 0,
+                      turns: _showRolePills ? 0 : 0.25,
                       duration: const Duration(milliseconds: 200),
                       child: const Icon(
                         Icons.chevron_right_rounded,
@@ -477,11 +478,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F8F2),
+        color: isDark ? const Color(0xFF111811) : const Color(0xFFF1F8F2),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
+              ? const Color(0xFF2A3A2E)
               : _kBorder,
         ),
       ),
@@ -585,19 +586,19 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.08)
-            : Colors.white,
+            ? const Color(0xFF1A2E1F)
+            : const Color(0xFFE8F2EA),
         shape: BoxShape.circle,
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.12)
-              : Colors.transparent,
+              ? const Color(0xFF2D6A4F).withValues(alpha: 0.3)
+              : _kGreen.withValues(alpha: 0.15),
         ),
       ),
       child: IconButton(
         icon: Icon(
           isDark ? Icons.wb_sunny_outlined : Icons.nights_stay_outlined,
-          color: isDark ? Colors.amber : _kGreen,
+          color: isDark ? const Color(0xFF8CD4A0) : const Color(0xFF1B4332),
           size: 20,
         ),
         onPressed: () => themeProvider.setThemeMode(

@@ -73,7 +73,7 @@ class _SimplePostInputState extends State<_SimplePostInput> {
                 hintText: lp.getText('post_text_hint'),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                 filled: true,
-                fillColor: context.isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                fillColor: context.isDark ? const Color(0xFF111811) : Colors.black.withValues(alpha: 0.05),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               maxLines: null,
@@ -114,10 +114,7 @@ class ForumView extends StatelessWidget {
       child: Scaffold(
         backgroundColor: context.appBackground,
         appBar: AppBar(
-          title: Text(lp.getText('community'), style: TextStyle(color: context.appTextPrimary)),
-          backgroundColor: context.appCard,
-          centerTitle: true,
-          elevation: 0,
+          title: Text(lp.getText('community')),
           bottom: TabBar(
             labelColor: AppColors.primary,
             unselectedLabelColor: context.appTextSecondary,

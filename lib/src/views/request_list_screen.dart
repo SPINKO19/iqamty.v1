@@ -6,6 +6,7 @@ import '../models/types.dart';
 import '../services/firestore_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
+import '../core/theme/colors.dart';
 
 class RequestListScreen extends StatefulWidget {
   final String category;
@@ -45,8 +46,10 @@ class _RequestListScreenState extends State<RequestListScreen> {
     const kMediumGreen = Color(0xFF2D6A4F);
     const kLightMint = Color(0xFFD8F3DC);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: kLightMint,
+      backgroundColor: isDark ? context.appBackground : kLightMint,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -61,15 +64,11 @@ class _RequestListScreenState extends State<RequestListScreen> {
         title: Text(
           _getCategoryTitle(widget.category, lp),
           style: GoogleFonts.inter(
-            color: Colors.white,
+            color: isDark ? context.appCard : Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
         ),
-        backgroundColor: const Color(0xFF2D6A4F),
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        centerTitle: true,
       ),
       body: Column(
         children: [
@@ -143,6 +142,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
   }
 
   Widget _buildFilterChip(String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSelected = _selectedFilter == label;
     return Expanded(
       child: GestureDetector(
@@ -150,7 +150,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF2D6A4F) : Colors.white,
+            color: isSelected ? const Color(0xFF2D6A4F) : (isDark ? context.appCard : Colors.white),
             borderRadius: BorderRadius.circular(25),
             border: Border.all(
               color: isSelected ? Colors.transparent : Colors.grey.withValues(alpha: 0.2),
@@ -160,7 +160,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
             child: Text(
               label,
               style: GoogleFonts.inter(
-                color: isSelected ? Colors.white : Colors.black87,
+                color: isSelected ? Colors.white : (isDark ? AppColors.textPrimaryDark : Colors.black87),
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
@@ -179,10 +179,11 @@ class _RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? context.appCard : Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -233,7 +234,7 @@ class _RequestCard extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: isDark ? AppColors.textPrimaryDark : Colors.black,
                         ),
                       ),
                     ],
