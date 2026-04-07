@@ -2,96 +2,125 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+const _kGreen = Color(0xFF2D6A4F);
 
 class WorkerDashboard extends StatelessWidget {
   const WorkerDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final isDark = context.isDark;
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: Text(lp.getText('worker_space')),
-        centerTitle: true,
+        elevation: 0,
+        backgroundColor: _kGreen,
+        foregroundColor: Colors.white,
+        title: Text(
+          lp.getText('worker_space'),
+          style: GoogleFonts.inter(fontWeight: FontWeight.w900, letterSpacing: -0.5),
+        ),
+        actions: [
+          IconButton(onPressed: () {}, icon: const Icon(Icons.notifications_none_rounded, color: Colors.white)),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildWorkerStats(lp),
+            _buildWorkerStats(context, lp),
             const SizedBox(height: 32),
-            Text(lp.getText('my_assigned_tasks'), style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              lp.getText('my_assigned_tasks'),
+              style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5),
+            ),
             const SizedBox(height: 16),
-            _buildTaskCard('Réparation Plomberie', 'Bloc J - Chambre 414', lp.getText('urgent_status'), Colors.red),
-            const SizedBox(height: 12),
-            _buildTaskCard('Vérification Électricité', 'Bloc A - Couloir 2', lp.getText('new_status'), const Color(0xFF2D6A4F)),
+            _buildTaskCard(context, 'Réparation Plomberie', 'Bloc J - Chambre 414', lp.getText('urgent_status'), Colors.red),
+            const SizedBox(height: 16),
+            _buildTaskCard(context, 'Vérification Électricité', 'Bloc A - Couloir 2', lp.getText('new_status'), _kGreen),
+            const SizedBox(height: 100),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWorkerStats(LanguageProvider lp) {
+  Widget _buildWorkerStats(BuildContext context, LanguageProvider lp) {
     return Row(
       children: [
-        _buildStatItem(lp.getText('to_do'), '5', Colors.orange),
+        _buildStatItem(context, lp.getText('to_do'), '5', const Color(0xFFF4A261)),
         const SizedBox(width: 12),
-        _buildStatItem(lp.getText('done_tasks'), '12', Colors.green),
+        _buildStatItem(context, lp.getText('done_tasks'), '12', const Color(0xFF10B981)),
       ],
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color) {
+  Widget _buildStatItem(BuildContext context, String label, String value, Color color) {
+    final isDark = context.isDark;
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          color: context.appCard,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: isDark ? null : [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
+          ],
         ),
         child: Column(
           children: [
-            Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
-            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+            Text(value, style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w900, color: color, letterSpacing: -1)),
+            const SizedBox(height: 4),
+            Text(label, style: GoogleFonts.inter(color: context.appTextSecondary, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.5)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTaskCard(String title, String location, String status, Color statusColor) {
+  Widget _buildTaskCard(BuildContext context, String title, String location, String status, Color statusColor) {
+    final isDark = context.isDark;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderColor),
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: isDark ? null : [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: AppColors.backgroundLight, borderRadius: BorderRadius.circular(12)),
-            child: Icon(Icons.assignment_outlined, color: AppColors.primary),
+            decoration: BoxDecoration(color: _kGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.assignment_outlined, color: _kGreen, size: 28),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(location, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: context.appTextPrimary, letterSpacing: -0.3)),
+                const SizedBox(height: 4),
+                Text(location, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-            child: Text(status, style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold)),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+            child: Text(
+              status,
+              style: GoogleFonts.inter(color: statusColor, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+            ),
           ),
         ],
       ),

@@ -4,6 +4,9 @@ import '../providers/language_provider.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+const _kGreen = Color(0xFF2D6A4F);
 
 class AdminComplaintsView extends StatelessWidget {
   const AdminComplaintsView({super.key});
@@ -14,17 +17,18 @@ class AdminComplaintsView extends StatelessWidget {
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: context.appBackground,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: _kGreen,
+        foregroundColor: Colors.white,
         title: Text(
           lp.getText('complaints_management'),
-          style: TextStyle(color: context.appTextPrimary, fontWeight: FontWeight.bold),
+          style: GoogleFonts.inter(fontWeight: FontWeight.w900, letterSpacing: -0.5),
         ),
         actions: [
-          IconButton(onPressed: () {}, icon: Icon(Icons.filter_list_rounded, color: context.appTextPrimary)),
-          IconButton(onPressed: () {}, icon: Icon(Icons.search_rounded, color: context.appTextPrimary)),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.filter_list_rounded, color: Colors.white)),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.search_rounded, color: Colors.white)),
           const SizedBox(width: 8),
         ],
       ),
@@ -48,7 +52,8 @@ class AdminComplaintsView extends StatelessWidget {
 
   Widget _buildMockComplaints(BuildContext context, LanguageProvider lp) {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       children: [
         _AdminComplaintCard(
           complaint: Complaint(
@@ -105,24 +110,23 @@ class _AdminComplaintCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.appCard,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: context.appBorder),
         boxShadow: isDark ? null : [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: priorityColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -131,27 +135,27 @@ class _AdminComplaintCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         _getPriorityLabel(complaint.priority, lp),
-                        style: TextStyle(color: priorityColor, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                        style: GoogleFonts.inter(color: priorityColor, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                       ),
                     ],
                   ),
                 ),
                 Text(
                   'ID: ${complaint.userId}',
-                  style: TextStyle(color: context.appTextSecondary, fontSize: 12, fontFamily: 'Courier', fontWeight: FontWeight.w600),
+                  style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(complaint.title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+                Text(complaint.title, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.3)),
                 const SizedBox(height: 8),
-                Text(complaint.description, style: TextStyle(fontSize: 14, color: context.appTextSecondary, height: 1.5)),
-                const SizedBox(height: 16),
+                Text(complaint.description, style: GoogleFonts.inter(fontSize: 14, color: context.appTextSecondary, height: 1.5, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 20),
                 Row(
                   children: [
                     _buildMetaInfo(context, Icons.inventory_2_outlined, complaint.category),
@@ -162,21 +166,21 @@ class _AdminComplaintCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Divider(height: 1, color: context.appBorder),
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Expanded(
                   child: TextButton.icon(
                     onPressed: () {},
                     icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
-                    label: Text(lp.getText('assign')),
+                    label: Text(lp.getText('assign'), style: const TextStyle(fontWeight: FontWeight.bold)),
                     style: TextButton.styleFrom(
                       foregroundColor: context.appTextPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                   ),
                 ),
@@ -185,13 +189,13 @@ class _AdminComplaintCard extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () {},
                     icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
-                    label: Text(lp.getText('resolve')),
+                    label: Text(lp.getText('resolve'), style: const TextStyle(fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: _kGreen,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                   ),
                 ),
@@ -206,9 +210,9 @@ class _AdminComplaintCard extends StatelessWidget {
   Widget _buildMetaInfo(BuildContext context, IconData icon, String label) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: context.appTextSecondary),
+        Icon(icon, size: 16, color: context.appTextSecondary.withValues(alpha: 0.7)),
         const SizedBox(width: 6),
-        Text(label, style: TextStyle(color: context.appTextSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
+        Text(label, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
       ],
     );
   }

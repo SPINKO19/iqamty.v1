@@ -23,6 +23,7 @@ import '../views/request_list_screen.dart';
 import '../views/create_request_screen.dart';
 import '../views/register_screen.dart';
 import '../views/placeholder_screen.dart';
+import '../views/admin_placeholder_view.dart';
 import '../models/types.dart';
 
 class AppRouter {
@@ -134,11 +135,11 @@ class AppRouter {
             // Admin Routes
             GoRoute(path: '/admin', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDashboard())),
             GoRoute(path: '/admin/complaints', pageBuilder: (context, state) => const NoTransitionPage(child: AdminComplaintsView())),
-            GoRoute(path: '/admin/requests', pageBuilder: (context, state) => const NoTransitionPage(child: PlaceholderScreen(title: 'Admin Requests'))),
+            GoRoute(path: '/admin/requests', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Admin Requests'))),
             GoRoute(path: '/admin/users', pageBuilder: (context, state) => const NoTransitionPage(child: AdminUsersView())),
             GoRoute(path: '/admin/announcements', pageBuilder: (context, state) => const NoTransitionPage(child: AdminAnnouncementsView())),
-            GoRoute(path: '/admin/resources', pageBuilder: (context, state) => const NoTransitionPage(child: PlaceholderScreen(title: 'Config Resources'))),
-            GoRoute(path: '/admin/dining', pageBuilder: (context, state) => const NoTransitionPage(child: PlaceholderScreen(title: 'Config Dining'))),
+            GoRoute(path: '/admin/resources', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Resources'))),
+            GoRoute(path: '/admin/dining', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Dining Config'))),
             
             // Worker Routes
             GoRoute(path: '/worker-dashboard', pageBuilder: (context, state) => const NoTransitionPage(child: WorkerDashboard())),

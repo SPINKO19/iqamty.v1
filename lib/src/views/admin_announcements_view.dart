@@ -4,6 +4,8 @@ import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+const _kGreen = Color(0xFF2D6A4F);
+
 class AdminAnnouncementsView extends StatelessWidget {
   const AdminAnnouncementsView({super.key});
 
@@ -13,30 +15,32 @@ class AdminAnnouncementsView extends StatelessWidget {
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: context.appBackground,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: _kGreen,
+        foregroundColor: Colors.white,
         title: Text(
           lp.getText('announcements_comm'),
-          style: GoogleFonts.inter(color: context.appTextPrimary, fontWeight: FontWeight.bold),
+          style: GoogleFonts.inter(fontWeight: FontWeight.w900, letterSpacing: -0.5),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
+        physics: const BouncingScrollPhysics(),
         children: [
-          _buildActionCard(context, lp.getText('create_announcement'), lp.getText('communicate_residents'), Icons.campaign_rounded, AppColors.primary),
+          _buildActionCard(context, lp.getText('create_announcement'), lp.getText('communicate_residents'), Icons.campaign_rounded, _kGreen),
           const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 lp.getText('message_history'),
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: context.appTextPrimary),
+                style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 18, color: context.appTextPrimary, letterSpacing: -0.5),
               ),
               Text(
                 lp.getText('view_all'),
-                style: GoogleFonts.inter(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600),
+                style: GoogleFonts.inter(fontSize: 13, color: _kGreen, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -50,10 +54,11 @@ class AdminAnnouncementsView extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
-        label: Text(lp.getText('broadcast'), style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        label: Text(lp.getText('broadcast'), style: GoogleFonts.inter(fontWeight: FontWeight.w900, fontSize: 15)),
         icon: const Icon(Icons.send_rounded),
-        backgroundColor: AppColors.primary,
-        elevation: 4,
+        backgroundColor: _kGreen,
+        foregroundColor: Colors.white,
+        elevation: 6,
       ),
     );
   }
@@ -62,9 +67,15 @@ class AdminAnnouncementsView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.8)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        gradient: LinearGradient(
+          colors: [color, color.withValues(alpha: 0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [
+          BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 20, offset: const Offset(0, 10)),
+        ],
       ),
       child: Row(
         children: [
@@ -72,16 +83,16 @@ class AdminAnnouncementsView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: GoogleFonts.inter(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(title, style: GoogleFonts.inter(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
                 const SizedBox(height: 8),
-                Text(subtitle, style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8), fontSize: 13)),
+                Text(subtitle, style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8), fontSize: 13, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
           const SizedBox(width: 16),
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), shape: BoxShape.circle),
             child: Icon(icon, color: Colors.white, size: 32),
           ),
         ],
@@ -90,13 +101,15 @@ class AdminAnnouncementsView extends StatelessWidget {
   }
 
   Widget _buildModernAnnouncementCard(BuildContext context, LanguageProvider lp, String title, String body, String time, bool isUrgent) {
+    final isDark = context.isDark;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: context.appCard,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.appBorder),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: isDark ? null : [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,27 +120,27 @@ class AdminAnnouncementsView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isUrgent ? Colors.red.withValues(alpha: 0.1) : AppColors.primary.withValues(alpha: 0.1),
+                  color: isUrgent ? Colors.red.withValues(alpha: 0.1) : _kGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   isUrgent ? lp.getText('urgent') : lp.getText('info'),
                   style: GoogleFonts.inter(
-                    color: isUrgent ? Colors.red : AppColors.primary,
+                    color: isUrgent ? Colors.red : _kGreen,
                     fontSize: 10,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w900,
                     letterSpacing: 1,
                   ),
                 ),
               ),
-              Text(time, style: GoogleFonts.inter(color: context.appTextSecondary.withValues(alpha: 0.6), fontSize: 11)),
+              Text(time, style: GoogleFonts.inter(color: context.appTextSecondary.withValues(alpha: 0.6), fontSize: 11, fontWeight: FontWeight.w600)),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: context.appTextPrimary)),
-          const SizedBox(height: 6),
-          Text(body, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13, height: 1.5)),
           const SizedBox(height: 16),
+          Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 17, color: context.appTextPrimary, letterSpacing: -0.3)),
+          const SizedBox(height: 8),
+          Text(body, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13, height: 1.5, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 20),
           Row(
             children: [
               _buildInteractionStat(Icons.visibility_outlined, '1.2k'),
@@ -145,9 +158,9 @@ class AdminAnnouncementsView extends StatelessWidget {
   Widget _buildInteractionStat(IconData icon, String count) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey),
-        const SizedBox(width: 4),
-        Text(count, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
+        Icon(icon, size: 16, color: Colors.grey[500]),
+        const SizedBox(width: 6),
+        Text(count, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500], fontWeight: FontWeight.bold)),
       ],
     );
   }
