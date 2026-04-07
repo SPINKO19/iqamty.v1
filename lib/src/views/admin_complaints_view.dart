@@ -32,66 +32,85 @@ class AdminComplaintsView extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: StreamBuilder<List<Complaint>>(
-        stream: Stream.value([]),
-        builder: (context, snapshot) {
-          final complaints = snapshot.data ?? [];
-          if (complaints.isEmpty) {
-            return _buildMockComplaints(context, lp);
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(24),
-            itemCount: complaints.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 20),
-            itemBuilder: (context, index) => _AdminComplaintCard(complaint: complaints[index]),
-          );
-        },
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 1400),
+          child: StreamBuilder<List<Complaint>>(
+            stream: Stream.value([]),
+            builder: (context, snapshot) {
+              final complaints = snapshot.data ?? [];
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final isDesktop = constraints.maxWidth > 900;
+                  final itemCount = complaints.isEmpty ? 3 : complaints.length;
+                  
+                  if (isDesktop) {
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(24),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 24,
+                        mainAxisSpacing: 24,
+                        childAspectRatio: 1.6,
+                      ),
+                      itemCount: itemCount,
+                      itemBuilder: (context, index) {
+                        if (complaints.isEmpty) return _getMockCard(index);
+                        return _AdminComplaintCard(complaint: complaints[index]);
+                      },
+                    );
+                  }
+                  
+                  return ListView.separated(
+                    padding: const EdgeInsets.all(24),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: itemCount,
+                    separatorBuilder: (context, index) => const SizedBox(height: 20),
+                    itemBuilder: (context, index) {
+                      if (complaints.isEmpty) return _getMockCard(index);
+                      return _AdminComplaintCard(complaint: complaints[index]);
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildMockComplaints(BuildContext context, LanguageProvider lp) {
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      children: [
-        _AdminComplaintCard(
-          complaint: Complaint(
-            userId: '202433294616',
-            title: 'Fuite d\'eau majeure',
-            description: 'Inondation importante dans la salle de bain du Bloc J, chambre 414.',
-            category: 'Plomberie',
-            priority: Priority.high,
-            status: Status.received,
-            timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-          ),
-        ),
-        const SizedBox(height: 20),
-        _AdminComplaintCard(
-          complaint: Complaint(
-            userId: '202433294000',
-            title: 'Problème d\'éclairage',
-            description: 'Ampoule grillée et court-circuit suspecté dans la chambre 201 du Bloc A.',
-            category: 'Électricité',
-            priority: Priority.medium,
-            status: Status.inProgress,
-            timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-          ),
-        ),
-        const SizedBox(height: 20),
-        _AdminComplaintCard(
-          complaint: Complaint(
-            userId: '202433294123',
-            title: 'Serrure bloquée',
-            description: 'La clé ne tourne plus dans la serrure de la porte principale du Bloc B.',
-            category: 'Sécurité',
-            priority: Priority.low,
-            status: Status.received,
-            timestamp: DateTime.now().subtract(const Duration(days: 1)),
-          ),
-        ),
-      ],
-    );
+  Widget _getMockCard(int index) {
+    final mocks = [
+      Complaint(
+        userId: '202433294616',
+        title: 'Fuite d\'eau majeure',
+        description: 'Inondation importante dans la salle de bain du Bloc J, chambre 414.',
+        category: 'Plomberie',
+        priority: Priority.high,
+        status: Status.received,
+        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+      ),
+      Complaint(
+        userId: '202433294000',
+        title: 'Problème d\'éclairage',
+        description: 'Ampoule grillée et court-circuit suspecté dans la chambre 201 du Bloc A.',
+        category: 'Électricité',
+        priority: Priority.medium,
+        status: Status.inProgress,
+        timestamp: DateTime.now().subtract(const Duration(hours: 5)),
+      ),
+      Complaint(
+        userId: '202433294123',
+        title: 'Serrure bloquée',
+        description: 'La clé ne tourne plus dans la serrure de la porte principale du Bloc B.',
+        category: 'Sécurité',
+        priority: Priority.low,
+        status: Status.received,
+        timestamp: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+    ];
+    return _AdminComplaintCard(complaint: mocks[index % mocks.length]);
   }
 }
 

@@ -29,60 +29,86 @@ class AdminUsersView extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-            child: Row(
-              children: [
-                _buildSmallStat(context, lp.getText('total'), '1,240', _kGreen),
-                const SizedBox(width: 12),
-                _buildSmallStat(context, lp.getText('active'), '1,180', const Color(0xFF10B981)),
-                const SizedBox(width: 12),
-                _buildSmallStat(context, lp.getText('blocked'), '60', const Color(0xFFEF4444)),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.appCard,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: isDark ? null : [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
-                ],
-              ),
-              child: TextField(
-                style: GoogleFonts.inter(color: context.appTextPrimary, fontWeight: FontWeight.w500),
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search_rounded, color: context.appTextSecondary, size: 20),
-                  hintText: lp.getText('search_student'),
-                  hintStyle: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 14, fontWeight: FontWeight.w500),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                child: Row(
+                  children: [
+                    _buildSmallStat(context, lp.getText('total'), '1,240', _kGreen),
+                    const SizedBox(width: 12),
+                    _buildSmallStat(context, lp.getText('active'), '1,180', const Color(0xFF10B981)),
+                    const SizedBox(width: 12),
+                    _buildSmallStat(context, lp.getText('blocked'), '60', const Color(0xFFEF4444)),
+                  ],
                 ),
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: context.appCard,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: isDark ? null : [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
+                    ],
+                  ),
+                  child: TextField(
+                    style: GoogleFonts.inter(color: context.appTextPrimary, fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.search_rounded, color: context.appTextSecondary, size: 20),
+                      hintText: lp.getText('search_student'),
+                      hintStyle: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 14, fontWeight: FontWeight.w500),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isDesktop = constraints.maxWidth > 800;
+                    if (isDesktop) {
+                      return GridView.count(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 3.5,
+                        physics: const BouncingScrollPhysics(),
+                        children: [
+                          _buildModernUserCard(context, lp, 'KHOUDIR Lynda', '202433294616', 'Bloc J • Room 414', false),
+                          _buildModernUserCard(context, lp, 'BOUZIDI Ahmed', '202433294001', 'Bloc A • Room 102', true),
+                          _buildModernUserCard(context, lp, 'MEHDI Sofiane', '202433294123', 'Bloc B • Room 205', false),
+                          _buildModernUserCard(context, lp, 'ZAHIRI Amine', '202433294888', 'Bloc C • Room 012', false),
+                        ],
+                      );
+                    }
+                    return ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      physics: const BouncingScrollPhysics(),
+                      children: [
+                        _buildModernUserCard(context, lp, 'KHOUDIR Lynda', '202433294616', 'Bloc J • Room 414', false),
+                        const SizedBox(height: 16),
+                        _buildModernUserCard(context, lp, 'BOUZIDI Ahmed', '202433294001', 'Bloc A • Room 102', true),
+                        const SizedBox(height: 16),
+                        _buildModernUserCard(context, lp, 'MEHDI Sofiane', '202433294123', 'Bloc B • Room 205', false),
+                        const SizedBox(height: 16),
+                        _buildModernUserCard(context, lp, 'ZAHIRI Amine', '202433294888', 'Bloc C • Room 012', false),
+                        const SizedBox(height: 100),
+                      ],
+                    );
+                  }
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              physics: const BouncingScrollPhysics(),
-              children: [
-                _buildModernUserCard(context, lp, 'KHOUDIR Lynda', '202433294616', 'Bloc J • Room 414', false),
-                const SizedBox(height: 16),
-                _buildModernUserCard(context, lp, 'BOUZIDI Ahmed', '202433294001', 'Bloc A • Room 102', true),
-                const SizedBox(height: 16),
-                _buildModernUserCard(context, lp, 'MEHDI Sofiane', '202433294123', 'Bloc B • Room 205', false),
-                const SizedBox(height: 16),
-                _buildModernUserCard(context, lp, 'ZAHIRI Amine', '202433294888', 'Bloc C • Room 012', false),
-                const SizedBox(height: 100),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

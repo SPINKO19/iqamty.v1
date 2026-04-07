@@ -24,33 +24,94 @@ class AdminAnnouncementsView extends StatelessWidget {
           lp.getText('announcements_comm'),
           style: GoogleFonts.inter(fontWeight: FontWeight.w900, letterSpacing: -0.5),
         ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        physics: const BouncingScrollPhysics(),
-        children: [
-          _buildActionCard(context, lp.getText('create_announcement'), lp.getText('communicate_residents'), Icons.campaign_rounded, _kGreen),
-          const SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                lp.getText('message_history'),
-                style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 18, color: context.appTextPrimary, letterSpacing: -0.5),
-              ),
-              Text(
-                lp.getText('view_all'),
-                style: GoogleFonts.inter(fontSize: 13, color: _kGreen, fontWeight: FontWeight.bold),
-              ),
-            ],
+        actions: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // We check against the screen width here
+              final screenWidth = MediaQuery.of(context).size.width;
+              if (screenWidth > 800) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: ElevatedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(Icons.send_rounded, size: 18),
+                    label: Text(lp.getText('broadcast'), style: const TextStyle(fontWeight: FontWeight.w900)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
-          const SizedBox(height: 16),
-          _buildModernAnnouncementCard(context, lp, 'Coupure d\'électricité planifiée', 'Une maintenance électrique aura lieu demain de 14h à 16h au Bloc J.', 'Hier, 14:30', true),
-          const SizedBox(height: 16),
-          _buildModernAnnouncementCard(context, lp, 'Menu Spécial Week-end', 'Le menu de ce samedi sera composé de spécialités traditionnelles.', 'Lundi, 10:00', false),
-          const SizedBox(height: 16),
-          _buildModernAnnouncementCard(context, lp, 'Rappel: Paiement de loyer', 'N\'oubliez pas de régulariser votre situation avant le 5 du mois.', '01 Mars, 09:00', false),
+          const SizedBox(width: 8),
         ],
+      ),
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isDesktop = constraints.maxWidth > 800;
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildActionCard(context, lp.getText('create_announcement'), lp.getText('communicate_residents'), Icons.campaign_rounded, _kGreen),
+                    const SizedBox(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          lp.getText('message_history'),
+                          style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 18, color: context.appTextPrimary, letterSpacing: -0.5),
+                        ),
+                        TextButton(
+                          onPressed: () {},
+                          child: Text(
+                            lp.getText('view_all'),
+                            style: GoogleFonts.inter(fontSize: 13, color: _kGreen, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (isDesktop)
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 24,
+                        mainAxisSpacing: 24,
+                        childAspectRatio: 1.5,
+                        children: [
+                          _buildModernAnnouncementCard(context, lp, 'Coupure d\'électricité planifiée', 'Une maintenance électrique aura lieu demain de 14h à 16h au Bloc J.', 'Hier, 14:30', true),
+                          _buildModernAnnouncementCard(context, lp, 'Menu Spécial Week-end', 'Le menu de ce samedi sera composé de spécialités traditionnelles.', 'Lundi, 10:00', false),
+                          _buildModernAnnouncementCard(context, lp, 'Rappel: Paiement de loyer', 'N\'oubliez pas de régulariser votre situation avant le 5 du mois.', '01 Mars, 09:00', false),
+                        ],
+                      )
+                    else
+                      Column(
+                        children: [
+                          _buildModernAnnouncementCard(context, lp, 'Coupure d\'électricité planifiée', 'Une maintenance électrique aura lieu demain de 14h à 16h au Bloc J.', 'Hier, 14:30', true),
+                          const SizedBox(height: 16),
+                          _buildModernAnnouncementCard(context, lp, 'Menu Spécial Week-end', 'Le menu de ce samedi sera composé de spécialités traditionnelles.', 'Lundi, 10:00', false),
+                          const SizedBox(height: 16),
+                          _buildModernAnnouncementCard(context, lp, 'Rappel: Paiement de loyer', 'N\'oubliez pas de régulariser votre situation avant le 5 du mois.', '01 Mars, 09:00', false),
+                        ],
+                      ),
+                  ],
+                ),
+              );
+            }
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},

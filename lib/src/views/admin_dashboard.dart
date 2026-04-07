@@ -17,7 +17,6 @@ class AdminDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeProvider>().isDarkMode;
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
@@ -27,33 +26,53 @@ class AdminDashboard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildNewHeader(context, lp),
+            // Full-width Header with centered content
+            Container(
+              width: double.infinity,
+              color: _kHeaderGreen,
+              child: Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 1400),
+                  child: _buildHeader(context, lp),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
-            _buildStatsSection(context, lp),
-            const SizedBox(height: 32),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  if (constraints.maxWidth > 900) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(flex: 3, child: _buildAnalyticsSection(context, lp)),
-                        const SizedBox(width: 24),
-                        Expanded(flex: 2, child: _buildQuickManagementGrid(context, lp)),
-                      ],
-                    );
-                  } else {
-                    return Column(
-                      children: [
-                        _buildAnalyticsSection(context, lp),
-                        const SizedBox(height: 32),
-                        _buildQuickManagementGrid(context, lp),
-                      ],
-                    );
-                  }
-                },
+            // Centered Content
+            Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 1400),
+                child: Column(
+                  children: [
+                    _buildStatsSection(context, lp),
+                    const SizedBox(height: 32),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (constraints.maxWidth > 900) {
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(flex: 3, child: _buildAnalyticsSection(context, lp)),
+                                const SizedBox(width: 24),
+                                Expanded(flex: 2, child: _buildQuickManagementGrid(context, lp)),
+                              ],
+                            );
+                          } else {
+                            return Column(
+                              children: [
+                                _buildAnalyticsSection(context, lp),
+                                const SizedBox(height: 32),
+                                _buildQuickManagementGrid(context, lp),
+                              ],
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 60),
@@ -63,91 +82,97 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildNewHeader(BuildContext context, LanguageProvider lp) {
-    final auth = context.watch<AuthProvider>();
-    final isDark = context.isDark;
-    
+  Widget _buildHeader(BuildContext context, LanguageProvider lp) {
     return Container(
-      width: double.infinity,
-      color: _kHeaderGreen,
-      padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(24, 48, 24, 40),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          _buildRoundedIconButton(
+            context,
+            icon: Icons.menu_rounded,
+            onTap: () => Scaffold.of(context).openDrawer(),
+            bgColor: Colors.white.withValues(alpha: 0.1),
+            iconColor: Colors.white,
+          ),
+          const SizedBox(width: 24),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${lp.getText('hello')}, Administrateur',
+                  style: GoogleFonts.inter(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.8),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  lp.getText('manage_residence_one_place'),
+                  style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8), fontSize: 13, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          // Desktop Header Actions
           Row(
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.menu_rounded, color: Colors.white),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
+              _buildRoundedIconButton(
+                context,
+                icon: Icons.notifications_none_rounded,
+                onTap: () {},
+                bgColor: Colors.white.withValues(alpha: 0.1),
+                iconColor: Colors.white,
               ),
-              const Expanded(
+              const SizedBox(width: 12),
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                  ],
+                ),
                 child: Center(
                   child: Text(
-                    'IQAMTY',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.5,
-                    ),
+                    'AD',
+                    style: GoogleFonts.inter(color: _kHeaderGreen, fontWeight: FontWeight.w800, fontSize: 16),
                   ),
                 ),
               ),
-              IconButton(
-                onPressed: () => _showSettings(context),
-                icon: const Icon(Icons.settings_outlined, color: Colors.white),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
-                  color: Colors.white.withValues(alpha: 0.2),
-                ),
-                alignment: Alignment.center,
-                child: const Text(
-                  'AD',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ),
             ],
-          ),
-          const SizedBox(height: 32),
-          Text(
-            lp.getText('hello_admin'),
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            lp.getText('manage_residence'),
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildRoundedIconButton(BuildContext context, {required IconData icon, required VoidCallback onTap, Color? bgColor, Color? iconColor}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: bgColor ?? context.appCard,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: (iconColor ?? context.appTextPrimary).withValues(alpha: 0.1)),
+          ),
+          child: Icon(icon, color: iconColor ?? context.appTextPrimary, size: 22),
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatsSection(BuildContext context, LanguageProvider lp) {
     final isDark = context.isDark;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: [
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth > 900;
+        final content = [
           _buildInfoStatCard(
             context,
             title: lp.getText('total_students'),
@@ -158,7 +183,7 @@ class AdminDashboard extends StatelessWidget {
             iconColor: Colors.white,
             onTap: () => context.go('/admin/users'),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           _buildInfoStatCard(
             context,
             title: lp.getText('complaints_handled'),
@@ -169,7 +194,7 @@ class AdminDashboard extends StatelessWidget {
             iconColor: _kGreen,
             onTap: () => context.go('/admin/complaints'),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           _buildInfoStatCard(
             context,
             title: lp.getText('free_rooms'),
@@ -180,8 +205,25 @@ class AdminDashboard extends StatelessWidget {
             iconColor: _kOrange,
             onTap: () => context.go('/admin/resources'),
           ),
-        ],
-      ),
+        ];
+
+        if (isDesktop) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: content.map((w) => w is SizedBox ? w : Expanded(child: w)).toList(),
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          physics: const BouncingScrollPhysics(),
+          child: Row(children: content),
+        );
+      },
     );
   }
 
@@ -195,55 +237,53 @@ class AdminDashboard extends StatelessWidget {
     required Color iconColor,
     required VoidCallback onTap,
   }) {
-    final isDark = context.isDark;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 140,
-        height: 140,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: isDark || bgColor != Colors.white ? [] : [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Icon(icon, color: iconColor, size: 28),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: textColor.withValues(alpha: 0.7),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          width: 150,
+          height: 150,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
+                child: Icon(icon, color: iconColor, size: 24),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(color: textColor.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w600),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: GoogleFonts.inter(
-                    color: textColor,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: GoogleFonts.inter(color: textColor, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-
 
   Widget _buildAnalyticsSection(BuildContext context, LanguageProvider lp) {
     final isDark = context.isDark;
@@ -252,6 +292,7 @@ class AdminDashboard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.appCard,
         borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.5)),
         boxShadow: isDark ? null : [
           BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, 8)),
         ],
@@ -263,7 +304,7 @@ class AdminDashboard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(lp.getText('task_progress'), style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-              Icon(Icons.more_horiz, color: context.appTextSecondary),
+              _buildRoundedIconButton(context, icon: Icons.more_horiz_rounded, onTap: () {}),
             ],
           ),
           const SizedBox(height: 40),
@@ -306,222 +347,100 @@ class AdminDashboard extends StatelessWidget {
   Widget _buildLegendItem(String label, Color color) {
     return Row(
       children: [
-        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+        Text(label, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
       ],
     );
   }
 
   Widget _buildQuickManagementGrid(BuildContext context, LanguageProvider lp) {
-    final isDark = context.isDark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(lp.getText('quick_management'), style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5)),
-        const SizedBox(height: 16),
+        Text(
+          lp.getText('quick_management'),
+          style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5),
+        ),
+        const SizedBox(height: 20),
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
           childAspectRatio: 1.1,
           children: [
-            _buildAdminQuickActionCard(
-              title: lp.getText('manage_students'),
-              subtitle: lp.getText('registered_users'),
-              icon: Icons.people_outline_rounded,
-              color: _kGreen,
-              isDark: isDark,
-              onTap: () => context.go('/admin/users'),
-            ),
-            _buildAdminQuickActionCard(
-              title: lp.getText('manage_complaints'),
-              subtitle: lp.getText('pending_complaints'),
-              icon: Icons.report_problem_outlined,
-              color: const Color(0xFFEF4444),
-              isDark: isDark,
-              onTap: () => context.go('/admin/complaints'),
-            ),
-            _buildAdminQuickActionCard(
-              title: lp.getText('meal_config'),
-              subtitle: lp.getText('modify_weekly_menu'),
-              icon: Icons.restaurant_menu_rounded,
-              color: const Color(0xFFEF4444),
-              isDark: isDark,
-              onTap: () => context.go('/admin/dining'),
-            ),
-            _buildAdminQuickActionCard(
-              title: lp.getText('global_announcements'),
-              subtitle: lp.getText('broadcast_message'),
-              icon: Icons.campaign_outlined,
-              color: const Color(0xFF8B5CF6),
-              isDark: isDark,
-              onTap: () => context.go('/admin/announcements'),
-            ),
+            _buildActionTile(context, lp.getText('manage_students'), lp.getText('registered_users'), Icons.people_alt_rounded, const Color(0xFF10B981), () => context.go('/admin/users')),
+            _buildActionTile(context, lp.getText('announcements'), lp.getText('broadcast_news'), Icons.campaign_rounded, const Color(0xFF3B82F6), () => context.go('/admin/announcements')),
+            _buildActionTile(context, lp.getText('dining_menu'), lp.getText('update_cafeteria'), Icons.restaurant_rounded, const Color(0xFFF59E0B), () => context.go('/admin/dining-config')),
+            _buildActionTile(context, lp.getText('maintenance'), lp.getText('resource_requests'), Icons.handyman_rounded, const Color(0xFF6366F1), () => context.go('/admin/requests')),
           ],
         ),
         const SizedBox(height: 24),
-        InkWell(
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(lp.getText('feature_coming_soon'))),
-            );
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [_kGreen, Color(0xFF1E3A2F)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: isDark ? [] : [
-                BoxShadow(color: _kGreen.withValues(alpha: 0.2), blurRadius: 12, offset: const Offset(0, 4)),
-              ],
-            ),
-            alignment: Alignment.center,
-            child: Text(lp.getText('add_task'), style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+        // Desktop Primary Action Button
+        ElevatedButton(
+          onPressed: () {},
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _kGreen,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            minimumSize: const Size(double.infinity, 60),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 0,
           ),
+          child: Text(lp.getText('add_task'), style: GoogleFonts.inter(fontWeight: FontWeight.w900, fontSize: 16)),
         ),
       ],
     );
   }
 
-  Widget _buildAdminQuickActionCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    required bool isDark,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
+  Widget _buildActionTile(BuildContext context, String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+    final isDark = context.isDark;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: isDark ? null : [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                  child: Icon(icon, color: color, size: 24),
-                ),
-                const Spacer(),
-                Text(
-                  title,
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1A1A2E), letterSpacing: -0.3),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(fontSize: 10, color: isDark ? Colors.white54 : const Color(0xFF6B7280), fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
+        hoverColor: color.withValues(alpha: 0.05),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: context.appCard,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: context.appBorder.withValues(alpha: 0.5)),
+            boxShadow: isDark ? null : [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
           ),
-        ),
-      ),
-    );
-  }
-
-
-  void _showSettings(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: context.appCard,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) {
-        final themeProvider = context.watch<ThemeProvider>();
-        final isDark = themeProvider.isDarkMode;
-        final lp2 = context.watch<LanguageProvider>();
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(lp2.getText('admin_settings'), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.appTextPrimary)),
-              const SizedBox(height: 24),
-              ListTile(
-                leading: Icon(isDark ? Icons.nights_stay : Icons.wb_sunny, color: AppColors.primary),
-                title: Text(lp2.getText('dark_mode_admin'), style: TextStyle(color: context.appTextPrimary)),
-                trailing: Switch(value: isDark, onChanged: (val) => themeProvider.setThemeMode(val ? AppThemeMode.dark : AppThemeMode.normal), activeThumbColor: AppColors.primary),
-              ),
-              ListTile(
-                leading: Icon(Icons.language, color: AppColors.primary),
-                title: Text(lp2.getText('language_admin'), style: TextStyle(color: context.appTextPrimary)),
-                trailing: DropdownButton<String>(
-                  value: lp2.currentLocale.languageCode,
-                  dropdownColor: context.appCard,
-                  underline: const SizedBox(),
-                  onChanged: (String? code) {
-                    if (code != null) context.read<LanguageProvider>().setLocale(code);
-                  },
-                  items: const [
-                    DropdownMenuItem(value: 'en', child: Text('English', style: TextStyle(fontSize: 12))),
-                    DropdownMenuItem(value: 'fr', child: Text('Français', style: TextStyle(fontSize: 12))),
-                    DropdownMenuItem(value: 'ar', child: Text('العربية', style: TextStyle(fontSize: 12))),
-                  ],
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                child: Icon(icon, color: color, size: 24),
               ),
-              const Divider(),
-              ListTile(
-                leading: Icon(Icons.logout, color: AppColors.error),
-                title: Text(lp2.getText('disconnect'), style: TextStyle(color: AppColors.error)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showLogoutConfirmation(context);
-                },
+              const Spacer(),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(fontWeight: FontWeight.w800, color: context.appTextPrimary, fontSize: 15, letterSpacing: -0.3),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 11, fontWeight: FontWeight.w500),
               ),
             ],
           ),
-        );
-      },
-    );
-  }
-
-  void _showLogoutConfirmation(BuildContext context) {
-    final lp = context.read<LanguageProvider>();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: context.appCard,
-        title: Text(lp.getText('logout_confirm_title'), style: TextStyle(color: context.appTextPrimary)),
-        content: Text(lp.getText('logout_confirm_msg'), style: TextStyle(color: context.appTextSecondary)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(lp.getText('cancel')),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<AuthProvider>().logout();
-            },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: Text(lp.getText('logout_action')),
-          ),
-        ],
+        ),
       ),
     );
   }
