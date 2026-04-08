@@ -300,6 +300,10 @@ class ServiceRequest {
   final DateTime createdAt;
   final String? adminResponseText;
   final String? adminResponseImageUrl;
+  final String? assignedWorkerId;
+  final String? workerStatus;
+  final DateTime? assignedAt;
+  final String? workerNotes;
 
   ServiceRequest({
     this.id,
@@ -312,6 +316,10 @@ class ServiceRequest {
     required this.createdAt,
     this.adminResponseText,
     this.adminResponseImageUrl,
+    this.assignedWorkerId,
+    this.workerStatus,
+    this.assignedAt,
+    this.workerNotes,
   });
 
   factory ServiceRequest.fromJson(Map<String, dynamic> json) {
@@ -326,6 +334,10 @@ class ServiceRequest {
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       adminResponseText: json['adminResponseText'],
       adminResponseImageUrl: json['adminResponseImageUrl'],
+      assignedWorkerId: json['assignedWorkerId'],
+      workerStatus: json['workerStatus'],
+      assignedAt: (json['assignedAt'] as Timestamp?)?.toDate(),
+      workerNotes: json['workerNotes'],
     );
   }
 
@@ -339,6 +351,10 @@ class ServiceRequest {
       'priority': priority,
       'adminResponseText': adminResponseText,
       'adminResponseImageUrl': adminResponseImageUrl,
+      'assignedWorkerId': assignedWorkerId,
+      'workerStatus': workerStatus,
+      'assignedAt': assignedAt != null ? Timestamp.fromDate(assignedAt!) : null,
+      'workerNotes': workerNotes,
       // createdAt is added by the server
     };
   }

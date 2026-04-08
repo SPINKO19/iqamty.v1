@@ -16,6 +16,7 @@ import '../views/chat_view.dart';
 import '../views/worker_dashboard.dart';
 import '../views/admin_dashboard.dart';
 import '../views/admin_complaints_view.dart';
+import '../views/admin_requests_view.dart';
 import '../views/admin_users_view.dart';
 import '../views/admin_announcements_view.dart';
 import '../views/announcement_detail_screen.dart';
@@ -135,7 +136,10 @@ class AppRouter {
             // Admin Routes
             GoRoute(path: '/admin', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDashboard())),
             GoRoute(path: '/admin/complaints', pageBuilder: (context, state) => const NoTransitionPage(child: AdminComplaintsView())),
-            GoRoute(path: '/admin/requests', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Admin Requests'))),
+            GoRoute(
+              path: '/admin/requests',
+              builder: (context, state) => const AdminRequestsView(),
+            ),
             GoRoute(path: '/admin/users', pageBuilder: (context, state) => const NoTransitionPage(child: AdminUsersView())),
             GoRoute(path: '/admin/announcements', pageBuilder: (context, state) => const NoTransitionPage(child: AdminAnnouncementsView())),
             GoRoute(path: '/admin/resources', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Resources'))),

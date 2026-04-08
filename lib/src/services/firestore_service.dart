@@ -123,6 +123,73 @@ class FirestoreService extends ChangeNotifier {
             .toList());
   }
 
+  // 1. Admin assigns a request to a worker
+  Future<void> assignRequestToWorker({
+    required String requestId,
+    required String workerId,
+  }) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    await _db!.collection('requests').doc(requestId).update({
+      'assignedWorkerId': workerId,
+      'workerStatus': 'assigned',
+      'assignedAt': FieldValue.serverTimestamp(),
+      'status': 'reviewed',
+    });
+  }
+
+  // 2. Worker gets their assigned tasks as a real-time stream
+  Stream<List<ServiceRequest>> getWorkerTasks(String workerId) {
+    if (_db == null) return Stream.value([]);
+    return _db!
+        .collection('requests')
+        .where('assignedWorkerId', isEqualTo: workerId)
+        .orderBy('assignedAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ServiceRequest.fromJson(
+                doc.data()..['id'] = doc.id))
+            .toList());
+  }
+
+  // Get all workers from users collection
+  Stream<List<Map<String, dynamic>>> getWorkers() {
+    if (_db == null) return Stream.value([]);
+    return _db!
+        .collection('users')
+        .where('role', isEqualTo: 'worker')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => doc.data()..['id'] = doc.id)
+            .toList());
+  }
+
+  // Get all requests for admin (all users)
+  Stream<List<ServiceRequest>> getAllRequests() {
+    if (_db == null) return Stream.value([]);
+    return _db!
+        .collection('requests')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ServiceRequest.fromJson(
+                doc.data()..['id'] = doc.id))
+            .toList());
+  }
+
+  // 3. Worker updates the status of a task
+  Future<void> updateWorkerTaskStatus({
+    required String requestId,
+    required String workerStatus,
+    String? workerNotes,
+  }) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    await _db!.collection('requests').doc(requestId).update({
+      'workerStatus': workerStatus,
+      'workerNotes': ?workerNotes,
+      if (workerStatus == 'done') 'status': 'completed',
+    });
+  }
+
   // Documents
   Stream<List<DocumentModel>> getDocuments() {
     if (_db == null) return Stream.value([]);
@@ -172,7 +239,7 @@ class FirestoreService extends ChangeNotifier {
 
   Future<void> updateComplaintStatus(String complaintId, Status status, {String? adminComment}) async {
     if (_db == null) throw Exception("Firestore not initialized");
-    final data = {
+    final data = <String, dynamic>{
       'status': status.toString(),
       'adminComment': ?adminComment,
     };

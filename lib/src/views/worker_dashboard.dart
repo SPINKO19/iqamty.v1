@@ -11,7 +11,6 @@ class WorkerDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.isDark;
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(

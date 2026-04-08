@@ -84,7 +84,7 @@ class AppTheme {
         onError: Colors.white,
         surfaceContainerHighest: AppColors.cardDark,
       ),
-      dialogBackgroundColor: AppColors.cardDark,
+      dialogTheme: DialogThemeData(backgroundColor: AppColors.cardDark),
       dividerColor: AppColors.borderColorDark,
       canvasColor: AppColors.backgroundDark,
       bottomNavigationBarTheme: BottomNavigationBarThemeData(

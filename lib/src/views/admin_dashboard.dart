@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
-import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 import 'package:go_router/go_router.dart';
