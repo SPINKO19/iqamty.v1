@@ -44,12 +44,11 @@ class _RequestListScreenState extends State<RequestListScreen> {
     final firestore = context.watch<FirestoreService>();
 
     const kMediumGreen = Color(0xFF2D6A4F);
-    const kLightMint = Color(0xFFD8F3DC);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? context.appBackground : kLightMint,
+      backgroundColor: context.appBackground,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -110,11 +109,11 @@ class _RequestListScreenState extends State<RequestListScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.assignment_late_outlined, size: 80, color: Colors.grey.withValues(alpha: 0.3)),
+                        Icon(Icons.assignment_late_outlined, size: 80, color: context.appTextSecondary.withValues(alpha: 0.3)),
                         const SizedBox(height: 16),
                         Text(
                           lp.getText('no_requests_found').isEmpty ? "Aucune demande trouvée." : lp.getText('no_requests_found'),
-                          style: const TextStyle(color: Colors.grey, fontSize: 16),
+                          style: TextStyle(color: context.appTextSecondary, fontSize: 16),
                         ),
                       ],
                     ),
@@ -142,7 +141,6 @@ class _RequestListScreenState extends State<RequestListScreen> {
   }
 
   Widget _buildFilterChip(String label) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSelected = _selectedFilter == label;
     return Expanded(
       child: GestureDetector(
@@ -150,17 +148,17 @@ class _RequestListScreenState extends State<RequestListScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF2D6A4F) : (isDark ? context.appCard : Colors.white),
+            color: isSelected ? const Color(0xFF2D6A4F) : context.appCard,
             borderRadius: BorderRadius.circular(25),
             border: Border.all(
-              color: isSelected ? Colors.transparent : Colors.grey.withValues(alpha: 0.2),
+              color: isSelected ? Colors.transparent : context.appBorder,
             ),
           ),
           child: Center(
             child: Text(
               label,
               style: GoogleFonts.inter(
-                color: isSelected ? Colors.white : (isDark ? AppColors.textPrimaryDark : Colors.black87),
+                color: isSelected ? Colors.white : context.appTextPrimary,
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
@@ -179,11 +177,10 @@ class _RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: isDark ? context.appCard : Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -234,7 +231,7 @@ class _RequestCard extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? AppColors.textPrimaryDark : Colors.black,
+                          color: context.appTextPrimary,
                         ),
                       ),
                     ],
@@ -252,11 +249,11 @@ class _RequestCard extends StatelessWidget {
                   _formatDate(request.createdAt),
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: Colors.grey,
+                    color: context.appTextSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                _buildPriorityIndicator(),
+                _buildPriorityIndicator(context),
               ],
             ),
           ],
@@ -342,7 +339,7 @@ class _RequestCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPriorityIndicator() {
+  Widget _buildPriorityIndicator(BuildContext context) {
     Color color;
     switch (request.priority) {
       case 'Haute':
@@ -370,7 +367,7 @@ class _RequestCard extends StatelessWidget {
           request.priority,
           style: GoogleFonts.inter(
             fontSize: 12,
-            color: Colors.black87,
+            color: context.appTextSecondary,
             fontWeight: FontWeight.w600,
           ),
         ),

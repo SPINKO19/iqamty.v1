@@ -56,9 +56,8 @@ class _NotificationsViewState extends State<NotificationsView> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: context.appBackground,
+      backgroundColor: context.appBackground, // dark matching design
       appBar: AppBar(
         title: Row(
           children: [
@@ -105,7 +104,7 @@ class _NotificationsViewState extends State<NotificationsView> {
             children: [
               // ── Toggle Tabs ──
               Container(
-              color: isDark ? context.appCard : Colors.white,
+                color: context.appBackground,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
@@ -175,7 +174,7 @@ class _NotificationsViewState extends State<NotificationsView> {
               Text(
                 'Non lues',
                 style: GoogleFonts.inter(
-                    fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? AppColors.textPrimaryDark : const Color(0xFF111827)),
+                    fontSize: 16, fontWeight: FontWeight.bold, color: context.appTextPrimary),
               ),
               const SizedBox(width: 8),
               Container(
@@ -209,13 +208,13 @@ class _NotificationsViewState extends State<NotificationsView> {
               Text(
                 'Lues',
                 style: GoogleFonts.inter(
-                    fontSize: 16, fontWeight: FontWeight.w600, color: isDark ? AppColors.textSecondaryDark : const Color(0xFF6B7280)),
+                    fontSize: 16, fontWeight: FontWeight.w600, color: context.appTextSecondary),
               ),
               const SizedBox(width: 8),
               Text(
                 '${readNotifs.length}',
                 style: GoogleFonts.inter(
-                    fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF9CA3AF)),
+                    fontSize: 14, fontWeight: FontWeight.w500, color: context.appTextSecondary.withValues(alpha: 0.6)),
               ),
             ],
           ),
@@ -237,11 +236,11 @@ class _NotificationsViewState extends State<NotificationsView> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.notifications_off_outlined, size: 60, color: Colors.grey.withValues(alpha: 0.3)),
+          Icon(Icons.notifications_off_outlined, size: 60, color: context.appTextSecondary.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
           Text(
             'Aucune notification pour le moment',
-            style: GoogleFonts.inter(color: Colors.grey, fontSize: 15, fontWeight: FontWeight.w500),
+            style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 15, fontWeight: FontWeight.w500),
           )
         ],
       ),
@@ -284,10 +283,10 @@ class _NotificationsViewState extends State<NotificationsView> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF286944) : (Theme.of(context).brightness == Brightness.dark ? AppColors.cardDark : Colors.white),
+          color: isSelected ? const Color(0xFF286944) : context.appCard,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: isSelected ? const Color(0xFF286944) : const Color(0xFFE5E7EB), width: 1.5),
+              color: isSelected ? const Color(0xFF286944) : context.appBorder, width: 1.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -297,7 +296,7 @@ class _NotificationsViewState extends State<NotificationsView> {
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? Colors.white : (Theme.of(context).brightness == Brightness.dark ? AppColors.textSecondaryDark : const Color(0xFF6B7280)),
+                color: isSelected ? Colors.white : context.appTextSecondary,
               ),
             ),
             if (badgeCount > 0) ...[
@@ -361,7 +360,6 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final conf = _getTypeConfig(notification.type);
     final color = conf['color'] as Color;
     final icon = conf['icon'] as IconData;
@@ -386,9 +384,9 @@ class _NotificationCard extends StatelessWidget {
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: isUnread ? (isDark ? const Color(0xFF111811) : const Color(0xFFF0F7F2)) : (isDark ? context.appCard : Colors.white),
+            color: isUnread ? context.appBorder.withValues(alpha: 0.2) : context.appCard,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isDark ? AppColors.borderColorDark : const Color(0xFFE5E7EB), width: 1),
+            border: Border.all(color: context.appBorder, width: 1),
             boxShadow: [
               if (isUnread)
                 BoxShadow(
@@ -437,7 +435,7 @@ class _NotificationCard extends StatelessWidget {
                                 style: GoogleFonts.inter(
                                   fontSize: 15,
                                   fontWeight: isUnread ? FontWeight.w800 : FontWeight.w600,
-                                  color: isUnread ? (Theme.of(context).brightness == Brightness.dark ? AppColors.textPrimaryDark : const Color(0xFF111827)) : (Theme.of(context).brightness == Brightness.dark ? AppColors.textSecondaryDark : const Color(0xFF374151)),
+                                  color: isUnread ? context.appTextPrimary : context.appTextSecondary,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -445,7 +443,7 @@ class _NotificationCard extends StatelessWidget {
                                 notification.body,
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
-                                  color: const Color(0xFF6B7280),
+                                  color: context.appTextSecondary,
                                   height: 1.4,
                                 ),
                               ),
@@ -456,7 +454,7 @@ class _NotificationCard extends StatelessWidget {
                                     _timeAgo(notification.createdAt),
                                     style: GoogleFonts.inter(
                                       fontSize: 12,
-                                      color: const Color(0xFF9CA3AF),
+                                      color: context.appTextSecondary.withValues(alpha: 0.7),
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -468,7 +466,7 @@ class _NotificationCard extends StatelessWidget {
                                       style: GoogleFonts.inter(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF9CA3AF),
+                                        color: context.appTextSecondary.withValues(alpha: 0.7),
                                       ),
                                     ),
                                   )

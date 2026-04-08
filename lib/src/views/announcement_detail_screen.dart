@@ -34,7 +34,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
             expandedHeight: 220,
             pinned: true,
             stretch: true,
-            backgroundColor: isDark ? AppColors.backgroundDark : primaryColor,
+            backgroundColor: const Color(0xFF2D6A4F),
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
@@ -58,9 +58,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: isDark
-                            ? [const Color(0xFF1A1A1A), AppColors.backgroundDark]
-                            : [primaryColor, primaryColor.withValues(alpha: 0.8)],
+                        colors: [const Color(0xFF2D6A4F), const Color(0xFF2D6A4F).withValues(alpha: 0.8)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),

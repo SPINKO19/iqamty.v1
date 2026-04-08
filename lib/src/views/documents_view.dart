@@ -10,7 +10,20 @@ class DocumentsView extends StatelessWidget {
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: const Text('Documents'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text('Documents', style: TextStyle(color: context.appTextPrimary, fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
@@ -71,7 +84,7 @@ class DocumentsView extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: context.appTextPrimary),
                 ),
                 Text(
                   info,

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:go_router/go_router.dart';
 import '../services/firestore_service.dart';
 import '../services/cloudinary_service.dart';
 import '../providers/auth_provider.dart';
@@ -19,7 +18,6 @@ class ComplaintsView extends StatelessWidget {
     final auth = context.read<AuthProvider>();
     final firestore = context.read<FirestoreService>();
     final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
@@ -192,7 +190,7 @@ class _ModernComplaintCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF111811) : const Color(0xFFF1F5F9).withValues(alpha: 0.5),
+              color: isDark ? context.appBackground : const Color(0xFFF1F5F9).withValues(alpha: 0.5),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(24),
                 bottomRight: Radius.circular(24),
@@ -371,7 +369,7 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.close_rounded),
                 style: IconButton.styleFrom(
-                  backgroundColor: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+                  backgroundColor: isDark ? context.appBackground : const Color(0xFFF1F5F9),
                 ),
               ),
             ],
@@ -380,19 +378,19 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
           _buildFieldLabel(lp.getText('complaint_title_label')),
           const SizedBox(height: 10),
           _buildModernTextField(
+            context: context,
             controller: _titleController,
             hint: lp.getText('complaint_title_hint'),
-            context: context,
           ),
           const SizedBox(height: 24),
           _buildFieldLabel(lp.getText('detailed_description')),
           const SizedBox(height: 10),
           Expanded(
             child: _buildModernTextField(
+              context: context,
               controller: _descController,
               hint: lp.getText('describe_problem_hint'),
               maxLines: null,
-              context: context,
             ),
           ),
           const SizedBox(height: 24),
@@ -451,20 +449,21 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
     );
   }
 
-  Widget _buildModernTextField({required TextEditingController controller, required String hint, int? maxLines = 1, required BuildContext context}) {
+  Widget _buildModernTextField({required BuildContext context, required TextEditingController controller, required String hint, int? maxLines = 1}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111811) : const Color(0xFFF1F5F9).withValues(alpha: 0.5),
+        color: isDark ? context.appBackground : const Color(0xFFF1F5F9).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
+        border: isDark ? Border.all(color: context.appBorder) : null,
       ),
       child: TextField(
         controller: controller,
         maxLines: maxLines,
-        style: GoogleFonts.inter(color: isDark ? Colors.white : Colors.black),
+        style: TextStyle(color: context.appTextPrimary),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.inter(color: Colors.grey, fontSize: 14),
+          hintStyle: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 14),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(20),
         ),
@@ -483,8 +482,8 @@ class _UploadPlaceholder extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 32),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: isDark ? const Color(0xFF111811) : const Color(0xFFF1F5F9),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), style: BorderStyle.solid),
+        color: isDark ? context.appBackground : const Color(0xFFF1F5F9),
+        border: Border.all(color: isDark ? context.appBorder : AppColors.primary.withValues(alpha: 0.3), style: BorderStyle.solid),
       ),
       child: Column(
         children: [

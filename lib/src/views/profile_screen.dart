@@ -269,8 +269,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildOfficialCard(BuildContext context, dynamic student, String name, String dob, bool isResidence) {
     final mainGreen = AppColors.primary;
-    final cardBg = Colors.white;
-    const textDark = Colors.white; // Changed to white for dark mode readability
+    final cardBg = context.appCard;
+    final textDark = context.appTextPrimary; 
+
     
     return Container(
       width: double.infinity,
@@ -528,9 +529,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: context.appBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(lp.getText('logout_confirm_title'), style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: Text(lp.getText('logout_confirm_msg'), style: GoogleFonts.inter()),
+        title: Text(lp.getText('logout_confirm_title'), style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+        content: Text(lp.getText('logout_confirm_msg'), style: GoogleFonts.inter(color: context.appTextSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

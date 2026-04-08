@@ -43,7 +43,6 @@ class _DiningViewState extends State<DiningView> {
   @override
   Widget build(BuildContext context) {
     const kDarkGreen = Color(0xFF2D6A4F);
-    const kLightMint = Color(0xFFD8F3DC);
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -199,7 +198,7 @@ class _DiningViewState extends State<DiningView> {
                   Text(
                     'Cette semaine',
                     style: GoogleFonts.inter(
-                      color: Colors.grey,
+                      color: context.appTextSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -210,7 +209,7 @@ class _DiningViewState extends State<DiningView> {
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: Colors.black,
+                      color: context.appTextPrimary,
                     ),
                   ),
                 ],
@@ -255,11 +254,11 @@ class _DiningViewState extends State<DiningView> {
               padding: const EdgeInsets.only(top: 40),
               child: Column(
                 children: [
-                  const Icon(Icons.restaurant_menu_rounded, size: 48, color: Colors.grey),
+                  Icon(Icons.restaurant_menu_rounded, size: 48, color: context.appTextSecondary),
                   const SizedBox(height: 16),
                   Text(
                     'Aucun menu pour ce jour',
-                    style: GoogleFonts.inter(color: Colors.grey, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.inter(color: context.appTextSecondary, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -335,7 +334,7 @@ class _MealCard extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
-                              color: Colors.black,
+                              color: context.appTextPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -343,7 +342,7 @@ class _MealCard extends StatelessWidget {
                             '${meal.startTime} — ${meal.endTime}',
                             style: GoogleFonts.inter(
                               fontSize: 13,
-                              color: Colors.grey,
+                              color: context.appTextSecondary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),

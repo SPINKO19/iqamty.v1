@@ -82,13 +82,13 @@ class _LoginScreenState extends State<LoginScreen> {
               Expanded(
                 flex: 35,
                 child: Container(
-                  color: isDark ? const Color(0xFF0A1A0D) : _kBgGreenTop,
+                  color: isDark ? context.appBackground : _kBgGreenTop,
                 ),
               ),
               Expanded(
                 flex: 65,
                 child: Container(
-                  color: isDark ? const Color(0xFF0A0A0A) : _kBgGreenBottom,
+                  color: isDark ? context.appBackground : _kBgGreenBottom,
                 ),
               ),
             ],
@@ -130,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Container(
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1C2B1E) : const Color(0xFFFFFFFF),
+                                color: isDark ? context.appCard : const Color(0xFFFFFFFF),
                                 borderRadius: BorderRadius.circular(28),
                                 boxShadow: [
                                   BoxShadow(
@@ -432,12 +432,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.08)
+                                  ? context.appBorder.withValues(alpha: 0.2)
                                   : const Color(0xFFF0F0F0),
                               borderRadius: BorderRadius.circular(50),
                               border: Border.all(
                                 color: isDark
-                                    ? Colors.white.withValues(alpha: 0.12)
+                                    ? context.appBorder
                                     : _kBorder,
                               ),
                             ),
@@ -478,11 +478,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111811) : const Color(0xFFF1F8F2),
+        color: isDark ? context.appCard.withValues(alpha: 0.5) : const Color(0xFFF1F8F2),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isDark
-              ? const Color(0xFF2A3A2E)
+              ? context.appBorder
               : _kBorder,
         ),
       ),
@@ -558,14 +558,14 @@ class _LoginScreenState extends State<LoginScreen> {
           color: sel
               ? Colors.white
               : (isDark
-                  ? Colors.white.withValues(alpha: 0.1)
+                  ? context.appCard
                   : Colors.white.withValues(alpha: 0.15)),
           borderRadius: BorderRadius.circular(50),
           border: Border.all(
             color: sel
                 ? Colors.white
                 : (isDark
-                    ? Colors.white.withValues(alpha: 0.15)
+                    ? context.appBorder
                     : Colors.transparent),
           ),
         ),

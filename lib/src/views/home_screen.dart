@@ -6,14 +6,12 @@ import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../services/firestore_service.dart';
 import '../models/types.dart';
-
 import 'package:go_router/go_router.dart';
 import '../core/theme/colors.dart';
 
 const _kGreen = Color(0xFF2D6A4F);
 const _kHeaderGreen = Color(0xFF2D6A4F);
 const _kOrange = Color(0xFFF4A261);
-const _kBgMint = Color(0xFFE8F2EA);
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -29,6 +27,34 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: context.appBackground,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.go('/create-request'),
+        backgroundColor: _kGreen,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add_rounded, size: 32),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        color: context.appCard,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8,
+        elevation: 10,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavIcon(context, Icons.home_rounded, 'Accueil', true, () => context.go('/')),
+              _buildNavIcon(context, Icons.restaurant_rounded, 'Resto', false, () => context.go('/dining')),
+              const SizedBox(width: 48), // Space for FAB
+              _buildNavIcon(context, Icons.assignment_rounded, 'Demandes', false, () => context.go('/requests')),
+              _buildNavIcon(context, Icons.person_rounded, 'Profil', false, () => context.go('/profile')),
+            ],
+          ),
+        ),
+      ),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -135,12 +161,12 @@ class HomeScreen extends StatelessWidget {
                           onTap: () => context.go('/documents'),
                         ),
                         _QuickActionCard(
-                          title: lp.getText('sports_and_showers'),
-                          subtitle: lp.getText('sports_subtitle'),
-                          icon: Icons.sports_volleyball_rounded,
+                          title: 'Planning',
+                          subtitle: 'Consulter l\'emploi du temps',
+                          icon: Icons.calendar_month_rounded,
                           color: const Color(0xFFF59E0B),
                           isDark: isDark,
-                          onTap: () => context.go('/sports'),
+                          onTap: () => context.go('/planning'),
                         ),
                       ],
                     );
@@ -162,7 +188,7 @@ class HomeScreen extends StatelessWidget {
                         child: Center(
                           child: Text(
                             lp.getText('no_data') == 'no_data' ? 'Aucune activité récente.' : lp.getText('no_data'),
-                            style: GoogleFonts.inter(color: isDark ? Colors.white54 : Colors.black45, fontSize: 13),
+                            style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13),
                           ),
                         ),
                       );
@@ -182,6 +208,30 @@ class HomeScreen extends StatelessWidget {
                 
                 const SizedBox(height: 80), 
               ]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavIcon(BuildContext context, IconData icon, String label, bool isSelected, VoidCallback onTap) {
+    final color = isSelected ? _kGreen : context.appTextSecondary;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(50),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: color,
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
         ],
@@ -305,6 +355,7 @@ class HomeScreen extends StatelessWidget {
         children: [
           // Card 1: Ma Chambre
           _buildInfoCard(
+            context: context,
             title: 'Ma Chambre',
             value: chambre,
             icon: Icons.home_outlined,
@@ -316,6 +367,7 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(width: 12),
           // Card 2: Résidence
           _buildInfoCard(
+            context: context,
             title: 'Résidence',
             value: residence,
             icon: Icons.domain_rounded,
@@ -326,15 +378,16 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           // Card 3: Statut
-          _buildStatusCard(isDark, !isBanned),
+          _buildStatusCard(context, isDark, !isBanned),
           const SizedBox(width: 12),
           // Card 4: Jours restants
           _buildInfoCard(
+            context: context,
             title: 'Jours restants',
             value: days.toString(),
             icon: Icons.calendar_today_rounded,
             isDark: isDark,
-            bgColor: isDark ? const Color(0xFF2A1B12) : const Color(0xFFFFF7EC),
+            bgColor: context.appCard,
             textColor: _kOrange,
             iconColor: _kOrange,
             titleColor: _kOrange,
@@ -345,6 +398,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildInfoCard({
+    required BuildContext context,
     required String title,
     required String value,
     required IconData icon,
@@ -407,13 +461,13 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusCard(bool isDark, bool isActive) {
+  Widget _buildStatusCard(BuildContext context, bool isDark, bool isActive) {
     return Container(
       width: 130,
       height: 130,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(24),
         boxShadow: isDark ? [] : [
           BoxShadow(
@@ -436,7 +490,7 @@ class HomeScreen extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  color: isDark ? Colors.white54 : const Color(0xFF6B7280),
+                  color: context.appTextSecondary,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
@@ -469,7 +523,6 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildSectionHeader(BuildContext context, String title, LanguageProvider lp, {VoidCallback? onPressed}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -478,7 +531,7 @@ class HomeScreen extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+            color: context.appTextPrimary,
             letterSpacing: -0.5,
           ),
         ),
@@ -499,7 +552,7 @@ class HomeScreen extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -510,7 +563,7 @@ class HomeScreen extends StatelessWidget {
           Text(
             message,
             style: GoogleFonts.inter(
-              color: isDark ? Colors.white54 : const Color(0xFF6B7280),
+              color: context.appTextSecondary,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -528,11 +581,10 @@ class _AnnouncementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lp = context.watch<LanguageProvider>();
     return SizedBox(
       width: 260,
       child: Material(
-        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(24),
         child: InkWell(
           onTap: () => context.go('/announcement', extra: announcement),
@@ -557,13 +609,13 @@ class _AnnouncementCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: _kGreen.withValues(alpha: 0.1),
+                        color: const Color(0xFFFFE4E6), // light pink/red
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        lp.getText('actualite') == 'actualite' ? 'NEWS' : lp.getText('actualite').toUpperCase(),
+                        'URGENT',
                         style: GoogleFonts.inter(
-                          color: _kGreen,
+                          color: const Color(0xFFE11D48), // rose
                           fontSize: 10,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1,
@@ -574,19 +626,29 @@ class _AnnouncementCard extends StatelessWidget {
                     Icon(Icons.push_pin_rounded, size: 16, color: isDark ? Colors.white30 : const Color(0xFF9CA3AF)),
                   ],
                 ),
-                const Spacer(),
+                const SizedBox(height: 12),
                 Text(
                   announcement.title,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
-                    color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-                    height: 1.3,
+                    color: context.appTextPrimary,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 4),
+                Text(
+                  announcement.content,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: context.appTextSecondary,
+                    height: 1.4,
+                  ),
+                ),
+                const Spacer(),
                 Row(
                   children: [
                     Icon(Icons.access_time_filled_rounded, size: 12, color: isDark ? Colors.white30 : const Color(0xFF9CA3AF)),
@@ -595,7 +657,7 @@ class _AnnouncementCard extends StatelessWidget {
                       _formatTimeAgo(announcement.timestamp),
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: isDark ? Colors.white54 : const Color(0xFF6B7280),
+                        color: context.appTextSecondary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -641,7 +703,7 @@ class _QuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C2B1E) : Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(24),
         boxShadow: isDark ? null : [
           BoxShadow(
@@ -664,13 +726,20 @@ class _QuickActionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(icon, color: color, size: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(icon, color: color, size: 20),
+                        ),
+                        Icon(Icons.chevron_right_rounded, color: isDark ? Colors.white30 : Colors.black26, size: 20),
+                      ],
                     ),
                     const Spacer(),
                     Text(
@@ -678,7 +747,7 @@ class _QuickActionCard extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                        color: context.appTextPrimary,
                         letterSpacing: -0.3,
                       ),
                     ),
@@ -689,7 +758,7 @@ class _QuickActionCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 10,
-                        color: isDark ? Colors.white54 : const Color(0xFF6B7280),
+                        color: context.appTextSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -758,7 +827,7 @@ class _ActivityListItem extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                    color: context.appTextPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -768,7 +837,7 @@ class _ActivityListItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: isDark ? Colors.white54 : const Color(0xFF6B7280),
+                    color: context.appTextSecondary,
                   ),
                 ),
               ],

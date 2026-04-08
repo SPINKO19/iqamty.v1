@@ -68,7 +68,6 @@ class _IqamtyAppState extends State<IqamtyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final themeMode = context.watch<ThemeProvider>().flutterThemeMode;
     final currentLocale = context.watch<LanguageProvider>().currentLocale;
     
     return MaterialApp.router(
@@ -76,7 +75,7 @@ class _IqamtyAppState extends State<IqamtyApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
+      themeMode: ThemeMode.dark,
       locale: currentLocale,
       localizationsDelegates: const [
         // AppLocalizations.delegate, // Add this if you use arb files

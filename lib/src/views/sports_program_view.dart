@@ -142,9 +142,8 @@ class SportsProgramView extends StatelessWidget {
   }
 
   Widget _buildDayScheduleCard(BuildContext context, String day, List<String> slots, IconData icon) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? AppColors.cardDark : Colors.white;
-    final borderColor = isDark ? const Color(0xFF333333) : const Color(0xFFE2E8F0);
+    final cardColor = context.appCard;
+    final borderColor = context.appBorder;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -182,7 +181,7 @@ class SportsProgramView extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                    color: context.appTextPrimary,
                   ),
                 ),
               ],
@@ -196,7 +195,7 @@ class SportsProgramView extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.02),
+                  color: context.appTextSecondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -209,7 +208,7 @@ class SportsProgramView extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white70 : Colors.black87,
+                          color: context.appTextSecondary,
                         ),
                       ),
                     ),
@@ -241,7 +240,7 @@ class SportsProgramView extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w800,
-              color: Theme.of(context).textTheme.bodyLarge?.color,
+              color: context.appTextPrimary,
               letterSpacing: -0.5,
             ),
           ),
@@ -263,9 +262,8 @@ class SportsProgramView extends StatelessWidget {
   }
 
   Widget _buildTeamCard(BuildContext context, String teamName, IconData icon, LanguageProvider lp) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? AppColors.cardDark : Colors.white;
-    final borderColor = isDark ? const Color(0xFF333333) : const Color(0xFFE2E8F0);
+    final cardColor = context.appCard;
+    final borderColor = context.appBorder;
 
     return Container(
       decoration: BoxDecoration(
@@ -295,7 +293,7 @@ class SportsProgramView extends StatelessWidget {
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             fontSize: 16,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
+            color: context.appTextPrimary,
           ),
         ),
         trailing: ElevatedButton(
