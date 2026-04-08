@@ -1,0 +1,29 @@
+name: Build iOS
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: 'latest'
+
+    - name: Get dependencies
+      run: flutter pub get
+
+    - name: Build iOS release
+      run: flutter build ios --release --no-codesign
+
+    - name: Upload iOS .ipa
+      uses: actions/upload-artifact@v2
+      with:
+        name: ios-release
+        path: build/ios/iphoneos/*.ipa
