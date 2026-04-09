@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/language_provider.dart';
@@ -67,6 +68,16 @@ class _ChatViewState extends State<ChatView> {
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
         title: Text(lp.getText('messaging'), style: TextStyle(color: context.appTextPrimary)),
         backgroundColor: context.appCard,
         centerTitle: true,

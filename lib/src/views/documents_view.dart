@@ -1,21 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 
 class DocumentsView extends StatelessWidget {
   const DocumentsView({super.key});
 
+  Future<void> _openDocument(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      debugPrint('Error opening document: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final lp = context.watch<LanguageProvider>();
+    final isDark = context.isDark;
+
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF2D6A4F),
         elevation: 0,
-        title: Text('Documents', style: TextStyle(color: context.appTextPrimary, fontWeight: FontWeight.bold)),
-        centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -24,86 +43,141 @@ class DocumentsView extends StatelessWidget {
             }
           },
         ),
+        title: Text(
+          lp.getText('documents'),
+          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w800),
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          _buildDocItem(
-            context,
-            'Certificat d\'hébergement',
-            'PDF • 1.2 MB',
-            Icons.picture_as_pdf,
-            Colors.red,
-            '',
-          ),
-          const SizedBox(height: 16),
-          _buildDocItem(
-            context,
-            'Règlement intérieur',
-            'PDF • 3.5 MB',
-            Icons.picture_as_pdf,
-            Colors.red,
-            '',
-          ),
-          const SizedBox(height: 16),
-          _buildDocItem(
-            context,
-            'Formulaire de départ',
-            'DOCX • 500 KB',
-            Icons.description,
-            const Color(0xFF2D6A4F),
-            '',
-          ),
-        ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('documents')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: Color(0xFF2D6A4F)));
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Error loading documents: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red),
+              ),
+            );
+          }
+
+          final docs = snapshot.data?.docs ?? [];
+
+          if (docs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.folder_open_outlined, size: 60, color: context.appTextSecondary.withOpacity(0.3)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No documents available',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      color: context.appTextSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(20),
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              final data = docs[index].data() as Map<String, dynamic>;
+              return _buildDocCard(context, data);
+            },
+          );
+        },
       ),
     );
   }
 
-  Widget _buildDocItem(
-    BuildContext context,
-    String title,
-    String info,
-    IconData icon,
-    Color iconColor,
-    String url,
-  ) {
+  Widget _buildDocCard(BuildContext context, Map<String, dynamic> data) {
+    final String type = (data['type'] ?? 'unknown').toLowerCase();
+    
     return Container(
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.appCard,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: context.appBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(icon, color: iconColor, size: 32),
+          _getIconForType(type),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: TextStyle(fontWeight: FontWeight.bold, color: context.appTextPrimary),
+                  data['title'] ?? 'Untitled',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 4),
                 Text(
-                  info,
-                  style: TextStyle(
+                  '${type.toUpperCase()} • ${data['size'] ?? ''}',
+                  style: GoogleFonts.inter(
                     color: context.appTextSecondary,
-                    fontSize: 12,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: () {
-              // Action: Implement download / open URL
-            },
-            icon: Icon(Icons.download_outlined, color: AppColors.primary),
+          ElevatedButton(
+            onPressed: () => _openDocument(data['url']),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2D6A4F).withOpacity(0.1),
+              foregroundColor: const Color(0xFF2D6A4F),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.open_in_new_rounded, size: 14),
+                SizedBox(width: 6),
+                Text('Open', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _getIconForType(String type) {
+    switch (type) {
+      case 'pdf': return const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 36);
+      case 'docx':
+      case 'doc': return const Icon(Icons.description_rounded, color: Colors.blue, size: 36);
+      case 'jpg':
+      case 'jpeg':
+      case 'png': return const Icon(Icons.image_rounded, color: Colors.green, size: 36);
+      default: return const Icon(Icons.insert_drive_file_rounded, color: Colors.grey, size: 36);
+    }
   }
 }

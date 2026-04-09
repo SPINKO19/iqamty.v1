@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
 import '../models/types.dart';
@@ -21,6 +22,16 @@ class AdminComplaintsView extends StatelessWidget {
         elevation: 0,
         backgroundColor: _kGreen,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/admin');
+            }
+          },
+        ),
         title: Text(
           lp.getText('complaints_management'),
           style: GoogleFonts.inter(fontWeight: FontWeight.w900, letterSpacing: -0.5),

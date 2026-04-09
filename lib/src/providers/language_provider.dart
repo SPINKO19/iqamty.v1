@@ -300,6 +300,9 @@ class LanguageProvider extends ChangeNotifier {
     'join_team': 'Join Team',
     'registration_sent_msg': 'Registration request sent successfully!',
     'feature_coming_soon': 'Feature coming soon!',
+    'showers': 'Showers',
+    'gym': 'Gym & Fitness',
+    'weightlifting_room': 'Weightlifting Room',
   };
 
   // ─── FRENCH ───
@@ -564,6 +567,10 @@ class LanguageProvider extends ChangeNotifier {
     'basketball': 'Basketball',
     'join_team': 'S\'inscrire',
     'registration_sent_msg': 'Demande d\'inscription envoyée avec succès !',
+    'feature_coming_soon': 'Bientôt disponible !',
+    'showers': 'Douches',
+    'gym': 'Gym & Fitness',
+    'weightlifting_room': 'Salle de Musculation',
 
     // Worker Dashboard
     'worker_space': 'Espace Travailleur',
@@ -572,7 +579,6 @@ class LanguageProvider extends ChangeNotifier {
     'done_tasks': 'Terminés',
     'urgent_status': 'Urgent',
     'new_status': 'Nouveau',
-    'feature_coming_soon': 'Bientôt disponible !',
   };
 
   // ─── ARABIC ───
@@ -832,6 +838,9 @@ class LanguageProvider extends ChangeNotifier {
     'basketball': 'كرة السلة',
     'join_team': 'انضم للفريق',
     'registration_sent_msg': 'تم إرسال طلب التسجيل بنجاح!',
-    'feature_coming_soon': 'الميزة قيد التطوير!',
+    'feature_coming_soon': 'قريباً!',
+    'showers': 'الدوش',
+    'gym': 'قاعة الرياضة',
+    'weightlifting_room': 'قاعة بناء الأجسام',
   };
 }

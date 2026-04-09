@@ -12,6 +12,7 @@ import '../views/requests_view.dart';
 import '../views/documents_view.dart';
 import '../views/forum_view.dart';
 import '../views/sports_program_view.dart';
+import '../views/notifications_view.dart';
 import '../views/chat_view.dart';
 import '../views/worker_dashboard.dart';
 import '../views/admin_dashboard.dart';
@@ -19,6 +20,7 @@ import '../views/admin_complaints_view.dart';
 import '../views/admin_requests_view.dart';
 import '../views/admin_users_view.dart';
 import '../views/admin_announcements_view.dart';
+import '../views/admin_documents_view.dart';
 import '../views/announcement_detail_screen.dart';
 import '../views/request_list_screen.dart';
 import '../views/create_request_screen.dart';
@@ -100,6 +102,7 @@ class AppRouter {
           GoRoute(path: '/requests', pageBuilder: (context, state) => const NoTransitionPage(child: RequestsView())),
           GoRoute(path: '/transport', pageBuilder: (context, state) => const NoTransitionPage(child: PlaceholderScreen(title: 'Transport'))),
           GoRoute(path: '/sports', pageBuilder: (context, state) => const NoTransitionPage(child: SportsProgramView())),
+          GoRoute(path: '/notifications', pageBuilder: (context, state) => const NoTransitionPage(child: NotificationsView())),
           GoRoute(path: '/documents', pageBuilder: (context, state) => const NoTransitionPage(child: DocumentsView())),
             GoRoute(path: '/community', pageBuilder: (context, state) => const NoTransitionPage(child: ForumView())),
             GoRoute(path: '/chat', pageBuilder: (context, state) => const NoTransitionPage(child: ChatView())),
@@ -142,6 +145,7 @@ class AppRouter {
             ),
             GoRoute(path: '/admin/users', pageBuilder: (context, state) => const NoTransitionPage(child: AdminUsersView())),
             GoRoute(path: '/admin/announcements', pageBuilder: (context, state) => const NoTransitionPage(child: AdminAnnouncementsView())),
+            GoRoute(path: '/admin/documents', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDocumentsView())),
             GoRoute(path: '/admin/resources', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Resources'))),
             GoRoute(path: '/admin/dining', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Dining Config'))),
             

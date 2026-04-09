@@ -23,7 +23,20 @@ class ComplaintsView extends StatelessWidget {
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        title: Text(lp.getText('my_complaints')),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
+        title: Text(lp.getText('my_complaints'), style: TextStyle(color: context.appTextPrimary)),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: StreamBuilder<List<Complaint>>(
         stream: firestore.getMyComplaints(userId),
@@ -366,7 +379,13 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
                 ),
               ),
               IconButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/');
+                  }
+                },
                 icon: const Icon(Icons.close_rounded),
                 style: IconButton.styleFrom(
                   backgroundColor: isDark ? context.appBackground : const Color(0xFFF1F5F9),

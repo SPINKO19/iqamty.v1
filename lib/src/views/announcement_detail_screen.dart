@@ -37,7 +37,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
             backgroundColor: const Color(0xFF2D6A4F),
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
               onPressed: () {
                 if (context.canPop()) {
                   context.pop();

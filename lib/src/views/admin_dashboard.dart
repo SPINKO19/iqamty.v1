@@ -81,68 +81,175 @@ class AdminDashboard extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, LanguageProvider lp) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 48, 24, 40),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _buildRoundedIconButton(
-            context,
-            icon: Icons.menu_rounded,
-            onTap: () => Scaffold.of(context).openDrawer(),
-            bgColor: Colors.white.withValues(alpha: 0.1),
-            iconColor: Colors.white,
-          ),
-          const SizedBox(width: 24),
-          Expanded(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+        
+        if (isMobile) {
+          return Container(
+            padding: const EdgeInsets.fromLTRB(20, 48, 20, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        _buildRoundedIconButton(
+                          context,
+                          icon: Icons.arrow_back_rounded,
+                          onTap: () {
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              context.go('/login');
+                            }
+                          },
+                          bgColor: Colors.white.withValues(alpha: 0.1),
+                          iconColor: Colors.white,
+                        ),
+                        const SizedBox(width: 10),
+                        _buildRoundedIconButton(
+                          context,
+                          icon: Icons.menu_rounded,
+                          onTap: () => Scaffold.of(context).openDrawer(),
+                          bgColor: Colors.white.withValues(alpha: 0.1),
+                          iconColor: Colors.white,
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        _buildRoundedIconButton(
+                          context,
+                          icon: Icons.notifications_none_rounded,
+                          onTap: () {},
+                          bgColor: Colors.white.withValues(alpha: 0.1),
+                          iconColor: Colors.white,
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'AD',
+                              style: GoogleFonts.inter(color: _kHeaderGreen, fontWeight: FontWeight.w800, fontSize: 14),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
                 Text(
                   '${lp.getText('hello')}, Administrateur',
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.8),
+                  style: GoogleFonts.inter(
+                    color: Colors.white, 
+                    fontSize: 24, 
+                    fontWeight: FontWeight.w900, 
+                    letterSpacing: -0.5,
+                    height: 1.1,
+                  ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   lp.getText('manage_residence_one_place'),
-                  style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8), fontSize: 13, fontWeight: FontWeight.w500),
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withValues(alpha: 0.7), 
+                    fontSize: 13, 
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
-          ),
-          const Spacer(),
-          // Desktop Header Actions
-          Row(
+          );
+        }
+
+        // Desktop Layout
+        return Container(
+          padding: const EdgeInsets.fromLTRB(32, 48, 32, 48),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _buildRoundedIconButton(
                 context,
-                icon: Icons.notifications_none_rounded,
-                onTap: () {},
+                icon: Icons.arrow_back_rounded,
+                onTap: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/login');
+                  }
+                },
                 bgColor: Colors.white.withValues(alpha: 0.1),
                 iconColor: Colors.white,
               ),
               const SizedBox(width: 12),
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4)),
+              _buildRoundedIconButton(
+                context,
+                icon: Icons.menu_rounded,
+                onTap: () => Scaffold.of(context).openDrawer(),
+                bgColor: Colors.white.withValues(alpha: 0.1),
+                iconColor: Colors.white,
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${lp.getText('hello')}, Administrateur',
+                      style: GoogleFonts.inter(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1.0),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      lp.getText('manage_residence_one_place'),
+                      style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8), fontSize: 15, fontWeight: FontWeight.w500),
+                    ),
                   ],
                 ),
-                child: Center(
-                  child: Text(
-                    'AD',
-                    style: GoogleFonts.inter(color: _kHeaderGreen, fontWeight: FontWeight.w800, fontSize: 16),
+              ),
+              const SizedBox(width: 40),
+              Row(
+                children: [
+                  _buildRoundedIconButton(
+                    context,
+                    icon: Icons.notifications_none_rounded,
+                    onTap: () {},
+                    bgColor: Colors.white.withValues(alpha: 0.1),
+                    iconColor: Colors.white,
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        'AD',
+                        style: GoogleFonts.inter(color: _kHeaderGreen, fontWeight: FontWeight.w800, fontSize: 17),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -369,10 +476,11 @@ class AdminDashboard extends StatelessWidget {
           mainAxisSpacing: 16,
           childAspectRatio: 1.1,
           children: [
-            _buildActionTile(context, lp.getText('manage_students'), lp.getText('registered_users'), Icons.people_alt_rounded, const Color(0xFF10B981), () => context.go('/admin/users')),
-            _buildActionTile(context, lp.getText('announcements'), lp.getText('broadcast_news'), Icons.campaign_rounded, const Color(0xFF3B82F6), () => context.go('/admin/announcements')),
-            _buildActionTile(context, lp.getText('dining_menu'), lp.getText('update_cafeteria'), Icons.restaurant_rounded, const Color(0xFFF59E0B), () => context.go('/admin/dining-config')),
-            _buildActionTile(context, lp.getText('maintenance'), lp.getText('resource_requests'), Icons.handyman_rounded, const Color(0xFF6366F1), () => context.go('/admin/requests')),
+            _buildActionTile(context, lp.getText('manage_students'), lp.getText('registered_users'), Icons.people_alt_rounded, const Color(0xFF10B981), () => context.push('/admin/users')),
+            _buildActionTile(context, lp.getText('announcements'), lp.getText('broadcast_news'), Icons.campaign_rounded, const Color(0xFF3B82F6), () => context.push('/admin/announcements')),
+            _buildActionTile(context, lp.getText('documents'), 'Share forms & guides', Icons.file_copy_rounded, Colors.purple, () => context.push('/admin/documents')),
+            _buildActionTile(context, lp.getText('dining_menu'), lp.getText('update_cafeteria'), Icons.restaurant_rounded, const Color(0xFFF59E0B), () => context.push('/admin/dining-config')),
+            _buildActionTile(context, lp.getText('maintenance'), lp.getText('resource_requests'), Icons.handyman_rounded, const Color(0xFF6366F1), () => context.push('/admin/requests')),
           ],
         ),
         const SizedBox(height: 24),

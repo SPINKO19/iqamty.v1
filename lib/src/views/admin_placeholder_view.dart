@@ -20,6 +20,10 @@ class AdminPlaceholderView extends StatelessWidget {
         elevation: 0,
         backgroundColor: kGreen,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(
           title,
           style: GoogleFonts.inter(fontWeight: FontWeight.w900, letterSpacing: -0.5),

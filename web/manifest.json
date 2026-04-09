@@ -1,6 +1,6 @@
 {
-    "name": "IQAMTY",
-    "short_name": "IQAMTY",
+    "name": "iqamty",
+    "short_name": "iqamty",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0A0A0A",

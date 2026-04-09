@@ -85,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -104,85 +104,32 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
             child: Column(
               children: [
-                // User Header Premium
+                // Header Section
                 _buildProfileHeader(context, student, displayName, isDark),
-                const SizedBox(height: 12),
+                const SizedBox(height: 32),
 
-                // Action Items
-                _buildActionItem(context, Icons.person_outline_rounded, lp.getText('personal_info'), lp.getText('personal_info_subtitle'), () {}),
-                const SizedBox(height: 12),
-                _buildActionItem(context, Icons.notifications_none_rounded, lp.getText('notifications'), lp.getText('alert_preferences'), () {}),
-                const SizedBox(height: 12),
-                _buildActionItem(context, Icons.security_rounded, lp.getText('security'), lp.getText('password_auth'), () {}),
-                const SizedBox(height: 12),
-                _buildActionItem(
-                  context, 
-                  Icons.logout_rounded, 
-                  lp.getText('logout'), 
-                  lp.getText('logout_subtitle'),
-                  () => _showLogoutConfirmation(context),
-                  isDestructive: true,
-                ),
-                
-                const SizedBox(height: 40),
-
-                // Card Section with Flip Animation (Now Below)
+                // Horizontal Official Card Sections (Restored from vertical)
                 Container(
-                  constraints: const BoxConstraints(maxWidth: 480),
+                  constraints: const BoxConstraints(maxWidth: 500),
                   child: Column(
                     children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _isShowingResidence ? lp.getText('residence_card_ar') : lp.getText('student_card_ar'),
-                              style: GoogleFonts.notoKufiArabic(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 12,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            Text(
-                              lp.getText('press_to_flip'),
-                              style: GoogleFonts.notoKufiArabic(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      GestureDetector(
-                        onTap: _toggleCard,
-                        onHorizontalDragEnd: (details) {
-                          if (details.primaryVelocity != null && details.primaryVelocity!.abs() > 300) {
-                            _toggleCard();
-                          }
-                        },
-                        child: AnimatedBuilder(
-                          animation: _flipAnimation,
-                          builder: (context, child) {
-                            final angle = _flipAnimation.value * math.pi;
-                            return Transform(
-                              transform: Matrix4.identity()
-                                ..setEntry(3, 2, 0.001)
-                                ..rotateY(angle),
-                              alignment: Alignment.center,
-                              child: angle < math.pi / 2
-                                  ? _buildOfficialCard(context, student, displayName, dobFormatted, true) // Front: Residence
-                                  : Transform(
-                                      transform: Matrix4.identity()..rotateY(math.pi),
-                                      alignment: Alignment.center,
-                                      child: _buildOfficialCard(context, student, displayName, dobFormatted, false), // Back: Student
-                                    ),
-                            );
-                          },
-                        ),
-                      ),
+                      _buildTitledCardSection(lp.getText('student_card_ar'), lp, student, displayName, dobFormatted, false),
+                      const SizedBox(height: 12),
+                      _buildTitledCardSection(lp.getText('residence_card_ar'), lp, student, displayName, dobFormatted, true),
                     ],
+                  ),
+                ),
+                
+                const SizedBox(height: 32),
+
+                // Restored Logout Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: _buildActionItem(
+                    context, 
+                    lp.getText('logout'), 
+                    () => _showLogoutConfirmation(context),
+                    isDestructive: true,
                   ),
                 ),
                 
@@ -192,6 +139,28 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTitledCardSection(String title, LanguageProvider lp, dynamic student, String name, String dob, bool isResidence) {
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 12, bottom: 8),
+            child: Text(
+              title,
+              style: GoogleFonts.notoKufiArabic(
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+                color: AppColors.primary.withValues(alpha: 0.7),
+              ),
+            ),
+          ),
+        ),
+        _buildOfficialCard(context, student, name, dob, isResidence),
+      ],
     );
   }
 
@@ -269,13 +238,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildOfficialCard(BuildContext context, dynamic student, String name, String dob, bool isResidence) {
     final mainGreen = AppColors.primary;
-    final cardBg = context.appCard;
-    final textDark = context.appTextPrimary; 
-
+    final cardBg = Colors.white;
+    const textDark = Colors.white;
     
     return Container(
-      width: double.infinity,
-      height: 285,
+      width: double.infinity, 
+      height: 260, // Restored Horizontal Height
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: context.isDark ? AppColors.cardDark : cardBg,
@@ -360,29 +328,29 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   style: GoogleFonts.notoKufiArabic(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.8),
                 ),
                 
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 
-                // Content Row
+                // Content Row (Horizontal)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Photo
                     Container(
-                      width: 80,
-                      height: 105,
+                      width: 90,
+                      height: 120,
                       decoration: BoxDecoration(
-                        color: mainGreen.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: mainGreen.withValues(alpha: 0.1), width: 1),
+                        color: mainGreen.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: mainGreen.withValues(alpha: 0.2), width: 1.5),
                         image: student?.photoBase64 != null 
                             ? DecorationImage(image: MemoryImage(base64Decode(student!.photoBase64!)), fit: BoxFit.cover)
                             : (student?.photo != null ? DecorationImage(image: NetworkImage(student!.photo!), fit: BoxFit.cover) : null),
                       ),
                       child: student?.photoBase64 == null && student?.photo == null 
-                          ? Icon(Icons.person, color: mainGreen.withValues(alpha: 0.2), size: 45)
+                          ? Icon(Icons.person, color: mainGreen.withValues(alpha: 0.2), size: 50)
                           : null,
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 16),
                     // Details
                     Expanded(
                       child: Directionality(
@@ -390,12 +358,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildInfoLine('اللقب:', student?.nomAr ?? student?.nomFr ?? 'REKAIK', textDark),
-                            _buildInfoLine('الإسم:', student?.prenomAr ?? student?.prenomFr ?? 'HOCINE', textDark),
+                            _buildInfoLine('اللقب:', student?.nomAr ?? student?.nomFr ?? '', textDark),
+                            _buildInfoLine('الإسم:', student?.prenomAr ?? student?.prenomFr ?? '', textDark),
                             _buildInfoLine('تاريخ الميلاد:', dob, textDark),
                             if (isResidence) ...[
-                              _buildInfoLine('الإقامة:', student?.residence ?? 'Résidence A', textDark),
-                              _buildInfoLine('الغرفة / الجناح:', '${student?.chambre ?? '214'} / ${student?.bloc ?? 'B4'}', textDark),
+                              _buildInfoLine('الإقامة:', student?.residence ?? 'Résidence universitaire', textDark),
+                              _buildInfoLine('الغرفة / الجناح:', '${student?.chambre ?? '--'} / ${student?.bloc ?? '--'}', textDark),
                             ] else ...[
                               _buildInfoLine('الميدان:', 'إعلام آلي', textDark),
                               _buildInfoLine('الفرع:', 'نظم المعلومات', textDark),
@@ -457,7 +425,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildActionItem(BuildContext context, IconData icon, String title, String subtitle, VoidCallback onTap, {bool isDestructive = false}) {
+  Widget _buildActionItem(BuildContext context, String title, VoidCallback onTap, {bool isDestructive = false}) {
     final color = isDestructive ? const Color(0xFFEF4444) : context.appTextPrimary;
     
     return Container(
@@ -479,43 +447,21 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           onTap: onTap,
           borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isDestructive ? const Color(0xFFEF4444).withValues(alpha: 0.1) : AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(icon, color: isDestructive ? const Color(0xFFEF4444) : AppColors.primary, size: 22),
-                ),
-                const SizedBox(width: 16),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          color: color,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: GoogleFonts.inter(
-                          color: context.appTextSecondary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: color,
+                    ),
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios_rounded, color: context.appTextSecondary.withValues(alpha: 0.4), size: 14),
               ],
             ),
           ),
@@ -529,10 +475,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: context.appBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(lp.getText('logout_confirm_title'), style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
-        content: Text(lp.getText('logout_confirm_msg'), style: GoogleFonts.inter(color: context.appTextSecondary)),
+        title: Text(lp.getText('logout_confirm_title'), style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        content: Text(lp.getText('logout_confirm_msg'), style: GoogleFonts.inter()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

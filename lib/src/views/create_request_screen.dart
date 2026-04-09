@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -129,6 +130,16 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/requests');
+            }
+          },
+        ),
         title: Text(lp.getText('new_request'), style: TextStyle(color: context.appTextPrimary)),
         backgroundColor: context.appCard,
         iconTheme: IconThemeData(color: context.appTextPrimary),
