@@ -108,15 +108,46 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 _buildProfileHeader(context, student, displayName, isDark),
                 const SizedBox(height: 32),
 
-                // Horizontal Official Card Sections (Restored from vertical)
-                Container(
-                  constraints: const BoxConstraints(maxWidth: 500),
-                  child: Column(
-                    children: [
-                      _buildTitledCardSection(lp.getText('student_card_ar'), lp, student, displayName, dobFormatted, false),
-                      const SizedBox(height: 12),
-                      _buildTitledCardSection(lp.getText('residence_card_ar'), lp, student, displayName, dobFormatted, true),
-                    ],
+                // Vertical Flippable Card Section (Rotated Content)
+                GestureDetector(
+                  onTap: _toggleCard,
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: AspectRatio(
+                      aspectRatio: 0.63, // Portrait ratio (1 / 1.58)
+                      child: RotatedBox(
+                        quarterTurns: 3, // 90° counter-clockwise
+                        child: AnimatedBuilder(
+                          animation: _flipAnimation,
+                          builder: (context, child) {
+                            final angle = _flipAnimation.value * math.pi;
+                            return Transform(
+                              transform: Matrix4.identity()
+                                ..setEntry(3, 2, 0.001) // Perspective
+                                ..rotateY(angle),
+                              alignment: Alignment.center,
+                              child: angle < math.pi / 2
+                                  ? _buildOfficialCard(context, student, displayName, dobFormatted, true) // Front: Residence
+                                  : Transform(
+                                      transform: Matrix4.identity()..rotateY(math.pi),
+                                      alignment: Alignment.center,
+                                      child: _buildOfficialCard(context, student, displayName, dobFormatted, false), // Back: Student
+                                    ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+                Text(
+                  lp.getText('press_to_flip'),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary.withOpacity(0.6),
                   ),
                 ),
                 
@@ -238,178 +269,162 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildOfficialCard(BuildContext context, dynamic student, String name, String dob, bool isResidence) {
     final mainGreen = AppColors.primary;
-    final cardBg = Colors.white;
-    const textDark = Colors.white;
-    
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.white70 : Colors.black54;
+
     return Container(
-      width: 340, 
-      height: 600, // Optimized for mobile screen (vertical)
+      width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: context.isDark ? AppColors.cardDark : cardBg,
-        borderRadius: BorderRadius.circular(20),
+        color: isDark ? const Color(0xFF121212) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: mainGreen.withValues(alpha: 0.15),
-            blurRadius: 25,
-            offset: const Offset(0, 10),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
-        border: Border.all(color: mainGreen.withValues(alpha: 0.15), width: 1.5),
+        border: Border.all(color: mainGreen.withOpacity(0.4), width: 1.2),
       ),
-      child: Stack(
-        children: [
-          // Background pattern
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 80,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [mainGreen.withValues(alpha: 0.1), Colors.transparent],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.04,
-              child: CustomPaint(
-                painter: CardPatternPainter(mainGreen),
-              ),
-            ),
-          ),
-          
-          // Decorative Security Wave (Vertical)
-          Positioned(
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: 40,
-            child: Opacity(
-              opacity: 0.1,
-              child: RotatedBox(
-                quarterTurns: 1,
-                child: CustomPaint(painter: CardPatternPainter(mainGreen)),
-              ),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
-              children: [
-                // Header: School Title
-                Text(
-                  'الثانوية التأهيلية الخاصة',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.notoKufiArabic(fontSize: 14, fontWeight: FontWeight.bold, color: textDark),
-                ),
-                Text(
-                  'الموسم الدراسي: 2025/2026',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.notoKufiArabic(fontSize: 10, color: textDark.withValues(alpha: 0.7)),
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Centered Photo Section
-                Center(
-                  child: Container(
-                    width: 160,
-                    height: 190,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 2),
-                      image: student?.photoBase64 != null 
-                          ? DecorationImage(image: MemoryImage(base64Decode(student!.photoBase64!)), fit: BoxFit.cover)
-                          : (student?.photo != null ? DecorationImage(image: NetworkImage(student!.photo!), fit: BoxFit.cover) : null),
+      child: FittedBox(
+        fit: BoxFit.contain,
+        child: SizedBox(
+          width: 500,
+          height: 316, // Proportional to AspectRatio 1.58 (500 / 1.58 = 316)
+          child: Stack(
+            children: [
+              // Header Bar
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 75,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: mainGreen,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
                     ),
-                    child: student?.photoBase64 == null && student?.photo == null 
-                        ? Icon(Icons.person, color: Colors.white.withValues(alpha: 0.2), size: 100)
-                        : null,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                       Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.account_balance_rounded, color: Colors.white, size: 12),
+                            const SizedBox(width: 8),
+                            Text(
+                              'الجمهورية الجزائرية الديمقراطية الشعبية',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.notoKufiArabic(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.account_balance_rounded, color: Colors.white, size: 12),
+                          ],
+                        ),
+                        Text(
+                          'وزارة التعليم العالي والبحث العلمي',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.notoKufiArabic(fontSize: 7, color: Colors.white.withOpacity(0.9)),
+                        ),
+                        Text(
+                          isResidence ? 'مديرية الخدمات الجامعية بجاية القصر' : 'المدرسة العليا للإعلام الآلي',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.notoKufiArabic(fontSize: 7.5, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                    ],
                   ),
                 ),
-                
-                const SizedBox(height: 24),
-                
-                // Centered Name (Bold)
-                Text(
-                  displayName,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.notoKufiArabic(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Info Fields (List Layout)
-                Expanded(
-                  child: Directionality(
-                    textDirection: ui.TextDirection.rtl,
-                    child: Column(
+              ),
+              
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 85, 16, 16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
                       children: [
-                        _buildMobileInfoLine('اللقب:', safeNomFr.toUpperCase(), textDark),
-                        _buildMobileInfoLine('الإسم:', safePrenomFr.toUpperCase(), textDark),
-                        _buildMobileInfoLine('تاريخ الميلاد:', dob, textDark),
-                        _buildMobileInfoLine('الجنس:', student?.genre == 'M' ? 'ذكر' : 'أنثى', textDark),
-                        _buildMobileInfoLine('المستوى:', 'الرابعة إعدادي', textDark),
-                        _buildMobileInfoLine('القسم:', 'الفوج A2', textDark),
+                        Text(
+                          isResidence ? 'بطاقة الإقامة' : 'بطاقة الطالب',
+                          style: GoogleFonts.notoKufiArabic(fontSize: 16, fontWeight: FontWeight.w900, color: mainGreen, letterSpacing: 0.5),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Photo
+                            Container(
+                              width: 100,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                color: mainGreen.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: mainGreen.withOpacity(0.2)),
+                                image: student?.photoBase64 != null 
+                                    ? DecorationImage(image: MemoryImage(base64Decode(student!.photoBase64!)), fit: BoxFit.cover)
+                                    : (student?.photo != null ? DecorationImage(image: NetworkImage(student!.photo!), fit: BoxFit.cover) : null),
+                              ),
+                              child: student?.photoBase64 == null && student?.photo == null 
+                                  ? Icon(Icons.person, color: mainGreen.withOpacity(0.2), size: 50)
+                                  : null,
+                            ),
+                            const SizedBox(width: 20),
+                            // Details
+                            Expanded(
+                              child: Directionality(
+                                textDirection: ui.TextDirection.rtl,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInfoLine('اللقب:', student?.nomAr ?? student?.nomFr ?? '', textColor),
+                                    _buildInfoLine('الإسم:', student?.prenomAr ?? student?.prenomFr ?? '', textColor),
+                                    _buildInfoLine('تاريخ الميلاد:', dob, textColor),
+                                    if (isResidence) ...[
+                                      _buildInfoLine('الإقامة:', student?.residence ?? 'Résidence universitaire', textColor),
+                                      _buildInfoLine('الغرفة / الجناح:', '${student?.chambre ?? '--'} / ${student?.bloc ?? '--'}', textColor),
+                                    ] else ...[
+                                      _buildInfoLine('الميدان:', 'إعلام آلي', textColor),
+                                      _buildInfoLine('الفرع:', 'نظم المعلومات', textColor),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                  ),
-                ),
-                
-                // QR & ID Section
-                Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.qr_code_2_rounded, size: 80, color: Colors.black),
+                    // Footer
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(Icons.qr_code_2_rounded, size: 50, color: textColor.withOpacity(0.7)),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'السنة الجامعية: 2024/2025',
+                              style: GoogleFonts.notoKufiArabic(color: subTextColor, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              'ID: ${student?.matricule ?? '201011123456'}',
+                              style: GoogleFonts.robotoMono(color: textColor, fontSize: 13, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'ID: ${student?.matricule ?? '2025-0001-ST'}',
-                      style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 2),
-                    ),
-                    const SizedBox(height: 10),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMobileInfoLine(String label, String value, Color textColor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.notoKufiArabic(color: textColor.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            value,
-            style: GoogleFonts.notoKufiArabic(color: textColor, fontSize: 14, fontWeight: FontWeight.w900),
-          ),
-        ],
-      ),
-    );
-  }
-        ],
+        ),
       ),
     );
   }
@@ -421,12 +436,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         text: TextSpan(
           children: [
             TextSpan(
-              text: '$label ',
-              style: GoogleFonts.notoKufiArabic(color: textColor.withValues(alpha: 0.6), fontSize: 9.5, fontWeight: FontWeight.bold),
+              text: label,
+              style: GoogleFonts.notoKufiArabic(fontSize: 12, color: textColor.withOpacity(0.6), fontWeight: FontWeight.bold),
             ),
+            const TextSpan(text: ' '),
             TextSpan(
               text: value,
-              style: GoogleFonts.notoKufiArabic(color: textColor, fontSize: 11.5, fontWeight: FontWeight.w900),
+              style: GoogleFonts.notoKufiArabic(fontSize: 13, color: textColor, fontWeight: FontWeight.w900),
             ),
           ],
         ),

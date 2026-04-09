@@ -27,6 +27,9 @@ import '../views/create_request_screen.dart';
 import '../views/register_screen.dart';
 import '../views/placeholder_screen.dart';
 import '../views/admin_placeholder_view.dart';
+import '../views/gym_view.dart';
+import '../views/weightlifting_view.dart';
+import '../views/hamam_view.dart';
 import '../models/types.dart';
 
 class AppRouter {
@@ -135,6 +138,10 @@ class AppRouter {
               path: '/settings',
               pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
             ),
+            GoRoute(path: '/planning', pageBuilder: (context, state) => const NoTransitionPage(child: SportsProgramView())),
+            GoRoute(path: '/gym', pageBuilder: (context, state) => const NoTransitionPage(child: GymView())),
+            GoRoute(path: '/weightlifting', pageBuilder: (context, state) => const NoTransitionPage(child: WeightliftingView())),
+            GoRoute(path: '/hamam', pageBuilder: (context, state) => const NoTransitionPage(child: HamamView())),
             
             // Admin Routes
             GoRoute(path: '/admin', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDashboard())),

@@ -14,12 +14,12 @@ class AppColors {
   static Color highlightLight = const Color(0xFFE0F2FE); // Sky 100
   static Color alertBgLight = const Color(0xFFFEF2F2); // Red 50
 
-  // Night Mode (Deep Green Aesthetic from user image)
-  static Color backgroundDark = const Color(0xFF0A0A0A); // Near-pure black
-  static Color cardDark = const Color(0xFF161D19); // Night green card
+  // Night Mode (Truly Black Aesthetic)
+  static Color backgroundDark = const Color(0xFF000000); // Pure black
+  static Color cardDark = const Color(0xFF121212); // Very dark card
   static Color textPrimaryDark = const Color(0xFFF1F5F2); // Minty off-white
   static Color textSecondaryDark = const Color(0xFF8CA193); // Desaturated sage
-  static Color borderColorDark = const Color(0xFF222E28); // Subtle dark boundary
+  static Color borderColorDark = const Color(0xFF1E1E1E); // Subtle dark boundary
   static Color highlightDark = const Color(0xFF245F40); // Deep forest highlight
   static Color alertBgDark = const Color(0xFF3F1313); // Deep muted red
 

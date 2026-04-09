@@ -92,7 +92,7 @@ class _SportsProgramViewState extends State<SportsProgramView> {
             },
           ),
           title: Text(
-            lp.getText('sports_and_showers'),
+            lp.getText('planning'),
             style: GoogleFonts.inter(
               color: Colors.white,
               fontWeight: FontWeight.w900,
@@ -106,26 +106,32 @@ class _SportsProgramViewState extends State<SportsProgramView> {
           padding: const EdgeInsets.all(24.0),
           physics: const BouncingScrollPhysics(),
           children: [
-            // Section A: Showers (Douches)
-            _buildSectionHeader(context, lp.getText('showers'), Icons.shower_rounded),
+            _buildMenuCard(
+              context, 
+              lp.getText('gym_schedule'), 
+              lp.getText('gym'), 
+              Icons.sports_basketball_rounded, 
+              const Color(0xFF3B82F6),
+              () => context.push('/gym'),
+            ),
             const SizedBox(height: 16),
-            _buildShowerSchedule(context),
-            
-            const SizedBox(height: 40),
-            
-            // Section B: Gym (General fitness area)
-            _buildSectionHeader(context, lp.getText('gym'), Icons.sports_basketball_rounded),
+            _buildMenuCard(
+              context, 
+              lp.getText('weightlifting_schedule'), 
+              lp.getText('weightlifting_room'), 
+              Icons.fitness_center_rounded, 
+              const Color(0xFF10B981),
+              () => context.push('/weightlifting'),
+            ),
             const SizedBox(height: 16),
-            _buildGymSection(context, lp),
-            
-            const SizedBox(height: 40),
-            
-            // Section C: Weightlifting Room
-            _buildSectionHeader(context, lp.getText('weightlifting_room'), Icons.fitness_center_rounded),
-            const SizedBox(height: 16),
-            _buildWeightliftingSchedule(context),
-            
-            const SizedBox(height: 60),
+            _buildMenuCard(
+              context, 
+              lp.getText('hamam_schedule'), 
+              lp.getText('showers'), 
+              Icons.shower_rounded, 
+              const Color(0xFFF59E0B),
+              () => context.push('/hamam'),
+            ),
           ],
         ),
       );
@@ -136,249 +142,69 @@ class _SportsProgramViewState extends State<SportsProgramView> {
     }
   }
 
-  Widget _buildGymSection(BuildContext context, LanguageProvider lp) {
-    return Column(
-      children: [
-        _buildSportsSchedule(context),
-        const SizedBox(height: 24),
-        _buildSectionHeader(context, lp.getText('team_registration'), Icons.group_add_rounded),
-        const SizedBox(height: 16),
-        _buildTeamRegistrationSection(context, lp),
-      ],
-    );
-  }
-
-  Widget _buildWeightliftingSchedule(BuildContext context) {
-    final schedules = {
-      'Lundi - Vendredi': ['08:00 - 22:00'],
-      'Samedi': ['10:00 - 18:00'],
-      'Dimanche': ['Fermé'],
-    };
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: schedules.entries.map((e) => _buildDayScheduleCard(context, e.key, e.value, Icons.fitness_center_rounded)).toList(),
-    );
-  }
-
-  Widget _buildSportsSchedule(BuildContext context) {
-    final schedules = {
-      'Samedi': ['17:00 - 19:00 (Foot INT)', '21:00 - 23:30 (Foot NAT/INT)'],
-      'Dimanche': ['17:00 - 18:30 (Volley-ball NAT/INT)', '18:30 - 21:30 (Foot ET/NAT)', '21:30 - 23:30 (Foot ET/INT)'],
-      'Lundi': ['17:00 - 18:30 (Basket-ball NAT/INT)', '18:30 - 20:00 (Volley-ball NAT/INT)', '20:00 - 21:30 (Foot ET/INT)', '21:30 - 23:30 (Foot ET/NAT)'],
-      'Mardi': ['17:00 - 18:30 (Hand-ball NAT/INT)', '18:30 - 21:30 (Foot ET/NAT)', '21:30 - 23:30 (Foot ET/INT)'],
-      'Mercredi': ['17:00 - 18:30 (Basket-ball NAT/INT)', '18:30 - 20:30 (Foot ET/INT)', '20:30 - 23:30 (Foot ET/NAT)'],
-      'Jeudi': ['17:00 - 18:30 (Hand-ball NAT/INT)', '18:30 - 20:30 (Foot ET/INT)', '20:30 - 23:30 (Foot ET/NAT)'],
-      'Vendredi': ['17:00 - 20:00 (Foot ET/NAT)', '20:30 - 21:30 (Volley-ball)', '21:30 - 23:30 (Foot ET/INT)'],
-    };
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: schedules.entries.map((e) => _buildDayScheduleCard(context, e.key, e.value, Icons.sports_kabaddi_rounded)).toList(),
-    );
-  }
-
-  Widget _buildShowerSchedule(BuildContext context) {
-    final schedules = {
-      'Dimanche': ['20:00 - 00:00'],
-      'Lundi': ['17:00 - 22:00'],
-      'Mardi': ['09:00 - 11:30', '17:00 - 22:00'],
-      'Mercredi': ['17:30 - 23:00'],
-      'Jeudi': ['17:30 - 23:00'],
-      'Vendredi': ['07:00 - 11:30', '21:00 - 00:00'],
-      'Samedi': ['07:00 - 11:30', '21:00 - 00:00'],
-    };
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: schedules.entries.map((e) => _buildDayScheduleCard(context, e.key, e.value, Icons.shower_rounded)).toList(),
-    );
-  }
-
-  Widget _buildDayScheduleCard(BuildContext context, String day, List<String> slots, IconData icon) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? AppColors.cardDark : Colors.white;
-    final borderColor = isDark ? const Color(0xFF333333) : const Color(0xFFE2E8F0);
-
+  Widget _buildMenuCard(BuildContext context, String title, String subtitle, IconData icon, Color iconBg, VoidCallback onTap) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      width: double.infinity,
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.appBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    color: iconBg.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(icon, color: AppColors.primary, size: 20),
+                  child: Icon(icon, color: iconBg, size: 28),
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  day,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: context.appTextPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: context.appTextSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                Icon(Icons.chevron_right_rounded, color: context.appTextSecondary),
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: slots.map((slot) => Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.02),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.access_time_rounded, size: 14, color: AppColors.primary.withOpacity(0.7)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        slot,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white70 : Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: AppColors.primary, size: 24),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: Theme.of(context).textTheme.bodyLarge?.color,
-              letterSpacing: -0.5,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTeamRegistrationSection(BuildContext context, LanguageProvider lp) {
-    return Column(
-      children: [
-        _buildTeamCard(context, lp.getText('football'), Icons.sports_soccer_rounded, lp),
-        const SizedBox(height: 12),
-        _buildTeamCard(context, lp.getText('volleyball'), Icons.sports_volleyball_rounded, lp),
-        const SizedBox(height: 12),
-        _buildTeamCard(context, lp.getText('basketball'), Icons.sports_basketball_rounded, lp),
-      ],
-    );
-  }
-
-  Widget _buildTeamCard(BuildContext context, String teamName, IconData icon, LanguageProvider lp) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? AppColors.cardDark : Colors.white;
-    final borderColor = isDark ? const Color(0xFF333333) : const Color(0xFFE2E8F0);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: AppColors.primary),
-        ),
-        title: Text(
-          teamName,
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
-          ),
-        ),
-        trailing: ElevatedButton(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(lp.getText('registration_sent_msg')),
-                backgroundColor: AppColors.primary,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          ),
-          child: Text(
-            lp.getText('join_team'),
-            style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
-          ),
         ),
       ),
     );
   }
+
 }
 

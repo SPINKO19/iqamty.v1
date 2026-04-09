@@ -297,13 +297,22 @@ class HomeScreen extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.2),
                   ),
                   alignment: Alignment.center,
-                  child: Text(
-                    initials,
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.transparent,
+                    backgroundImage: student?.photoBase64 != null 
+                        ? MemoryImage(base64Decode(student!.photoBase64!))
+                        : (student?.photo != null ? NetworkImage(student!.photo!) : null) as ImageProvider?,
+                    child: student?.photoBase64 == null && student?.photo == null
+                        ? Text(
+                            initials,
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          )
+                        : null,
                   ),
                 ),
               ),

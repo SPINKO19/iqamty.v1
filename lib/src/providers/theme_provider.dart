@@ -50,8 +50,8 @@ class ThemeProvider extends ChangeNotifier {
       AppColors.cardDark = _styledCardColor;
     } else {
       AppColors.primary = const Color(0xFF2D6A4F); // Default Medium Green
-      AppColors.backgroundDark = const Color(0xFF0F172A); // Default Slate 900
-      AppColors.cardDark = const Color(0xFF1E293B); // Default Slate 800
+      AppColors.backgroundDark = const Color(0xFF000000); // Changed to Pure Black
+      AppColors.cardDark = const Color(0xFF121212); // Changed to Very Dark Grey
     }
   }
 

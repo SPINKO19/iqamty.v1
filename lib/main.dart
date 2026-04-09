@@ -75,7 +75,7 @@ class _IqamtyAppState extends State<IqamtyApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark,
+      themeMode: context.watch<ThemeProvider>().flutterThemeMode,
       locale: currentLocale,
       localizationsDelegates: const [
         // AppLocalizations.delegate, // Add this if you use arb files

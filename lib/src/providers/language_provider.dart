@@ -303,6 +303,9 @@ class LanguageProvider extends ChangeNotifier {
     'showers': 'Showers',
     'gym': 'Gym & Fitness',
     'weightlifting_room': 'Weightlifting Room',
+    'gym_schedule': 'Gym Schedule',
+    'weightlifting_schedule': 'Weightlifting Schedule',
+    'hamam_schedule': 'Hamam Schedule',
   };
 
   // ─── FRENCH ───
@@ -571,6 +574,9 @@ class LanguageProvider extends ChangeNotifier {
     'showers': 'Douches',
     'gym': 'Gym & Fitness',
     'weightlifting_room': 'Salle de Musculation',
+    'gym_schedule': 'Emploi du temps Gym',
+    'weightlifting_schedule': 'Emploi du temps Musculation',
+    'hamam_schedule': 'Emploi du temps Hammam',
 
     // Worker Dashboard
     'worker_space': 'Espace Travailleur',
@@ -842,5 +848,8 @@ class LanguageProvider extends ChangeNotifier {
     'showers': 'الدوش',
     'gym': 'قاعة الرياضة',
     'weightlifting_room': 'قاعة بناء الأجسام',
+    'gym_schedule': 'جدول الزمني للصالة الرياضة',
+    'weightlifting_schedule': 'جدول زمني لصالة رفع الأثقال',
+    'hamam_schedule': 'البرنامج الزمني للحمام',
   };
 }
