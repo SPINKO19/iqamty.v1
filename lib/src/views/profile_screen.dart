@@ -242,8 +242,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     const textDark = Colors.white;
     
     return Container(
-      width: double.infinity, 
-      height: 260, // Restored Horizontal Height
+      width: 340, 
+      height: 600, // Optimized for mobile screen (vertical)
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: context.isDark ? AppColors.cardDark : cardBg,
@@ -284,122 +284,131 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
           ),
           
+          // Decorative Security Wave (Vertical)
+          Positioned(
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: 40,
+            child: Opacity(
+              opacity: 0.1,
+              child: RotatedBox(
+                quarterTurns: 1,
+                child: CustomPaint(painter: CardPatternPainter(mainGreen)),
+              ),
+            ),
+          ),
+
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Column(
               children: [
-                // Centered Header (Official Text)
+                // Header: School Title
+                Text(
+                  'الثانوية التأهيلية الخاصة',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.notoKufiArabic(fontSize: 14, fontWeight: FontWeight.bold, color: textDark),
+                ),
+                Text(
+                  'الموسم الدراسي: 2025/2026',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.notoKufiArabic(fontSize: 10, color: textDark.withValues(alpha: 0.7)),
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Centered Photo Section
+                Center(
+                  child: Container(
+                    width: 160,
+                    height: 190,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 2),
+                      image: student?.photoBase64 != null 
+                          ? DecorationImage(image: MemoryImage(base64Decode(student!.photoBase64!)), fit: BoxFit.cover)
+                          : (student?.photo != null ? DecorationImage(image: NetworkImage(student!.photo!), fit: BoxFit.cover) : null),
+                    ),
+                    child: student?.photoBase64 == null && student?.photo == null 
+                        ? Icon(Icons.person, color: Colors.white.withValues(alpha: 0.2), size: 100)
+                        : null,
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Centered Name (Bold)
+                Text(
+                  displayName,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.notoKufiArabic(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Info Fields (List Layout)
+                Expanded(
+                  child: Directionality(
+                    textDirection: ui.TextDirection.rtl,
+                    child: Column(
+                      children: [
+                        _buildMobileInfoLine('اللقب:', safeNomFr.toUpperCase(), textDark),
+                        _buildMobileInfoLine('الإسم:', safePrenomFr.toUpperCase(), textDark),
+                        _buildMobileInfoLine('تاريخ الميلاد:', dob, textDark),
+                        _buildMobileInfoLine('الجنس:', student?.genre == 'M' ? 'ذكر' : 'أنثى', textDark),
+                        _buildMobileInfoLine('المستوى:', 'الرابعة إعدادي', textDark),
+                        _buildMobileInfoLine('القسم:', 'الفوج A2', textDark),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                // QR & ID Section
                 Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ClipOval(
-                          child: Image.asset('assets/logo/app_icon.png', height: 32, width: 32, fit: BoxFit.cover),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'الجمهورية الجزائرية الديمقراطية الشعبية',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.notoKufiArabic(fontSize: 8.5, fontWeight: FontWeight.bold, color: textDark),
-                        ),
-                        const SizedBox(width: 8),
-                        ClipOval(
-                          child: Image.asset('assets/logo/app_icon.png', height: 32, width: 32, fit: BoxFit.cover),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      'وزارة التعليم العالي والبحث العلمي',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.notoKufiArabic(fontSize: 7.5, color: textDark.withValues(alpha: 0.7)),
-                    ),
-                    Text(
-                      isResidence ? 'مديرية الخدمات الجامعية بجاية القصر' : 'المدرسة العليا لعلوم وتكنولوجيا الإعلام الآلي',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.notoKufiArabic(fontSize: 6.5, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 4),
-                Text(
-                  isResidence ? 'بطاقة الإقامة' : 'بطاقة الطالب',
-                  style: GoogleFonts.notoKufiArabic(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.8),
-                ),
-                
-                const SizedBox(height: 8),
-                
-                // Content Row (Horizontal)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Photo
                     Container(
-                      width: 90,
-                      height: 120,
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: mainGreen.withValues(alpha: 0.1),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: mainGreen.withValues(alpha: 0.2), width: 1.5),
-                        image: student?.photoBase64 != null 
-                            ? DecorationImage(image: MemoryImage(base64Decode(student!.photoBase64!)), fit: BoxFit.cover)
-                            : (student?.photo != null ? DecorationImage(image: NetworkImage(student!.photo!), fit: BoxFit.cover) : null),
                       ),
-                      child: student?.photoBase64 == null && student?.photo == null 
-                          ? Icon(Icons.person, color: mainGreen.withValues(alpha: 0.2), size: 50)
-                          : null,
+                      child: Icon(Icons.qr_code_2_rounded, size: 80, color: Colors.black),
                     ),
-                    const SizedBox(width: 16),
-                    // Details
-                    Expanded(
-                      child: Directionality(
-                        textDirection: ui.TextDirection.rtl,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildInfoLine('اللقب:', student?.nomAr ?? student?.nomFr ?? '', textDark),
-                            _buildInfoLine('الإسم:', student?.prenomAr ?? student?.prenomFr ?? '', textDark),
-                            _buildInfoLine('تاريخ الميلاد:', dob, textDark),
-                            if (isResidence) ...[
-                              _buildInfoLine('الإقامة:', student?.residence ?? 'Résidence universitaire', textDark),
-                              _buildInfoLine('الغرفة / الجناح:', '${student?.chambre ?? '--'} / ${student?.bloc ?? '--'}', textDark),
-                            ] else ...[
-                              _buildInfoLine('الميدان:', 'إعلام آلي', textDark),
-                              _buildInfoLine('الفرع:', 'نظم المعلومات', textDark),
-                            ],
-                          ],
-                        ),
-                      ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'ID: ${student?.matricule ?? '2025-0001-ST'}',
+                      style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 2),
                     ),
-                  ],
-                ),
-                
-                const SizedBox(height: 4),
-                
-                // Footer
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Icon(Icons.qr_code_2_rounded, size: 45, color: Colors.white.withValues(alpha: 0.8)),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'السنة الجامعية: 2024/2025',
-                          style: GoogleFonts.notoKufiArabic(color: textDark.withValues(alpha: 0.6), fontSize: 8.5, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          'ID: ${student?.matricule ?? '202031045214'}',
-                          style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
-                        ),
-                      ],
-                    ),
+                    const SizedBox(height: 10),
                   ],
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileInfoLine(String label, String value, Color textColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.notoKufiArabic(color: textColor.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.notoKufiArabic(color: textColor, fontSize: 14, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    );
+  }
         ],
       ),
     );
