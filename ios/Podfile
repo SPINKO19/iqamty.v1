@@ -8,11 +8,23 @@ platform :ios, '15.0'
 install! 'cocoapods', :deterministic_uuids => false
 
 # --- FLUTTER START ---
-prepare_path = File.join('Flutter', 'podhelper.rb')
-if File.exist?(prepare_path)
-  load prepare_path
+# Load podhelper.rb from the Flutter SDK to ensure relative paths are resolved correctly.
+if ENV['FLUTTER_ROOT']
+  load File.join(ENV['FLUTTER_ROOT'], 'packages', 'flutter_tools', 'bin', 'podhelper.rb')
 else
-  puts "Warning: Flutter/podhelper.rb not found"
+  # Fallback for local development or if FLUTTER_ROOT is not in environment
+  prepare_path = File.join('Flutter', 'podhelper.rb')
+  if File.exist?(prepare_path)
+    load prepare_path
+  else
+    # Try to find it via flutter configuration as a last resort
+    flutter_root = `flutter config --machine`.match(/"flutterRoot":\s*"([^"]+)"/)[1] rescue nil
+    if flutter_root
+      load File.join(flutter_root, 'packages', 'flutter_tools', 'bin', 'podhelper.rb')
+    else
+      puts "Warning: Could not find Flutter SDK path"
+    end
+  end
 end
 # --- FLUTTER END ---
 
