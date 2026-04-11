@@ -1,22 +1,24 @@
+# Pin the Firebase iOS SDK version to prevent CocoaPods dependency loops
+$FirebaseSDKVersion = '11.5.0'
+
 # Uncomment this line to define a global platform for your project
 platform :ios, '15.0'
 
-# CocoaPods analytics sends network stats synchronous off-main-thread, as well as (at least in 1.0.0.beta.10) after the pod install has completed, which can be slow and/or fail on some networks.
+# CocoaPods analytics sends network stats synchronous off-main-thread.
 install! 'cocoapods', :deterministic_uuids => false
 
 # --- FLUTTER START ---
-# The following lines are essential for Flutter to work with CocoaPods.
 prepare_path = File.join('Flutter', 'podhelper.rb')
 if File.exist?(prepare_path)
   load prepare_path
 else
-  # Debug fallback
   puts "Warning: Flutter/podhelper.rb not found"
 end
 # --- FLUTTER END ---
 
 target 'Runner' do
-  use_frameworks!
+  # Use static linkage for better reliability with Firebase on CI/CD
+  use_frameworks! :linkage => :static
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
