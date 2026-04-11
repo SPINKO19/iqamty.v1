@@ -7,12 +7,12 @@ import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../services/firestore_service.dart';
 import '../models/types.dart';
-import 'package:go_router/go_router.dart';
 import '../core/theme/colors.dart';
+import '../components/custom_menu_button.dart';
+import 'package:go_router/go_router.dart';
 
 const _kGreen = Color(0xFF2D6A4F);
 const _kHeaderGreen = Color(0xFF2D6A4F);
-const _kOrange = Color(0xFFF4A261);
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -21,41 +21,12 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final student = auth.currentStudent;
-    final userData = auth.currentUserData;
     final firestore = context.watch<FirestoreService>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lp = context.watch<LanguageProvider>();
 
     return Scaffold(
       backgroundColor: context.appBackground,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/create-request'),
-        backgroundColor: _kGreen,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add_rounded, size: 32),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        color: context.appCard,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
-        elevation: 10,
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavIcon(context, Icons.home_rounded, 'Accueil', true, () => context.go('/')),
-              _buildNavIcon(context, Icons.restaurant_rounded, 'Resto', false, () => context.go('/dining')),
-              const SizedBox(width: 48), // Space for FAB
-              _buildNavIcon(context, Icons.assignment_rounded, 'Demandes', false, () => context.go('/requests')),
-              _buildNavIcon(context, Icons.person_rounded, 'Profil', false, () => context.go('/profile')),
-            ],
-          ),
-        ),
-      ),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -64,7 +35,6 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               children: [
                 _buildHeaderSection(context, student, lp, isDark),
-                _buildInfoCardsRow(context, student, userData, isDark),
               ],
             ),
           ),
@@ -76,7 +46,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Announcements Section
-                _buildSectionHeader(context, lp.getText('recent_announcements'), lp, onPressed: () {}),
+                _buildSectionHeader(context, lp.getText('recent_announcements'), lp, onPressed: () => context.go('/community')),
                 const SizedBox(height: 16),
                 SizedBox(
                   height: 160,
@@ -214,64 +184,24 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Widget _buildNavIcon(BuildContext context, IconData icon, String label, bool isSelected, VoidCallback onTap) {
-    final color = isSelected ? _kGreen : context.appTextSecondary;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(50),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              color: color,
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeaderSection(BuildContext context, dynamic student, LanguageProvider lp, bool isDark) {
+  }  Widget _buildHeaderSection(BuildContext context, dynamic student, LanguageProvider lp, bool isDark) {
     final String prenom = student?.prenomFr ?? '';
     final String nom = student?.nomFr ?? '';
     final String fullName = '$prenom $nom'.trim().isEmpty ? lp.getText('student') : '$prenom $nom';
+    final String residence = student?.residence?.toString() ?? 'ru amizour 2 - béjaïa';
     
     final String initials = (prenom.isNotEmpty ? prenom[0].toUpperCase() : '') + (nom.isNotEmpty ? nom[0].toUpperCase() : 'S');
     
     return Container(
       color: _kHeaderGreen,
-      padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 24),
+      padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               // Hamburger menu
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.menu_rounded, color: Colors.white),
-                  onPressed: () {
-                    if (Scaffold.maybeOf(context)?.hasDrawer ?? false) {
-                      Scaffold.of(context).openDrawer();
-                    } else {
-                      Scaffold.maybeOf(context)?.openDrawer();
-                    }
-                  },
-                ),
-              ),
+              const CustomMenuButton(),
               const Expanded(
                 child: Center(
                   child: Text(
@@ -285,7 +215,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // Notifications removed as per user request
               // Avatar with initials
               GestureDetector(
                 onTap: () => context.go('/profile'),
@@ -320,148 +249,117 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 32),
-          // Welcome text
-          Text(
-            lp.getText('welcome') == 'welcome' ? 'Bienvenue,' : '${lp.getText('welcome')},',
-            style: GoogleFonts.inter(
-              color: Colors.white70,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Text(
-                fullName,
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Text('👋', style: TextStyle(fontSize: 24)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCardsRow(BuildContext context, dynamic student, Map<String, dynamic>? userData, bool isDark) {
-    final String chambre = student?.chambre?.toString() ?? '204 B';
-    final String residence = student?.residence?.toString() ?? 'Résidence A';
-    final bool isBanned = student?.isBanned == true;
-    final int days = userData?['joursRestants'] ?? userData?['remainingDays'] ?? 127;
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Card 1: Ma Chambre
-          _buildInfoCard(
-            context: context,
-            title: 'Ma Chambre',
-            value: chambre,
-            icon: Icons.home_outlined,
-            isDark: isDark,
-            bgColor: isDark ? AppColors.highlightDark : const Color(0xFF2D6A4F),
-            textColor: Colors.white,
-            iconColor: Colors.white,
-          ),
-          const SizedBox(width: 12),
-          // Card 2: Résidence
-          _buildInfoCard(
-            context: context,
-            title: 'Résidence',
-            value: residence,
-            icon: Icons.domain_rounded,
-            isDark: isDark,
-            bgColor: context.appCard,
-            textColor: context.appTextPrimary,
-            iconColor: const Color(0xFF2D6A4F),
-          ),
-          const SizedBox(width: 12),
-          // Card 3: Statut
-          _buildStatusCard(context, isDark, !isBanned),
-          const SizedBox(width: 12),
-          // Card 4: Jours restants
-          _buildInfoCard(
-            context: context,
-            title: 'Jours restants',
-            value: days.toString(),
-            icon: Icons.calendar_today_rounded,
-            isDark: isDark,
-            bgColor: context.appCard,
-            textColor: _kOrange,
-            iconColor: _kOrange,
-            titleColor: _kOrange,
+          // Greeting and Pill Section (Responsive)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final bool isSmallScreen = constraints.maxWidth < 450;
+              
+              if (isSmallScreen) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildGreetingColumn(fullName),
+                    const SizedBox(height: 16),
+                    _buildResidenceHeaderPill(residence),
+                  ],
+                );
+              }
+              
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Flexible(
+                    child: _buildGreetingColumn(fullName),
+                  ),
+                  const SizedBox(width: 16),
+                  _buildResidenceHeaderPill(residence),
+                ],
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoCard({
-    required BuildContext context,
-    required String title,
-    required String value,
-    required IconData icon,
-    required bool isDark,
-    required Color bgColor,
-    required Color textColor,
-    required Color iconColor,
-    Color? titleColor,
-  }) {
-    return Container(
-      width: 130,
-      height: 130,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: isDark || bgColor != Colors.white ? [] : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(icon, color: iconColor, size: 24),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  color: titleColor ?? textColor.withValues(alpha: 0.7),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              FittedBox(
+  Widget _buildGreetingColumn(String fullName) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Bienvenue,,',
+          style: GoogleFonts.inter(
+            color: Colors.white.withValues(alpha: 0.9),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  value,
+                  fullName.toUpperCase(),
                   style: GoogleFonts.inter(
-                    color: textColor,
-                    fontSize: 16,
+                    color: Colors.white,
+                    fontSize: 20,
                     fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
                   ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text('👋', style: TextStyle(fontSize: 24)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResidenceHeaderPill(String residence) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.domain_rounded, size: 18, color: Color(0xFF6B7280)),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Résidence',
+                style: TextStyle(
+                  color: Color(0xFF9CA3AF),
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                residence,
+                style: GoogleFonts.inter(
+                  color: Colors.black,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
@@ -471,66 +369,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusCard(BuildContext context, bool isDark, bool isActive) {
-    return Container(
-      width: 130,
-      height: 130,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.appCard,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: isDark ? [] : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF2D6A4F), size: 24),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Statut',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  color: context.appTextSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isActive ? Colors.green.withValues(alpha: 0.15) : Colors.red.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    isActive ? 'Actif ✓' : 'Inactif',
-                    style: GoogleFonts.inter(
-                      color: isActive ? Colors.green[700] : Colors.red[700],
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSectionHeader(BuildContext context, String title, LanguageProvider lp, {VoidCallback? onPressed}) {
     return Row(

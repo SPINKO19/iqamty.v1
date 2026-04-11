@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
 import '../models/types.dart';
 import '../services/firestore_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
+
+import '../components/custom_menu_button.dart';
 
 class RequestListScreen extends StatefulWidget {
   final String category;
@@ -50,15 +51,12 @@ class _RequestListScreenState extends State<RequestListScreen> {
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomMenuButton(
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
+            iconColor: Colors.white,
+          ),
         ),
         title: Text(
           _getCategoryTitle(widget.category, lp),

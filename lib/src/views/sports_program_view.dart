@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 import 'package:go_router/go_router.dart';
+import '../components/custom_menu_button.dart';
 
 class SportsProgramView extends StatefulWidget {
   const SportsProgramView({super.key});
@@ -81,15 +82,12 @@ class _SportsProgramViewState extends State<SportsProgramView> {
         appBar: AppBar(
           elevation: 0,
           backgroundColor: AppColors.primary,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go('/');
-              }
-            },
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CustomMenuButton(
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
+              iconColor: Colors.white,
+            ),
           ),
           title: Text(
             lp.getText('planning'),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
+import '../components/custom_menu_button.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
 
@@ -36,15 +36,12 @@ class AnnouncementDetailScreen extends StatelessWidget {
             stretch: true,
             backgroundColor: const Color(0xFF2D6A4F),
             elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-              onPressed: () {
-                if (context.canPop()) {
-                  context.pop();
-                } else {
-                  context.go('/');
-                }
-              },
+            leading: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: CustomMenuButton(
+                backgroundColor: Colors.white.withValues(alpha: 0.2),
+                iconColor: Colors.white,
+              ),
             ),
             flexibleSpace: FlexibleSpaceBar(
               stretchModes: const [

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import '../components/custom_menu_button.dart';
 
 class PlaceholderScreen extends StatelessWidget {
   final String title;
@@ -9,15 +9,9 @@ class PlaceholderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: CustomMenuButton(),
         ),
         title: Text(title),
       ),

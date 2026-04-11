@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../models/types.dart';
 import '../providers/auth_provider.dart';
 import '../core/theme/colors.dart';
+
+import '../components/custom_menu_button.dart';
 
 class NotificationsView extends StatefulWidget {
   const NotificationsView({super.key});
@@ -63,15 +64,12 @@ class _NotificationsViewState extends State<NotificationsView> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF2D6A4F),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomMenuButton(
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
+            iconColor: Colors.white,
+          ),
         ),
         title: Row(
           children: [

@@ -4,7 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
+import '../components/custom_menu_button.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 import 'dart:io';
@@ -124,9 +124,12 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
       backgroundColor: context.appBackground,
       appBar: AppBar(
         title: Text(lp.getText('documents'), style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomMenuButton(
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+            iconColor: AppColors.primary,
+          ),
         ),
       ),
       body: SingleChildScrollView(

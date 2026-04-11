@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
+import '../components/custom_menu_button.dart';
 
 class RequestsView extends StatelessWidget {
   const RequestsView({super.key});
@@ -10,21 +11,22 @@ class RequestsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
         title: Text(lp.getText('my_requests'), style: TextStyle(color: context.appTextPrimary)),
         backgroundColor: context.appCard,
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomMenuButton(
+            backgroundColor: isDark 
+                ? Colors.white.withValues(alpha: 0.1) 
+                : AppColors.primary.withValues(alpha: 0.1),
+            iconColor: isDark ? Colors.white : AppColors.primary,
+          ),
         ),
       ),
       body: ListView(

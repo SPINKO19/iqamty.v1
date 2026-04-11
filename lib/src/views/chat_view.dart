@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/language_provider.dart';
@@ -7,6 +6,8 @@ import '../providers/auth_provider.dart';
 import '../services/firestore_service.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
+
+import '../components/custom_menu_button.dart';
 
 class ChatView extends StatefulWidget {
   const ChatView({super.key});
@@ -33,7 +34,7 @@ class _ChatViewState extends State<ChatView> {
     final studentName = auth.currentUserData?['displayName'] ?? auth.currentStudent?.nomFr ?? 'Student';
     
     _chatId = await firestore.startOrGetChat(studentId, studentName);
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   Future<void> _sendMessage() async {
@@ -64,19 +65,19 @@ class _ChatViewState extends State<ChatView> {
     final firestore = context.read<FirestoreService>();
     final auth = context.read<AuthProvider>();
     final currentUserId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomMenuButton(
+            backgroundColor: isDark 
+                ? Colors.white.withValues(alpha: 0.1) 
+                : AppColors.primary.withValues(alpha: 0.1),
+            iconColor: isDark ? Colors.white : AppColors.primary,
+          ),
         ),
         title: Text(lp.getText('messaging'), style: TextStyle(color: context.appTextPrimary)),
         backgroundColor: context.appCard,

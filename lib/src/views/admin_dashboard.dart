@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 import 'package:go_router/go_router.dart';
+import '../components/custom_menu_button.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 const _kGreen = Color(0xFF2D6A4F);
@@ -94,30 +95,9 @@ class AdminDashboard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        _buildRoundedIconButton(
-                          context,
-                          icon: Icons.arrow_back_rounded,
-                          onTap: () {
-                            if (context.canPop()) {
-                              context.pop();
-                            } else {
-                              context.go('/login');
-                            }
-                          },
-                          bgColor: Colors.white.withValues(alpha: 0.1),
-                          iconColor: Colors.white,
-                        ),
-                        const SizedBox(width: 10),
-                        _buildRoundedIconButton(
-                          context,
-                          icon: Icons.menu_rounded,
-                          onTap: () => Scaffold.of(context).openDrawer(),
-                          bgColor: Colors.white.withValues(alpha: 0.1),
-                          iconColor: Colors.white,
-                        ),
-                      ],
+                    CustomMenuButton(
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
+                      iconColor: Colors.white,
                     ),
                     Row(
                       children: [
@@ -178,25 +158,8 @@ class AdminDashboard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _buildRoundedIconButton(
-                context,
-                icon: Icons.arrow_back_rounded,
-                onTap: () {
-                  if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    context.go('/login');
-                  }
-                },
-                bgColor: Colors.white.withValues(alpha: 0.1),
-                iconColor: Colors.white,
-              ),
-              const SizedBox(width: 12),
-              _buildRoundedIconButton(
-                context,
-                icon: Icons.menu_rounded,
-                onTap: () => Scaffold.of(context).openDrawer(),
-                bgColor: Colors.white.withValues(alpha: 0.1),
+              CustomMenuButton(
+                backgroundColor: Colors.white.withValues(alpha: 0.1),
                 iconColor: Colors.white,
               ),
               const SizedBox(width: 24),

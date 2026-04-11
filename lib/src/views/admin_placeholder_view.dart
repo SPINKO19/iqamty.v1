@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/language_provider.dart';
 import 'package:provider/provider.dart';
+import '../components/custom_menu_button.dart';
 
 class AdminPlaceholderView extends StatelessWidget {
   final String title;
@@ -20,9 +21,12 @@ class AdminPlaceholderView extends StatelessWidget {
         elevation: 0,
         backgroundColor: kGreen,
         foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomMenuButton(
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
+            iconColor: Colors.white,
+          ),
         ),
         title: Text(
           title,

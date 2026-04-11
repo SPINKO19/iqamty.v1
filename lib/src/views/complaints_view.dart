@@ -10,6 +10,7 @@ import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
+import '../components/custom_menu_button.dart';
 
 class ComplaintsView extends StatelessWidget {
   const ComplaintsView({super.key});
@@ -20,19 +21,19 @@ class ComplaintsView extends StatelessWidget {
     final firestore = context.read<FirestoreService>();
     final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
     final lp = context.watch<LanguageProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomMenuButton(
+            backgroundColor: isDark 
+                ? Colors.white.withValues(alpha: 0.1) 
+                : AppColors.primary.withValues(alpha: 0.1),
+            iconColor: isDark ? Colors.white : AppColors.primary,
+          ),
         ),
         title: Text(lp.getText('my_complaints'), style: TextStyle(color: context.appTextPrimary)),
         centerTitle: true,
@@ -78,7 +79,7 @@ class ComplaintsView extends StatelessWidget {
             );
           }
 
-    return ListView.separated(
+          return ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             itemCount: complaints.length,
             separatorBuilder: (context, index) => const SizedBox(height: 20),

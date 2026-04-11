@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
@@ -9,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+
+import '../components/custom_menu_button.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -84,16 +85,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
-          color: context.appTextPrimary,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomMenuButton(
+            backgroundColor: isDark 
+                ? Colors.white.withValues(alpha: 0.1) 
+                : AppColors.primary.withValues(alpha: 0.1),
+            iconColor: isDark ? Colors.white : AppColors.primary,
+          ),
         ),
       ),
       body: Center(

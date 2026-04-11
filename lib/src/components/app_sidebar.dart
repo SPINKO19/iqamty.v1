@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
+import '../providers/nav_provider.dart';
 import '../services/firestore_service.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
@@ -17,7 +18,9 @@ class AppSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nav = context.watch<NavProvider>();
     return Scaffold(
+      key: nav.scaffoldKey,
       backgroundColor: context.appBackground,
       drawer: _buildSidebar(context),
       body: child,
@@ -25,6 +28,7 @@ class AppSidebar extends StatelessWidget {
   }
 
   Widget _buildSidebar(BuildContext context) {
+    final nav = context.read<NavProvider>();
     final languageProvider = context.watch<LanguageProvider>();
     final auth = context.watch<AuthProvider>();
     final role = auth.currentStudent?.role ?? auth.currentUserData?['role'] ?? 'student';
@@ -81,11 +85,7 @@ class AppSidebar extends StatelessWidget {
                 ],
               ),
               GestureDetector(
-                onTap: () {
-                  if (Scaffold.maybeOf(context)?.hasDrawer ?? false) {
-                    Scaffold.of(context).closeDrawer();
-                  }
-                },
+                onTap: () => nav.closeDrawer(),
                 child: Container(
                   width: 32,
                   height: 32,
@@ -295,6 +295,7 @@ class AppSidebar extends StatelessWidget {
   }
 
   Widget _buildNavItem(BuildContext context, _NavItemData data, String currentRoute, {bool isLogout = false}) {
+    final nav = context.read<NavProvider>();
     final isSelected = !isLogout && (currentRoute == data.route || (data.route != '/' && currentRoute.startsWith(data.route)));
 
     final textColor = isLogout ? const Color(0xFFEF4444) : (isSelected ? _kDarkGreen : const Color(0xFF4B5563));
@@ -309,9 +310,9 @@ class AppSidebar extends StatelessWidget {
           if (isLogout) {
             _showLogoutConfirmation(context);
           } else {
-            if (Scaffold.maybeOf(context)?.hasDrawer ?? false) {
-              Scaffold.of(context).closeDrawer();
-            }
+            // Use NavProvider to close the root drawer immediately
+            nav.closeDrawer();
+            
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (context.mounted) {
                 context.go(data.route);

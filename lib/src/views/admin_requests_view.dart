@@ -5,6 +5,8 @@ import '../services/firestore_service.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
 
+import '../components/custom_menu_button.dart';
+
 const _kGreen = Color(0xFF2D6A4F);
 
 class AdminRequestsView extends StatelessWidget {
@@ -17,6 +19,13 @@ class AdminRequestsView extends StatelessWidget {
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomMenuButton(
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
+            iconColor: Colors.white,
+          ),
+        ),
         title: Text(
           'Gestion des Demandes',
           style: GoogleFonts.inter(fontWeight: FontWeight.bold),

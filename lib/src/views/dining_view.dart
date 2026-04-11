@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:go_router/go_router.dart';
 import '../core/theme/colors.dart';
 import '../services/firestore_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../models/types.dart';
+import '../components/custom_menu_button.dart';
 
 class DiningView extends StatefulWidget {
   const DiningView({super.key});
@@ -58,21 +58,7 @@ class _DiningViewState extends State<DiningView> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
-                        onPressed: () {
-                          if (context.canPop()) {
-                            context.pop();
-                          } else {
-                            context.go('/');
-                          }
-                        },
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.2),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.all(8),
-                        ),
-                      ),
+                      const CustomMenuButton(),
                       const SizedBox(width: 16),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

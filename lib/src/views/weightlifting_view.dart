@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
-import 'package:go_router/go_router.dart';
+import '../components/custom_menu_button.dart';
 
 class WeightliftingView extends StatelessWidget {
   const WeightliftingView({super.key});
@@ -28,9 +28,12 @@ class WeightliftingView extends StatelessWidget {
           style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          onPressed: () => context.pop(),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomMenuButton(
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
+            iconColor: Colors.white,
+          ),
         ),
       ),
       body: ListView(

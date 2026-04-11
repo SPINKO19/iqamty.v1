@@ -14,6 +14,7 @@ import 'src/services/auth_service.dart';
 import 'src/services/firestore_service.dart';
 import 'src/providers/theme_provider.dart';
 import 'src/providers/language_provider.dart';
+import 'src/providers/nav_provider.dart';
 import 'src/services/storage_service.dart';
 
 void main() async {
@@ -34,6 +35,7 @@ void main() async {
   final themeProvider = ThemeProvider();
   final languageProvider = LanguageProvider();
   final storageService = StorageService();
+  final navProvider = NavProvider();
 
   runApp(
     MultiProvider(
@@ -44,6 +46,7 @@ void main() async {
         ChangeNotifierProvider.value(value: themeProvider),
         ChangeNotifierProvider.value(value: languageProvider),
         ChangeNotifierProvider.value(value: storageService),
+        ChangeNotifierProvider.value(value: navProvider),
       ],
       child: const IqamtyApp(),
     ),

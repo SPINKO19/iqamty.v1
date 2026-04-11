@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../core/theme/colors.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import '../providers/theme_provider.dart';
 import '../providers/language_provider.dart';
+
+import '../components/custom_menu_button.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -20,19 +21,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final themeProvider = context.watch<ThemeProvider>();
     final languageProvider = context.watch<LanguageProvider>();
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: context.appTextPrimary),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomMenuButton(
+            backgroundColor: isDark 
+                ? Colors.white.withValues(alpha: 0.1) 
+                : AppColors.primary.withValues(alpha: 0.1),
+            iconColor: isDark ? Colors.white : AppColors.primary,
+          ),
         ),
         title: Text(languageProvider.getText('settings'), style: TextStyle(color: context.appTextPrimary)),
         centerTitle: true,
