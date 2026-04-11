@@ -185,7 +185,7 @@ class FirestoreService extends ChangeNotifier {
     if (_db == null) throw Exception("Firestore not initialized");
     await _db!.collection('requests').doc(requestId).update({
       'workerStatus': workerStatus,
-      'workerNotes': ?workerNotes,
+      if (workerNotes != null) 'workerNotes': workerNotes,
       if (workerStatus == 'done') 'status': 'completed',
     });
   }
@@ -241,7 +241,7 @@ class FirestoreService extends ChangeNotifier {
     if (_db == null) throw Exception("Firestore not initialized");
     final data = <String, dynamic>{
       'status': status.toString(),
-      'adminComment': ?adminComment,
+      if (adminComment != null) 'adminComment': adminComment,
     };
     await _db!.collection('complaints').doc(complaintId).update(data);
   }
