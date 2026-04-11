@@ -6,17 +6,26 @@ import '../core/theme/colors.dart';
 import 'package:go_router/go_router.dart';
 import '../components/custom_menu_button.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/firestore_service.dart';
+import '../models/types.dart';
 
 const _kGreen = Color(0xFF2D6A4F);
 const _kHeaderGreen = Color(0xFF2D6A4F);
 const _kOrange = Color(0xFFF4A261);
 
-class AdminDashboard extends StatelessWidget {
+class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
+
+  @override
+  State<AdminDashboard> createState() => _AdminDashboardState();
+}
+
+class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
+    final firestore = context.read<FirestoreService>();
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -43,7 +52,7 @@ class AdminDashboard extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 1400),
                 child: Column(
                   children: [
-                    _buildStatsSection(context, lp),
+                    _buildLiveStats(context, lp, firestore),
                     const SizedBox(height: 32),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -235,61 +244,74 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsSection(BuildContext context, LanguageProvider lp) {
+  Widget _buildLiveStats(BuildContext context, LanguageProvider lp, FirestoreService firestore) {
     final isDark = context.isDark;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth > 900;
-        final content = [
-          _buildInfoStatCard(
-            context,
-            title: lp.getText('total_students'),
-            value: '1,240',
-            icon: Icons.people_rounded,
-            bgColor: isDark ? const Color(0xFF1E3A2F) : _kGreen,
-            textColor: Colors.white,
-            iconColor: Colors.white,
-            onTap: () => context.go('/admin/users'),
-          ),
-          const SizedBox(width: 16),
-          _buildInfoStatCard(
-            context,
-            title: lp.getText('complaints_handled'),
-            value: '150',
-            icon: Icons.check_circle_rounded,
-            bgColor: context.appCard,
-            textColor: context.appTextPrimary,
-            iconColor: _kGreen,
-            onTap: () => context.go('/admin/complaints'),
-          ),
-          const SizedBox(width: 16),
-          _buildInfoStatCard(
-            context,
-            title: lp.getText('free_rooms'),
-            value: '25',
-            icon: Icons.meeting_room_rounded,
-            bgColor: isDark ? const Color(0xFF2A1B12) : const Color(0xFFFFF7EC),
-            textColor: _kOrange,
-            iconColor: _kOrange,
-            onTap: () => context.go('/admin/resources'),
-          ),
-        ];
+        
+        return MultiStreamBuilder(
+          streams: [
+            firestore.getStudents(),
+            firestore.getAllComplaints(),
+          ],
+          builder: (context, snapshots) {
+            final students = snapshots[0].data as List<Map<String, dynamic>>? ?? [];
+            final complaints = snapshots[1].data as List<Complaint>? ?? [];
+            final handledComplaints = complaints.where((c) => c.status == Status.resolved || c.status == Status.rejected).length;
 
-        if (isDesktop) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: content.map((w) => w is SizedBox ? w : Expanded(child: w)).toList(),
-            ),
-          );
-        }
+            final content = [
+              _buildInfoStatCard(
+                context,
+                title: lp.getText('total_students'),
+                value: students.length.toString(),
+                icon: Icons.people_rounded,
+                bgColor: isDark ? const Color(0xFF1E3A2F) : _kGreen,
+                textColor: Colors.white,
+                iconColor: Colors.white,
+                onTap: () => context.go('/admin/users'),
+              ),
+              const SizedBox(width: 16),
+              _buildInfoStatCard(
+                context,
+                title: lp.getText('complaints_handled'),
+                value: handledComplaints.toString(),
+                icon: Icons.check_circle_rounded,
+                bgColor: context.appCard,
+                textColor: context.appTextPrimary,
+                iconColor: _kGreen,
+                onTap: () => context.go('/admin/complaints'),
+              ),
+              const SizedBox(width: 16),
+              _buildInfoStatCard(
+                context,
+                title: lp.getText('free_rooms'),
+                value: '22', // Still hardcoded for now until we have Rooms collection
+                icon: Icons.meeting_room_rounded,
+                bgColor: isDark ? const Color(0xFF2A1B12) : const Color(0xFFFFF7EC),
+                textColor: _kOrange,
+                iconColor: _kOrange,
+                onTap: () => context.go('/admin/resources'),
+              ),
+            ];
 
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          physics: const BouncingScrollPhysics(),
-          child: Row(children: content),
+            if (isDesktop) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: content.map((w) => w is SizedBox ? w : Expanded(child: w)).toList(),
+                ),
+              );
+            }
+
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              physics: const BouncingScrollPhysics(),
+              child: Row(children: content),
+            );
+          },
         );
       },
     );
@@ -547,4 +569,30 @@ class _ProgressPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// Helper widget for multiple streams
+class MultiStreamBuilder extends StatelessWidget {
+  final List<Stream> streams;
+  final Widget Function(BuildContext, List<AsyncSnapshot>) builder;
+
+  const MultiStreamBuilder({super.key, required this.streams, required this.builder});
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildStream(0, []);
+  }
+
+  Widget _buildStream(int index, List<AsyncSnapshot> snapshots) {
+    return StreamBuilder(
+      stream: streams[index],
+      builder: (context, snapshot) {
+        final currentSnapshots = List<AsyncSnapshot>.from(snapshots)..add(snapshot);
+        if (index + 1 < streams.length) {
+          return _buildStream(index + 1, currentSnapshots);
+        }
+        return builder(context, currentSnapshots);
+      },
+    );
+  }
 }

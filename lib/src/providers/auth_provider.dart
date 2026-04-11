@@ -53,7 +53,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = _mapError(e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -71,7 +71,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = _mapError(e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -105,11 +105,31 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = _mapError(e);
       _isLoading = false;
       notifyListeners();
       return false;
     }
+  }
+
+  String _mapError(Object e) {
+    final errorStr = e.toString().toLowerCase();
+    
+    // API Errors (WebEtu)
+    if (errorStr.contains('401')) return 'Identifiants incorrects. Veuillez vérifier votre matricule et mot de passe.';
+    if (errorStr.contains('404')) return 'Serveur WebEtu introuvable. Veuillez réessayer plus tard.';
+    if (errorStr.contains('timeout')) return 'Délai d\'attente dépassé. Vérifiez votre connexion internet.';
+    
+    // Firebase Auth Errors
+    if (errorStr.contains('invalid-email')) return 'Format d\'email invalide.';
+    if (errorStr.contains('user-not-found')) return 'Aucun compte trouvé avec cet email.';
+    if (errorStr.contains('wrong-password')) return 'Mot de passe incorrect.';
+    if (errorStr.contains('email-already-in-use')) return 'Cet email est déjà utilisé par un autre compte.';
+    if (errorStr.contains('network-request-failed')) return 'Erreur réseau. Vérifiez votre connexion.';
+    if (errorStr.contains('too-many-requests')) return 'Trop de tentatives échouées. Réessayez plus tard.';
+    
+    // Default fallback
+    return 'Une erreur est survenue. Veuillez réessayer.';
   }
 
   void injectDevUser(String role) {

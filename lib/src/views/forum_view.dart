@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/language_provider.dart';
 import '../providers/auth_provider.dart';
@@ -168,9 +169,25 @@ class _FeedTab extends StatelessWidget {
             if (snapshot.hasError) {
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)),
-                )
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.amber, size: 40),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Impossible de charger le forum',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        snapshot.error.toString(),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
               );
             }
             

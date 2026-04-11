@@ -6,6 +6,7 @@ import '../models/types.dart';
 import '../core/theme/colors.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/firestore_service.dart';
 
 const _kGreen = Color(0xFF2D6A4F);
 
@@ -43,13 +44,24 @@ class AdminComplaintsView extends StatelessWidget {
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1400),
           child: StreamBuilder<List<Complaint>>(
-            stream: Stream.value([]),
+            stream: context.read<FirestoreService>().getAllComplaints(),
             builder: (context, snapshot) {
+              if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
+              if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+              
               final complaints = snapshot.data ?? [];
+              if (complaints.isEmpty) {
+                return Center(
+                  child: Text(
+                    lp.getText('no_complaints_msg'),
+                    style: GoogleFonts.inter(color: context.appTextSecondary),
+                  ),
+                );
+              }
+
               return LayoutBuilder(
                 builder: (context, constraints) {
                   final isDesktop = constraints.maxWidth > 900;
-                  final itemCount = complaints.isEmpty ? 3 : complaints.length;
                   
                   if (isDesktop) {
                     return GridView.builder(
@@ -58,25 +70,19 @@ class AdminComplaintsView extends StatelessWidget {
                         crossAxisCount: 2,
                         crossAxisSpacing: 24,
                         mainAxisSpacing: 24,
-                        childAspectRatio: 1.6,
+                        childAspectRatio: 1.5,
                       ),
-                      itemCount: itemCount,
-                      itemBuilder: (context, index) {
-                        if (complaints.isEmpty) return _getMockCard(index);
-                        return _AdminComplaintCard(complaint: complaints[index]);
-                      },
+                      itemCount: complaints.length,
+                      itemBuilder: (context, index) => _AdminComplaintCard(complaint: complaints[index]),
                     );
                   }
                   
                   return ListView.separated(
                     padding: const EdgeInsets.all(24),
                     physics: const BouncingScrollPhysics(),
-                    itemCount: itemCount,
+                    itemCount: complaints.length,
                     separatorBuilder: (context, index) => const SizedBox(height: 20),
-                    itemBuilder: (context, index) {
-                      if (complaints.isEmpty) return _getMockCard(index);
-                      return _AdminComplaintCard(complaint: complaints[index]);
-                    },
+                    itemBuilder: (context, index) => _AdminComplaintCard(complaint: complaints[index]),
                   );
                 },
               );
@@ -87,37 +93,61 @@ class AdminComplaintsView extends StatelessWidget {
     );
   }
 
-  Widget _getMockCard(int index) {
-    final mocks = [
-      Complaint(
-        userId: '202433294616',
-        title: 'Fuite d\'eau majeure',
-        description: 'Inondation importante dans la salle de bain du Bloc J, chambre 414.',
-        category: 'Plomberie',
-        priority: Priority.high,
-        status: Status.received,
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+  void _showAssignSheet(BuildContext context, Complaint complaint) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: context.appCard,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      builder: (context) => _AssignWorkerSheet(complaintId: complaint.id!),
+    );
+  }
+
+  void _showResolveDialog(BuildContext context, Complaint complaint) {
+    final commentController = TextEditingController();
+    final lp = context.read<LanguageProvider>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: context.appCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(lp.getText('resolve'), style: GoogleFonts.inter(fontWeight: FontWeight.w900, color: context.appTextPrimary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Ajouter une réponse pour l'étudiant :", style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: commentController,
+              maxLines: 4,
+              decoration: InputDecoration(
+                hintText: "Expliquez comment le problème a été réglé...",
+                hintStyle: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
+                filled: true,
+                fillColor: context.appBackground.withValues(alpha: 0.5),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Annuler")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _kGreen, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            onPressed: () async {
+              await context.read<FirestoreService>().updateComplaintStatus(
+                complaint.id!,
+                Status.resolved,
+                adminComment: commentController.text,
+              );
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text("Confirmer", style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
-      Complaint(
-        userId: '202433294000',
-        title: 'Problème d\'éclairage',
-        description: 'Ampoule grillée et court-circuit suspecté dans la chambre 201 du Bloc A.',
-        category: 'Électricité',
-        priority: Priority.medium,
-        status: Status.inProgress,
-        timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-      ),
-      Complaint(
-        userId: '202433294123',
-        title: 'Serrure bloquée',
-        description: 'La clé ne tourne plus dans la serrure de la porte principale du Bloc B.',
-        category: 'Sécurité',
-        priority: Priority.low,
-        status: Status.received,
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-    ];
-    return _AdminComplaintCard(complaint: mocks[index % mocks.length]);
+    );
   }
 }
 
@@ -200,7 +230,7 @@ class _AdminComplaintCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: TextButton.icon(
-                    onPressed: () {},
+                    onPressed: complaint.status == Status.resolved ? null : () => const AdminComplaintsView()._showAssignSheet(context, complaint),
                     icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
                     label: Text(lp.getText('assign'), style: const TextStyle(fontWeight: FontWeight.bold)),
                     style: TextButton.styleFrom(
@@ -213,11 +243,11 @@ class _AdminComplaintCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: complaint.status == Status.resolved ? null : () => const AdminComplaintsView()._showResolveDialog(context, complaint),
                     icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
-                    label: Text(lp.getText('resolve'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    label: Text(complaint.status == Status.resolved ? "Résolu" : lp.getText('resolve'), style: const TextStyle(fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _kGreen,
+                      backgroundColor: complaint.status == Status.resolved ? Colors.grey : _kGreen,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -257,5 +287,72 @@ class _AdminComplaintCard extends StatelessWidget {
       case Priority.medium: return lp.getText('priority_medium');
       case Priority.low: return lp.getText('priority_normal');
     }
+  }
+}
+
+class _AssignWorkerSheet extends StatelessWidget {
+  final String complaintId;
+  const _AssignWorkerSheet({required this.complaintId});
+
+  @override
+  Widget build(BuildContext context) {
+    final firestore = context.read<FirestoreService>();
+    final lp = context.read<LanguageProvider>();
+
+    return Container(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(lp.getText('assign'), style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w900, color: context.appTextPrimary)),
+          const SizedBox(height: 8),
+          Text("Sélectionnez un membre du personnel pour traiter cette réclamation.", style: GoogleFonts.inter(color: context.appTextSecondary)),
+          const SizedBox(height: 24),
+          Flexible(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: firestore.getWorkers(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                final workers = snapshot.data ?? [];
+                
+                if (workers.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Text("Aucun employé trouvé dans le système.", style: GoogleFonts.inter(color: Colors.red)),
+                  );
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: workers.length,
+                  itemBuilder: (context, index) {
+                    final worker = workers[index];
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      leading: CircleAvatar(
+                        backgroundColor: _kGreen.withValues(alpha: 0.1),
+                        child: Text(worker['displayName']?[0] ?? 'W', style: const TextStyle(color: _kGreen, fontWeight: FontWeight.bold)),
+                      ),
+                      title: Text(worker['displayName'] ?? 'Unknown Worker', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+                      subtitle: Text(worker['department'] ?? 'General', style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12)),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () async {
+                        await firestore.assignComplaintToWorker(
+                          complaintId: complaintId,
+                          workerId: worker['uid'] ?? worker['id'],
+                        );
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
   }
 }

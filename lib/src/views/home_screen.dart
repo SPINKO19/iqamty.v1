@@ -53,6 +53,7 @@ class HomeScreen extends StatelessWidget {
                   child: StreamBuilder<List<Announcement>>(
                     stream: firestore.getAnnouncements(),
                     builder: (context, snapshot) {
+                      if (snapshot.hasError) return const SizedBox.shrink(); // Hide if error
                       final announcements = snapshot.data ?? [];
                       if (announcements.isEmpty) {
                         return _buildEmptyState(context, Icons.campaign_rounded, lp.getText('no_announcements'), isDark);
@@ -88,6 +89,14 @@ class HomeScreen extends StatelessWidget {
                         StreamBuilder<List<Complaint>>(
                           stream: firestore.getMyComplaints(student?.id?.toString() ?? ''),
                           builder: (context, snapshot) {
+                            if (snapshot.hasError) return _QuickActionCard(
+                                title: lp.getText('complaints'),
+                                subtitle: 'Erreur de chargement',
+                                icon: Icons.error_outline,
+                                color: Colors.grey,
+                                onTap: () => context.push('/complaints'),
+                                isDark: isDark,
+                              );
                             final count = snapshot.data?.where((c) => c.status != Status.resolved).length ?? 0;
                             return _QuickActionCard(
                               title: lp.getText('complaints'),
@@ -152,6 +161,7 @@ class HomeScreen extends StatelessWidget {
                 StreamBuilder<List<ServiceRequest>>(
                   stream: firestore.getMyRequests(student?.id?.toString() ?? ''),
                   builder: (context, snapshot) {
+                    if (snapshot.hasError) return const Center(child: Text('Erreur d\'activité'));
                     final activities = snapshot.data ?? [];
                     if (activities.isEmpty) {
                       return Padding(

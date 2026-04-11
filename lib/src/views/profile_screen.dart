@@ -299,7 +299,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 top: 0,
                 left: 0,
                 right: 0,
-                height: 75,
+                height: 70,
                 child: Container(
                   decoration: BoxDecoration(
                     color: mainGreen,
@@ -342,7 +342,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               ),
               
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 85, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 78, 16, 12),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -350,7 +350,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       children: [
                         Text(
                           isResidence ? 'بطاقة الإقامة' : 'بطاقة الطالب',
-                          style: GoogleFonts.notoKufiArabic(fontSize: 16, fontWeight: FontWeight.w900, color: mainGreen, letterSpacing: 0.5),
+                          style: GoogleFonts.notoKufiArabic(fontSize: 14, fontWeight: FontWeight.w900, color: mainGreen, letterSpacing: 0.5),
                         ),
                         const SizedBox(height: 8),
                         Row(
@@ -441,7 +441,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             const TextSpan(text: ' '),
             TextSpan(
               text: value,
-              style: GoogleFonts.notoKufiArabic(fontSize: 13, color: textColor, fontWeight: FontWeight.w900),
+              style: GoogleFonts.notoKufiArabic(fontSize: 12, color: textColor, fontWeight: FontWeight.w900),
             ),
           ],
         ),

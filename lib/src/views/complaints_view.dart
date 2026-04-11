@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,6 +12,7 @@ import '../providers/language_provider.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
 import '../components/custom_menu_button.dart';
+import 'package:intl/intl.dart';
 
 class ComplaintsView extends StatelessWidget {
   const ComplaintsView({super.key});
@@ -43,6 +45,38 @@ class ComplaintsView extends StatelessWidget {
       body: StreamBuilder<List<Complaint>>(
         stream: firestore.getMyComplaints(userId),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Erreur de base de données',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      snapshot.error.toString(),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12),
+                    ),
+                    if (snapshot.error.toString().contains('index')) ...[
+                      const SizedBox(height: 16),
+                      const Text(
+                        '💡 Firestore nécessite un index pour cette recherche. Vérifiez votre console Firebase pour le lien de création.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.blue, fontSize: 13),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -108,6 +142,15 @@ class ComplaintsView extends StatelessWidget {
       builder: (context) => const _ComplaintSubmissionSheet(),
     );
   }
+
+  void _showComplaintDetails(BuildContext context, Complaint complaint) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ComplaintDetailsSheet(complaint: complaint),
+    );
+  }
 }
 
 class _ModernComplaintCard extends StatelessWidget {
@@ -116,7 +159,7 @@ class _ModernComplaintCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = _getStatusColor(complaint.status);
+    final statusColor = _ModernComplaintCard.getStatusColor(complaint.status);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lp = context.watch<LanguageProvider>();
     
@@ -159,7 +202,7 @@ class _ModernComplaintCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            _getStatusLabel(complaint.status, lp).toUpperCase(),
+                            _ModernComplaintCard.getStatusLabel(complaint.status, lp).toUpperCase(),
                             style: GoogleFonts.inter(
                               color: statusColor,
                               fontSize: 10,
@@ -202,38 +245,45 @@ class _ModernComplaintCard extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: isDark ? context.appBackground : const Color(0xFFF1F5F9).withValues(alpha: 0.5),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
+          InkWell(
+            onTap: () => ComplaintsView()._showComplaintDetails(context, complaint),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
             ),
-            child: Row(
-              children: [
-                Icon(Icons.category_outlined, size: 14, color: AppColors.primary),
-                const SizedBox(width: 8),
-                Text(
-                  complaint.category,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: context.appTextSecondary,
-                  ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: isDark ? context.appBackground.withValues(alpha: 0.5) : const Color(0xFFF1F5F9).withValues(alpha: 0.5),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
                 ),
-                const Spacer(),
-                Text(
-                  lp.getText('details') == 'details' ? 'Détails' : lp.getText('details'),
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.category_outlined, size: 14, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    complaint.category,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: context.appTextSecondary,
+                    ),
                   ),
-                ),
-                Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.primary),
-              ],
+                  const Spacer(),
+                  Text(
+                    lp.getText('details') == 'details' ? 'Détails' : lp.getText('details'),
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.primary),
+                ],
+              ),
             ),
           ),
         ],
@@ -241,7 +291,7 @@ class _ModernComplaintCard extends StatelessWidget {
     );
   }
 
-  String _getStatusLabel(Status status, LanguageProvider lp) {
+  static String getStatusLabel(Status status, LanguageProvider lp) {
     switch (status) {
       case Status.received: return lp.getText('status_received');
       case Status.inProgress: return lp.getText('status_in_progress');
@@ -251,7 +301,7 @@ class _ModernComplaintCard extends StatelessWidget {
     }
   }
 
-  Color _getStatusColor(Status status) {
+  static Color getStatusColor(Status status) {
     switch (status) {
       case Status.received: return const Color(0xFF2D6A4F);
       case Status.inProgress: return const Color(0xFFF59E0B);
@@ -259,6 +309,134 @@ class _ModernComplaintCard extends StatelessWidget {
       case Status.approved: return const Color(0xFF10B981);
       case Status.rejected: return const Color(0xFFEF4444);
     }
+  }
+}
+
+class _ComplaintDetailsSheet extends StatelessWidget {
+  final Complaint complaint;
+  const _ComplaintDetailsSheet({required this.complaint});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lp = context.watch<LanguageProvider>();
+    final statusColor = _ModernComplaintCard.getStatusColor(complaint.status);
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.8,
+      decoration: BoxDecoration(
+        color: context.appCard,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2))),
+          
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _ModernComplaintCard.getStatusLabel(complaint.status, lp).toUpperCase(),
+                        style: GoogleFonts.inter(color: statusColor, fontWeight: FontWeight.w900, fontSize: 11),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  complaint.title,
+                  style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w900, color: context.appTextPrimary),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  DateFormat('dd MMMM yyyy HH:mm').format(complaint.timestamp),
+                  style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13),
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  lp.getText('detailed_description').toUpperCase(),
+                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary, letterSpacing: 1),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  complaint.description,
+                  style: GoogleFonts.inter(fontSize: 16, color: context.appTextPrimary, height: 1.6),
+                ),
+                
+                if (complaint.imageUrl != null) ...[
+                  const SizedBox(height: 32),
+                  Text(
+                    lp.getText('photo_optional').toUpperCase(),
+                    style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary, letterSpacing: 1),
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.network(
+                      complaint.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, stack) => Container(
+                        height: 100,
+                        color: Colors.grey.withValues(alpha: 0.1),
+                        child: const Center(child: Icon(Icons.broken_image_outlined, color: Colors.grey)),
+                      ),
+                    ),
+                  ),
+                ],
+
+                if (complaint.adminComment != null && complaint.adminComment!.isNotEmpty) ...[
+                  const SizedBox(height: 32),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.admin_panel_settings_outlined, size: 18, color: AppColors.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              "RÉPONSE DE L'ADMINISTRATION",
+                              style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.primary),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          complaint.adminComment!,
+                          style: GoogleFonts.inter(fontSize: 14, color: context.appTextPrimary, height: 1.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -274,12 +452,17 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
   final _descController = TextEditingController();
   XFile? _imageFile;
   bool _isUploading = false;
+  Uint8List? _previewBytes;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      setState(() => _imageFile = image);
+      final bytes = await image.readAsBytes();
+      setState(() {
+        _imageFile = image;
+        _previewBytes = bytes;
+      });
     }
   }
 
@@ -419,14 +602,14 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
           const SizedBox(height: 10),
           GestureDetector(
             onTap: _isUploading ? null : _pickImage,
-            child: _imageFile != null 
+            child: _previewBytes != null 
               ? Container(
                   height: 120,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     image: DecorationImage(
-                      image: FileImage(File(_imageFile!.path)),
+                      image: MemoryImage(_previewBytes!),
                       fit: BoxFit.cover,
                     ),
                   ),

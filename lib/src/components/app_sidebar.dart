@@ -189,10 +189,25 @@ class AppSidebar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(
               children: [
-                _buildNavItem(
-                  context,
-                  _NavItemData(Icons.notifications_none_rounded, 'Notifications', '/notifications'),
-                  currentRoute,
+                StreamBuilder<int>(
+                  stream: context.read<FirestoreService>().getUnreadNotificationsCount(
+                    context.read<AuthProvider>().currentStudent?.id?.toString() ?? 
+                    context.read<AuthProvider>().currentUserData?['id']?.toString() ?? ''
+                  ),
+                  builder: (context, snapshot) {
+                    final unreadCount = snapshot.data ?? 0;
+                    return _buildNavItem(
+                      context,
+                      _NavItemData(
+                        Icons.notifications_none_rounded, 
+                        'Notifications', 
+                        '/notifications',
+                        badgeCount: unreadCount,
+                        badgeColor: const Color(0xFFEF4444),
+                      ),
+                      currentRoute,
+                    );
+                  }
                 ),
                 _buildNavItem(
                   context,
@@ -315,7 +330,7 @@ class AppSidebar extends StatelessWidget {
             
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (context.mounted) {
-                context.go(data.route);
+                context.push(data.route);
               }
             });
           }

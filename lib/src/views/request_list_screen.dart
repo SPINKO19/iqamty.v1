@@ -89,6 +89,31 @@ class _RequestListScreenState extends State<RequestListScreen> {
             child: StreamBuilder<List<ServiceRequest>>(
               stream: firestore.getMyRequests(userId, category: widget.category),
               builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Erreur de base de données',
+                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            snapshot.error.toString(),
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }

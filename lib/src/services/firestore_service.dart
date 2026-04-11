@@ -92,11 +92,15 @@ class FirestoreService extends ChangeNotifier {
     return _db!
         .collection('complaints')
         .where('userId', isEqualTo: userId)
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Complaint.fromJson(doc.data()..['id'] = doc.id))
-            .toList());
+        .snapshots() // Removed .orderBy() to avoid index requirements
+        .map((snapshot) {
+      final list = snapshot.docs
+          .map((doc) => Complaint.fromJson(doc.data()..['id'] = doc.id))
+          .toList();
+      // Manual client-side sort
+      list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return list;
+    });
   }
 
   // Service Requests
@@ -116,11 +120,15 @@ class FirestoreService extends ChangeNotifier {
     }
     
     return query
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ServiceRequest.fromJson(doc.data() as Map<String, dynamic>..['id'] = doc.id))
-            .toList());
+        .map((snapshot) {
+      final list = snapshot.docs
+          .map((doc) => ServiceRequest.fromJson(doc.data() as Map<String, dynamic>..['id'] = doc.id))
+          .toList();
+      // Manual client-side sort
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
+    });
   }
 
   // 1. Admin assigns a request to a worker
@@ -163,17 +171,36 @@ class FirestoreService extends ChangeNotifier {
             .toList());
   }
 
+  // Get all students from users collection
+  Stream<List<Map<String, dynamic>>> getStudents() {
+    if (_db == null) return Stream.value([]);
+    return _db!
+        .collection('users')
+        .where('role', isEqualTo: 'student')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => doc.data()..['id'] = doc.id)
+            .toList());
+  }
+
+  Future<void> toggleUserBan(String userId, bool isBanned) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    await _db!.collection('users').doc(userId).update({'isBanned': isBanned});
+  }
+
   // Get all requests for admin (all users)
   Stream<List<ServiceRequest>> getAllRequests() {
     if (_db == null) return Stream.value([]);
     return _db!
         .collection('requests')
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ServiceRequest.fromJson(
-                doc.data()..['id'] = doc.id))
-            .toList());
+        .map((snapshot) {
+      final list = snapshot.docs
+          .map((doc) => ServiceRequest.fromJson(doc.data()..['id'] = doc.id))
+          .toList();
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
+    });
   }
 
   // 3. Worker updates the status of a task
@@ -183,11 +210,24 @@ class FirestoreService extends ChangeNotifier {
     String? workerNotes,
   }) async {
     if (_db == null) throw Exception("Firestore not initialized");
+    final doc = await _db!.collection('requests').doc(requestId).get();
+    final userId = doc.data()?['userId'];
+
     await _db!.collection('requests').doc(requestId).update({
       'workerStatus': workerStatus,
       if (workerNotes != null) 'workerNotes': workerNotes,
       if (workerStatus == 'done') 'status': 'completed',
     });
+
+    if (userId != null) {
+      String statusText = workerStatus == 'done' ? 'terminée' : 'en cours';
+      await createNotification(
+        userId: userId,
+        title: 'Mise à jour de votre demande',
+        body: 'Le statut de votre demande a été mis à jour : $statusText',
+        type: 'approved',
+      );
+    }
   }
 
   // Documents
@@ -218,11 +258,14 @@ class FirestoreService extends ChangeNotifier {
     if (_db == null) return Stream.value([]);
     return _db!
         .collection('complaints')
-        .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Complaint.fromJson(doc.data()..['id'] = doc.id))
-            .toList());
+        .map((snapshot) {
+      final list = snapshot.docs
+          .map((doc) => Complaint.fromJson(doc.data()..['id'] = doc.id))
+          .toList();
+      list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return list;
+    });
   }
 
   Stream<List<Complaint>> getComplaintsByDepartment(String department) {
@@ -239,11 +282,76 @@ class FirestoreService extends ChangeNotifier {
 
   Future<void> updateComplaintStatus(String complaintId, Status status, {String? adminComment}) async {
     if (_db == null) throw Exception("Firestore not initialized");
+    final doc = await _db!.collection('complaints').doc(complaintId).get();
+    final userId = doc.data()?['userId'];
+
     final data = <String, dynamic>{
       'status': status.toString(),
       if (adminComment != null) 'adminComment': adminComment,
     };
     await _db!.collection('complaints').doc(complaintId).update(data);
+
+    if (userId != null) {
+      await createNotification(
+        userId: userId,
+        title: 'Réponse à votre réclamation',
+        body: 'L\'administration a répondu à votre réclamation. Consultez les détails.',
+        type: status == Status.resolved ? 'resolved' : 'announcement',
+      );
+    }
+  }
+
+  Future<void> assignComplaintToWorker({
+    required String complaintId,
+    required String workerId,
+  }) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final doc = await _db!.collection('complaints').doc(complaintId).get();
+    final userId = doc.data()?['userId'];
+
+    await _db!.collection('complaints').doc(complaintId).update({
+      'assignedWorkerId': workerId,
+      'status': Status.inProgress.toString(),
+    });
+
+    if (userId != null) {
+      await createNotification(
+        userId: userId,
+        title: 'Réclamation prise en charge',
+        body: 'Votre réclamation a été assignée à un membre du personnel.',
+        type: 'approved',
+      );
+    }
+  }
+
+  // Notifications
+  Future<void> createNotification({
+    required String userId,
+    required String title,
+    required String body,
+    required String type,
+  }) async {
+    if (_db == null) return;
+    await _db!.collection('notifications').add({
+      'userId': userId,
+      'title': title,
+      'body': body,
+      'type': type,
+      'isRead': false,
+      'isDeleted': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<int> getUnreadNotificationsCount(String userId) {
+    if (_db == null) return Stream.value(0);
+    return _db!
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .where('isRead', isEqualTo: false)
+        .where('isDeleted', isNotEqualTo: true)
+        .snapshots()
+        .map((snap) => snap.docs.length);
   }
 
   // Chats

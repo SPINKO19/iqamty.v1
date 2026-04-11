@@ -2,18 +2,34 @@ import 'package:flutter/material.dart';
 import '../components/custom_menu_button.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
+import '../services/firestore_service.dart';
 import '../core/theme/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 const _kGreen = Color(0xFF2D6A4F);
 
-class AdminUsersView extends StatelessWidget {
+class AdminUsersView extends StatefulWidget {
   const AdminUsersView({super.key});
+
+  @override
+  State<AdminUsersView> createState() => _AdminUsersViewState();
+}
+
+class _AdminUsersViewState extends State<AdminUsersView> {
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lp = context.watch<LanguageProvider>();
+    final firestore = context.read<FirestoreService>();
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -37,92 +53,134 @@ class AdminUsersView extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                child: Row(
-                  children: [
-                    _buildSmallStat(context, lp.getText('total'), '1,240', _kGreen),
-                    const SizedBox(width: 12),
-                    _buildSmallStat(context, lp.getText('active'), '1,180', const Color(0xFF10B981)),
-                    const SizedBox(width: 12),
-                    _buildSmallStat(context, lp.getText('blocked'), '60', const Color(0xFFEF4444)),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: context.appCard,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: isDark ? null : [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
-                    ],
-                  ),
-                  child: TextField(
-                    style: GoogleFonts.inter(color: context.appTextPrimary, fontWeight: FontWeight.w500),
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.search_rounded, color: context.appTextSecondary, size: 20),
-                      hintText: lp.getText('search_student'),
-                      hintStyle: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 14, fontWeight: FontWeight.w500),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: firestore.getStudents(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: _kGreen));
+          }
+
+          final allStudents = snapshot.data ?? [];
+          final filteredStudents = allStudents.where((s) {
+            final name = (s['displayName'] ?? '').toString().toLowerCase();
+            final matricule = (s['matricule'] ?? s['uid'] ?? '').toString().toLowerCase();
+            final query = _searchQuery.toLowerCase();
+            return name.contains(query) || matricule.contains(query);
+          }).toList();
+
+          final total = allStudents.length;
+          final blocked = allStudents.where((s) => s['isBanned'] == true).length;
+          final active = total - blocked;
+
+          return Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                    child: Row(
+                      children: [
+                        _buildSmallStat(context, lp.getText('total'), total.toString(), _kGreen),
+                        const SizedBox(width: 12),
+                        _buildSmallStat(context, lp.getText('active'), active.toString(), const Color(0xFF10B981)),
+                        const SizedBox(width: 12),
+                        _buildSmallStat(context, lp.getText('blocked'), blocked.toString(), const Color(0xFFEF4444)),
+                      ],
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isDesktop = constraints.maxWidth > 800;
-                    if (isDesktop) {
-                      return GridView.count(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 3.5,
-                        physics: const BouncingScrollPhysics(),
-                        children: [
-                          _buildModernUserCard(context, lp, 'KHOUDIR Lynda', '202433294616', 'Bloc J • Room 414', false),
-                          _buildModernUserCard(context, lp, 'BOUZIDI Ahmed', '202433294001', 'Bloc A • Room 102', true),
-                          _buildModernUserCard(context, lp, 'MEHDI Sofiane', '202433294123', 'Bloc B • Room 205', false),
-                          _buildModernUserCard(context, lp, 'ZAHIRI Amine', '202433294888', 'Bloc C • Room 012', false),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: context.appCard,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: isDark ? null : [
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
                         ],
-                      );
-                    }
-                    return ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      physics: const BouncingScrollPhysics(),
-                      children: [
-                        _buildModernUserCard(context, lp, 'KHOUDIR Lynda', '202433294616', 'Bloc J • Room 414', false),
-                        const SizedBox(height: 16),
-                        _buildModernUserCard(context, lp, 'BOUZIDI Ahmed', '202433294001', 'Bloc A • Room 102', true),
-                        const SizedBox(height: 16),
-                        _buildModernUserCard(context, lp, 'MEHDI Sofiane', '202433294123', 'Bloc B • Room 205', false),
-                        const SizedBox(height: 16),
-                        _buildModernUserCard(context, lp, 'ZAHIRI Amine', '202433294888', 'Bloc C • Room 012', false),
-                        const SizedBox(height: 100),
-                      ],
-                    );
-                  }
-                ),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (val) => setState(() => _searchQuery = val),
+                        style: GoogleFonts.inter(color: context.appTextPrimary, fontWeight: FontWeight.w500),
+                        decoration: InputDecoration(
+                          prefixIcon: Icon(Icons.search_rounded, color: context.appTextSecondary, size: 20),
+                          hintText: lp.getText('search_student'),
+                          hintStyle: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 14, fontWeight: FontWeight.w500),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                          suffixIcon: _searchQuery.isNotEmpty 
+                            ? IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                              )
+                            : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (filteredStudents.isEmpty) {
+                          return Center(
+                            child: Text(
+                              _searchQuery.isEmpty ? "Aucun étudiant enregistré" : "Aucun résultat trouvé",
+                              style: GoogleFonts.inter(color: context.appTextSecondary),
+                            ),
+                          );
+                        }
+
+                        final isDesktop = constraints.maxWidth > 800;
+                        if (isDesktop) {
+                          return GridView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 3.5,
+                            ),
+                            itemCount: filteredStudents.length,
+                            physics: const BouncingScrollPhysics(),
+                            itemBuilder: (context, index) => _buildModernUserCard(
+                              context, 
+                              lp, 
+                              filteredStudents[index],
+                              firestore,
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: filteredStudents.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 16),
+                          itemBuilder: (context, index) => _buildModernUserCard(
+                            context, 
+                            lp, 
+                            filteredStudents[index],
+                            firestore,
+                          ),
+                        );
+                      }
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildSmallStat(BuildContext context, String label, String value, Color color) {
-    final isDark = context.isDark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -144,8 +202,16 @@ class AdminUsersView extends StatelessWidget {
     );
   }
 
-  Widget _buildModernUserCard(BuildContext context, LanguageProvider lp, String name, String matricule, String details, bool isBanned) {
-    final isDark = context.isDark;
+  Widget _buildModernUserCard(BuildContext context, LanguageProvider lp, Map<String, dynamic> student, FirestoreService firestore) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final name = student['displayName'] ?? 'Étudiant';
+    final matricule = student['matricule'] ?? student['uid'] ?? '---';
+    final residence = student['residence'] ?? '---';
+    final bloc = student['bloc'] ?? '---';
+    final room = student['room'] ?? student['chambre'] ?? '---';
+    final isBanned = student['isBanned'] == true;
+    final userId = student['id'] ?? student['uid'];
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -178,7 +244,7 @@ class AdminUsersView extends StatelessWidget {
               children: [
                 Text(name, style: GoogleFonts.inter(fontWeight: FontWeight.w800, color: context.appTextPrimary, fontSize: 16, letterSpacing: -0.3)),
                 const SizedBox(height: 4),
-                Text(details, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+                Text('$residence • Bloc $bloc • Ch $room', style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text('ID: $matricule', style: GoogleFonts.robotoMono(color: context.appTextSecondary.withValues(alpha: 0.6), fontSize: 11, fontWeight: FontWeight.w500)),
               ],
@@ -187,8 +253,14 @@ class AdminUsersView extends StatelessWidget {
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert_rounded, color: context.appTextSecondary),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            onSelected: (val) async {
+              if (val == 'ban') {
+                await firestore.toggleUserBan(userId, !isBanned);
+              }
+            },
             itemBuilder: (context) => [
               PopupMenuItem(
+                value: 'edit',
                 child: ListTile(
                   leading: const Icon(Icons.edit_outlined, size: 20),
                   title: Text(lp.getText('edit'), style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -197,6 +269,7 @@ class AdminUsersView extends StatelessWidget {
                 ),
               ),
               PopupMenuItem(
+                value: 'ban',
                 child: ListTile(
                   leading: Icon(
                     isBanned ? Icons.check_circle_outline_rounded : Icons.block_flipped,
