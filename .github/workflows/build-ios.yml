@@ -19,6 +19,9 @@ jobs:
           flutter-version: '3.41.0'
           channel: 'stable'
 
+      - name: Precache iOS artifacts
+        run: flutter precache --ios
+
       - name: Install dependencies
         run: flutter pub get
 
