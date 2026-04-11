@@ -28,8 +28,14 @@ jobs:
       - name: Build iOS (no sign)
         run: flutter build ios --release --no-codesign
 
-      - name: Upload build
+      - name: Create IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -r iqamty.ipa Payload
+          
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ios-build
-          path: build/ios/
+          name: iqamty-ipa
+          path: iqamty.ipa
