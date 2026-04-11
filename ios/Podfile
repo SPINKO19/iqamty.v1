@@ -1,5 +1,5 @@
 # Pin the Firebase iOS SDK version to prevent CocoaPods dependency loops
-$FirebaseSDKVersion = '11.5.0'
+$FirebaseSDKVersion = '11.10.0'
 
 # Uncomment this line to define a global platform for your project
 platform :ios, '15.0'
