@@ -48,7 +48,11 @@ class AuthProvider with ChangeNotifier {
     try {
       await _authService.loginWithWebEtu(matricule, password);
       // Wait for userData to populate
-      await Future.delayed(const Duration(milliseconds: 500));
+      int waitingTime = 0;
+      while (_authService.userData == null && waitingTime < 3000) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        waitingTime += 100;
+      }
       _isLoading = false;
       notifyListeners();
       return true;
@@ -67,6 +71,12 @@ class AuthProvider with ChangeNotifier {
 
     try {
       await _authService.signIn(email, password);
+      // Wait for user data to populate from Firestore
+      int waitingTime = 0;
+      while (_authService.userData == null && waitingTime < 3000) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        waitingTime += 100;
+      }
       _isLoading = false;
       notifyListeners();
       return true;

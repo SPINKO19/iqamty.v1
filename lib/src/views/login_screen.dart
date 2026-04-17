@@ -55,7 +55,14 @@ class _LoginScreenState extends State<LoginScreen> {
         : await auth.login(identifier, password);
 
     if (success && mounted) {
-      context.go('/');
+      final role = auth.currentStudent?.role ?? auth.currentUserData?['role'] ?? 'student';
+      if (role == 'administrator') {
+        context.go('/admin');
+      } else if (role == 'worker') {
+        context.go('/worker-dashboard');
+      } else {
+        context.go('/');
+      }
     } else if (mounted) {
       final error = auth.error;
       ScaffoldMessenger.of(context).showSnackBar(
