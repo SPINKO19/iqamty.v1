@@ -54,7 +54,7 @@ class AuthService extends ChangeNotifier {
   }
 
   /// TESTING ONLY - bypass Firebase
-  void injectDevUser(String role) {
+  void injectDevUser(String role) async {
     _isDevUser = true;
     if (role == 'student') {
       _userData = {
@@ -85,6 +85,12 @@ class AuthService extends ChangeNotifier {
         'isBanned': false,
       };
     }
+    
+    // Sign in anonymously so Firestore rules (request.auth != null) pass
+    try {
+      await _auth?.signInAnonymously();
+    } catch (_) {}
+    
     notifyListeners();
   }
 
@@ -168,15 +174,26 @@ class AuthService extends ChangeNotifier {
         
         notifyListeners();
 
-        // Optional: Firebase anonymous sync
+        // Sign in anonymously to get Firebase Auth token for Firestore access
         try {
-          await _auth?.signInAnonymously();
-          if (_auth?.currentUser != null) {
-            await _firestore?.collection('users').doc(_auth!.currentUser!.uid).set(
+          final anonCredential = await _auth?.signInAnonymously();
+          final anonUid = anonCredential?.user?.uid;
+          final matriculeUid = _userData!['uid']?.toString() ?? matricule;
+          
+          // Save student data under their matricule ID
+          await _firestore?.collection('users').doc(matriculeUid).set(
+            _userData!, SetOptions(merge: true)
+          );
+          
+          // Also save a reference under the anonymous UID so auth works
+          if (anonUid != null && anonUid != matriculeUid) {
+            await _firestore?.collection('users').doc(anonUid).set(
               _userData!, SetOptions(merge: true)
             );
           }
-        } catch (_) {}
+        } catch (e) {
+          if (kDebugMode) print('Firebase sync error: $e');
+        }
       } else {
         throw Exception('Login failed: ${response.statusCode}');
       }

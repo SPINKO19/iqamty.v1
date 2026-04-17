@@ -26,7 +26,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
 
   Future<void> _pickFile() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'docx', 'doc', 'png', 'jpg', 'jpeg'],
       );
@@ -112,13 +112,12 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
     if (bytes <= 0) return "0 B";
     const suffixes = ["B", "KB", "MB", "GB", "TB"];
     var i = (math.log(bytes) / math.log(1024)).floor();
-    return ((bytes / math.pow(1024, i)).toStringAsFixed(decimals)) + ' ' + suffixes[i];
+    return '${(bytes / math.pow(1024, i)).toStringAsFixed(decimals)} ${suffixes[i]}';
   }
 
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
-    final isDark = context.isDark;
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -216,9 +215,9 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 40),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.primary.withOpacity(0.3), style: BorderStyle.none), // simplified
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), style: BorderStyle.none), // simplified
           borderRadius: BorderRadius.circular(16),
-          color: AppColors.primary.withOpacity(0.05),
+          color: AppColors.primary.withValues(alpha: 0.05),
         ),
         child: Column(
           children: [
@@ -236,7 +235,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
+        color: AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(

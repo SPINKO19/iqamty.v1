@@ -148,15 +148,17 @@ class FirestoreService extends ChangeNotifier {
   // 2. Worker gets their assigned tasks as a real-time stream
   Stream<List<ServiceRequest>> getWorkerTasks(String workerId) {
     if (_db == null) return Stream.value([]);
+    if (workerId.isEmpty) return Stream.value([]);
     return _db!
         .collection('requests')
         .where('assignedWorkerId', isEqualTo: workerId)
-        .orderBy('assignedAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => ServiceRequest.fromJson(
-                doc.data()..['id'] = doc.id))
-            .toList());
+                (doc.data())..['id'] = doc.id))
+            .toList()
+          ..sort((a, b) => (b.assignedAt ?? b.createdAt)
+              .compareTo(a.assignedAt ?? a.createdAt)));
   }
 
   // Get all workers from users collection

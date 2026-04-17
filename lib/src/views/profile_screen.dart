@@ -146,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary.withOpacity(0.6),
+                    color: AppColors.primary.withValues(alpha: 0.6),
                   ),
                 ),
                 
@@ -172,28 +172,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildTitledCardSection(String title, LanguageProvider lp, dynamic student, String name, String dob, bool isResidence) {
-    return Column(
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 12, bottom: 8),
-            child: Text(
-              title,
-              style: GoogleFonts.notoKufiArabic(
-                fontWeight: FontWeight.w900,
-                fontSize: 12,
-                color: AppColors.primary.withValues(alpha: 0.7),
-              ),
-            ),
-          ),
-        ),
-        _buildOfficialCard(context, student, name, dob, isResidence),
-      ],
-    );
-  }
-
   Widget _buildProfileHeader(BuildContext context, dynamic student, String name, bool isDark) {
     final lp = context.read<LanguageProvider>();
     return Column(
@@ -206,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: [AppColors.primary, Color(0xFF065F46)],
+                  colors: [AppColors.primary, const Color(0xFF065F46)],
                 ),
               ),
               child: CircleAvatar(
@@ -280,12 +258,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
         ],
-        border: Border.all(color: mainGreen.withOpacity(0.4), width: 1.2),
+        border: Border.all(color: mainGreen.withValues(alpha: 0.4), width: 1.2),
       ),
       child: FittedBox(
         fit: BoxFit.contain,
@@ -329,7 +307,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         Text(
                           'وزارة التعليم العالي والبحث العلمي',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.notoKufiArabic(fontSize: 7, color: Colors.white.withOpacity(0.9)),
+                          style: GoogleFonts.notoKufiArabic(fontSize: 7, color: Colors.white.withValues(alpha: 0.9)),
                         ),
                         Text(
                           isResidence ? 'مديرية الخدمات الجامعية بجاية القصر' : 'المدرسة العليا للإعلام الآلي',
@@ -361,15 +339,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                               width: 100,
                               height: 120,
                               decoration: BoxDecoration(
-                                color: mainGreen.withOpacity(0.1),
+                                color: mainGreen.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: mainGreen.withOpacity(0.2)),
+                                border: Border.all(color: mainGreen.withValues(alpha: 0.2)),
                                 image: student?.photoBase64 != null 
                                     ? DecorationImage(image: MemoryImage(base64Decode(student!.photoBase64!)), fit: BoxFit.cover)
                                     : (student?.photo != null ? DecorationImage(image: NetworkImage(student!.photo!), fit: BoxFit.cover) : null),
                               ),
                               child: student?.photoBase64 == null && student?.photo == null 
-                                  ? Icon(Icons.person, color: mainGreen.withOpacity(0.2), size: 50)
+                                  ? Icon(Icons.person, color: mainGreen.withValues(alpha: 0.2), size: 50)
                                   : null,
                             ),
                             const SizedBox(width: 20),
@@ -402,7 +380,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.qr_code_2_rounded, size: 50, color: textColor.withOpacity(0.7)),
+                        Icon(Icons.qr_code_2_rounded, size: 50, color: textColor.withValues(alpha: 0.7)),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -436,7 +414,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           children: [
             TextSpan(
               text: label,
-              style: GoogleFonts.notoKufiArabic(fontSize: 12, color: textColor.withOpacity(0.6), fontWeight: FontWeight.bold),
+              style: GoogleFonts.notoKufiArabic(fontSize: 12, color: textColor.withValues(alpha: 0.6), fontWeight: FontWeight.bold),
             ),
             const TextSpan(text: ' '),
             TextSpan(

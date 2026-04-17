@@ -75,7 +75,7 @@ class HamamView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(color: context.appBackground.withOpacity(0.5), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(color: context.appBackground.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(8)),
               child: Row(
                 children: [
                   Icon(Icons.access_time_rounded, size: 14, color: AppColors.primary),
@@ -84,7 +84,7 @@ class HamamView extends StatelessWidget {
                 ],
               ),
             ),
-          )).toList(),
+          )),
           const SizedBox(height: 8),
         ],
       ),

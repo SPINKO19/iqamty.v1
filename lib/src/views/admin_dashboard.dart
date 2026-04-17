@@ -121,7 +121,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         Container(
                           width: 40,
                           height: 40,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),

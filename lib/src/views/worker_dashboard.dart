@@ -5,6 +5,10 @@ import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../services/firestore_service.dart';
+import '../providers/auth_provider.dart';
+import '../models/types.dart';
+
 const _kGreen = Color(0xFF2D6A4F);
 
 class WorkerDashboard extends StatelessWidget {
@@ -13,6 +17,8 @@ class WorkerDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
+    final firestore = context.watch<FirestoreService>();
+    final workerId = context.read<AuthProvider>().currentUserData?['uid'] ?? '';
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -36,35 +42,70 @@ class WorkerDashboard extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildWorkerStats(context, lp),
-            const SizedBox(height: 32),
-            Text(
-              lp.getText('my_assigned_tasks'),
-              style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5),
+      body: StreamBuilder<List<ServiceRequest>>(
+        stream: firestore.getWorkerTasks(workerId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final tasks = snapshot.data ?? [];
+          final todoCount = tasks.where((t) => t.workerStatus != 'done').length.toString();
+          final doneCount = tasks.where((t) => t.workerStatus == 'done').length.toString();
+
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildWorkerStats(context, todoCount, doneCount),
+                const SizedBox(height: 32),
+                Text(
+                  lp.getText('my_assigned_tasks'),
+                  style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5),
+                ),
+                const SizedBox(height: 16),
+                if (tasks.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.assignment_turned_in_outlined, size: 64, color: Colors.grey),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Aucune tâche assignée',
+                            style: GoogleFonts.inter(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: tasks.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
+                      return _buildTaskCard(context, tasks[index], firestore);
+                    },
+                  ),
+                const SizedBox(height: 100),
+              ],
             ),
-            const SizedBox(height: 16),
-            _buildTaskCard(context, 'Réparation Plomberie', 'Bloc J - Chambre 414', lp.getText('urgent_status'), Colors.red),
-            const SizedBox(height: 16),
-            _buildTaskCard(context, 'Vérification Électricité', 'Bloc A - Couloir 2', lp.getText('new_status'), _kGreen),
-            const SizedBox(height: 100),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildWorkerStats(BuildContext context, LanguageProvider lp) {
+  Widget _buildWorkerStats(BuildContext context, String todoCount, String doneCount) {
     return Row(
       children: [
-        _buildStatItem(context, lp.getText('to_do'), '5', const Color(0xFFF4A261)),
+        _buildStatItem(context, 'À faire', todoCount, const Color(0xFFF4A261)),
         const SizedBox(width: 12),
-        _buildStatItem(context, lp.getText('done_tasks'), '12', const Color(0xFF10B981)),
+        _buildStatItem(context, 'Terminés', doneCount, const Color(0xFF10B981)),
       ],
     );
   }
@@ -92,8 +133,28 @@ class WorkerDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildTaskCard(BuildContext context, String title, String location, String status, Color statusColor) {
+  Widget _buildTaskCard(BuildContext context, ServiceRequest request, FirestoreService firestore) {
     final isDark = context.isDark;
+    
+    String statusLabel = '';
+    Color statusColor = _kGreen;
+    
+    if (request.workerStatus == 'assigned') {
+      statusLabel = 'Nouveau';
+      statusColor = _kGreen;
+    } else if (request.workerStatus == 'in_progress') {
+      statusLabel = 'En cours';
+      statusColor = Colors.orange;
+    } else if (request.workerStatus == 'done') {
+      statusLabel = 'Terminé';
+      statusColor = Colors.green;
+    } else {
+      statusLabel = request.workerStatus ?? 'Inconnu';
+      statusColor = Colors.grey;
+    }
+
+    final title = '${request.category.toUpperCase()} - ${request.description}';
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -103,32 +164,70 @@ class WorkerDashboard extends StatelessWidget {
           BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: _kGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
-            child: const Icon(Icons.assignment_outlined, color: _kGreen, size: 28),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: _kGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                child: const Icon(Icons.assignment_outlined, color: _kGreen, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: context.appTextPrimary, letterSpacing: -0.3)),
+                    const SizedBox(height: 4),
+                    Text(request.priority, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                child: Text(
+                  statusLabel,
+                  style: GoogleFonts.inter(color: statusColor, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: context.appTextPrimary, letterSpacing: -0.3)),
-                const SizedBox(height: 4),
-                Text(location, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
-              ],
+          if (request.workerStatus == 'assigned') ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => firestore.updateWorkerTaskStatus(requestId: request.id!, workerStatus: 'in_progress'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: statusColor.withValues(alpha: 0.1),
+                  foregroundColor: statusColor,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                child: Text('Marquer en cours', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+              ),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-            child: Text(
-              status,
-              style: GoogleFonts.inter(color: statusColor, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+          ],
+          if (request.workerStatus == 'in_progress') ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => firestore.updateWorkerTaskStatus(requestId: request.id!, workerStatus: 'done'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green.withValues(alpha: 0.1),
+                  foregroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                child: Text('Marquer terminé', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

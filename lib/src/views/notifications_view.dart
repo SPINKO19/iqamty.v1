@@ -266,8 +266,8 @@ class _NotificationsViewState extends State<NotificationsView> {
         children: [
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFFD1FAE5),
+            decoration: const BoxDecoration(
+              color: Color(0xFFD1FAE5),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.check_rounded, size: 40, color: Color(0xFF059669)),

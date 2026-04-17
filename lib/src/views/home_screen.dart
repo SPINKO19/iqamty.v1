@@ -89,7 +89,8 @@ class HomeScreen extends StatelessWidget {
                         StreamBuilder<List<Complaint>>(
                           stream: firestore.getMyComplaints(student?.id?.toString() ?? ''),
                           builder: (context, snapshot) {
-                            if (snapshot.hasError) return _QuickActionCard(
+                            if (snapshot.hasError) {
+                              return _QuickActionCard(
                                 title: lp.getText('complaints'),
                                 subtitle: 'Erreur de chargement',
                                 icon: Icons.error_outline,
@@ -97,6 +98,7 @@ class HomeScreen extends StatelessWidget {
                                 onTap: () => context.push('/complaints'),
                                 isDark: isDark,
                               );
+                            }
                             final count = snapshot.data?.where((c) => c.status != Status.resolved).length ?? 0;
                             return _QuickActionCard(
                               title: lp.getText('complaints'),

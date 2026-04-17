@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -246,7 +245,7 @@ class _ModernComplaintCard extends StatelessWidget {
             ),
           ),
           InkWell(
-            onTap: () => ComplaintsView()._showComplaintDetails(context, complaint),
+            onTap: () => const ComplaintsView()._showComplaintDetails(context, complaint),
             borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(24),
               bottomRight: Radius.circular(24),
@@ -318,7 +317,6 @@ class _ComplaintDetailsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final lp = context.watch<LanguageProvider>();
     final statusColor = _ModernComplaintCard.getStatusColor(complaint.status);
 
