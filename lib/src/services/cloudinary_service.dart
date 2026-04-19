@@ -48,7 +48,7 @@ class CloudinaryService {
     try {
       // For non-image files, the endpoint often is /auto/upload or /raw/upload
       // Here we'll try /auto/upload and let Cloudinary handle the detection.
-      final url = 'https://api.cloudinary.com/v1_1/$cloudName/auto/upload';
+      const url = 'https://api.cloudinary.com/v1_1/$cloudName/auto/upload';
       final request = http.MultipartRequest('POST', Uri.parse(url));
       request.fields['upload_preset'] = uploadPreset;
       request.fields['folder'] = 'iqamty/uploads';

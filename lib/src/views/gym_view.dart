@@ -11,7 +11,6 @@ class GymView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final schedules = {
       'Samedi': ['17:00 - 19:00 (Foot INT)', '21:00 - 23:30 (Foot NAT/INT)'],
@@ -60,7 +59,6 @@ class GymView extends StatelessWidget {
   }
 
   Widget _buildDayScheduleCard(BuildContext context, String day, List<String> slots, IconData icon) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -85,7 +83,7 @@ class GymView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(color: context.appBackground.withOpacity(0.5), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(color: context.appBackground.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(8)),
               child: Row(
                 children: [
                   Icon(Icons.access_time_rounded, size: 14, color: AppColors.primary),
@@ -94,7 +92,7 @@ class GymView extends StatelessWidget {
                 ],
               ),
             ),
-          )).toList(),
+          )),
           const SizedBox(height: 8),
         ],
       ),

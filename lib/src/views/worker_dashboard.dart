@@ -9,6 +9,10 @@ import '../providers/auth_provider.dart';
 import '../models/types.dart';
 import 'package:go_router/go_router.dart';
 
+import '../services/firestore_service.dart';
+import '../providers/auth_provider.dart';
+import '../models/types.dart';
+
 const _kGreen = Color(0xFF2D6A4F);
 
 class WorkerDashboard extends StatelessWidget {
@@ -18,7 +22,7 @@ class WorkerDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
     final auth = context.watch<AuthProvider>();
-    final firestore = context.read<FirestoreService>();
+    final firestore = context.watch<FirestoreService>();
     final userId = auth.currentUserData?['uid'] ?? '';
 
     return Scaffold(

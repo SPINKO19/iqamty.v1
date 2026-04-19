@@ -29,7 +29,6 @@ class DocumentsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
-    final isDark = context.isDark;
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -71,7 +70,7 @@ class DocumentsView extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.folder_open_outlined, size: 60, color: context.appTextSecondary.withOpacity(0.3)),
+                  Icon(Icons.folder_open_outlined, size: 60, color: context.appTextSecondary.withValues(alpha: 0.3)),
                   const SizedBox(height: 16),
                   Text(
                     'No documents available',
@@ -111,7 +110,7 @@ class DocumentsView extends StatelessWidget {
         border: Border.all(color: context.appBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -146,7 +145,7 @@ class DocumentsView extends StatelessWidget {
           ElevatedButton(
             onPressed: () => _openDocument(doc.fileUrl),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2D6A4F).withOpacity(0.1),
+              backgroundColor: const Color(0xFF2D6A4F).withValues(alpha: 0.1),
               foregroundColor: const Color(0xFF2D6A4F),
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -59,7 +59,7 @@ class ForumView extends StatelessWidget {
             ],
           ),
         ),
-        body: TabBarView(
+        body: const TabBarView(
           children: [
             _FeedTab(postType: 'announcement'),
             _FeedTab(postType: 'post'),
@@ -175,6 +175,10 @@ class _FeedTab extends StatelessWidget {
             child: FloatingActionButton(
               backgroundColor: AppColors.primary,
               onPressed: () {
+                 if (postType == 'announcement' && userData?['role'] != 'administrator') {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Only admins can post announcements')));
+                    return;
+                 }
                  _showCreateSheet(context, postType);
               },
               child: const Icon(Icons.edit, color: Colors.white),
@@ -669,7 +673,7 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
     if (widget.postType == 'poll') {
       opts = _pollOptControllers.map((c) => c.text.trim()).where((t) => t.isNotEmpty).map((t) => PollOption(text: t, votedBy: [])).toList();
       if (opts.length < 2) {
-         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('At least 2 poll options required')));
+         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('At least 2 poll options required')));
          setState(() => _isLoading = false);
          return;
       }
