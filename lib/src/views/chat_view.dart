@@ -10,7 +10,11 @@ import '../core/theme/colors.dart';
 import '../components/custom_menu_button.dart';
 
 class ChatView extends StatefulWidget {
-  const ChatView({super.key});
+  final String? chatId;
+  final String? name;
+  final bool isAdmin;
+
+  const ChatView({super.key, this.chatId, this.name, this.isAdmin = false});
 
   @override
   State<ChatView> createState() => _ChatViewState();
@@ -28,12 +32,20 @@ class _ChatViewState extends State<ChatView> {
   }
 
   Future<void> _initChat() async {
+    if (widget.chatId != null) {
+      _chatId = widget.chatId;
+      if (mounted) setState(() {});
+      return;
+    }
+
     final auth = context.read<AuthProvider>();
     final firestore = context.read<FirestoreService>();
     final studentId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
     final studentName = auth.currentUserData?['displayName'] ?? auth.currentStudent?.nomFr ?? 'Student';
     
-    _chatId = await firestore.startOrGetChat(studentId, studentName);
+    final residenceId = auth.currentResidenceId;
+    
+    _chatId = await firestore.startOrGetChat(studentId, studentName, residenceId: residenceId);
     if (mounted) setState(() {});
   }
 
@@ -79,7 +91,7 @@ class _ChatViewState extends State<ChatView> {
             iconColor: isDark ? Colors.white : AppColors.primary,
           ),
         ),
-        title: Text(lp.getText('messaging'), style: TextStyle(color: context.appTextPrimary)),
+        title: Text(widget.name ?? lp.getText('messaging'), style: TextStyle(color: context.appTextPrimary)),
         backgroundColor: context.appCard,
         centerTitle: true,
       ),

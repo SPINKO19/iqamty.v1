@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/firestore_service.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
+import '../providers/auth_provider.dart';
 
 import '../components/custom_menu_button.dart';
 
@@ -14,60 +15,63 @@ class AdminRequestsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
     final firestore = context.read<FirestoreService>();
+    final residenceId = auth.currentResidenceId;
 
-    return Scaffold(
-      backgroundColor: context.appBackground,
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CustomMenuButton(
-            backgroundColor: Colors.white.withValues(alpha: 0.2),
-            iconColor: Colors.white,
-          ),
-        ),
-        title: Text(
-          'Gestion des Demandes',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: _kGreen,
-        foregroundColor: Colors.white,
-      ),
-      body: StreamBuilder<List<ServiceRequest>>(
-        stream: firestore.getAllRequests(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: _kGreen));
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Erreur: ${snapshot.error}',
-                style: TextStyle(color: context.appTextPrimary),
-              ),
-            );
-          }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          StreamBuilder<List<ServiceRequest>>(
+            stream: firestore.getAllRequests(residenceId: residenceId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator(color: _kGreen));
+              }
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'Erreur: ${snapshot.error}',
+                    style: TextStyle(color: context.appTextPrimary),
+                  ),
+                );
+              }
 
-          final requests = snapshot.data ?? [];
-          if (requests.isEmpty) {
-            return Center(
-              child: Text(
-                'Aucune demande',
-                style: TextStyle(color: context.appTextSecondary),
-              ),
-            );
-          }
+              final requests = snapshot.data ?? [];
+              if (requests.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Text(
+                      'Aucune demande',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                );
+              }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: requests.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final request = requests[index];
-              return _buildRequestCard(context, request, firestore);
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final cardsPerRow = constraints.maxWidth > 800 ? 2 : 1;
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: cardsPerRow,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      mainAxisExtent: 180,
+                    ),
+                    itemCount: requests.length,
+                    itemBuilder: (context, index) => _buildRequestCard(context, requests[index], firestore),
+                  );
+                },
+              );
             },
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -210,7 +214,7 @@ class AdminRequestsView extends StatelessWidget {
               const SizedBox(height: 16),
               Expanded(
                 child: StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: firestore.getWorkers(),
+                  stream: firestore.getWorkers(residenceId: context.read<AuthProvider>().currentResidenceId),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator(color: _kGreen));

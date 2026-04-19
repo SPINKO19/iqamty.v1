@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "559394782861",
-    "project_id": "iqamty-41729",
-    "storage_bucket": "iqamty-41729.firebasestorage.app"
+    "project_number": "229444084306",
+    "project_id": "iqamty-estin-pp",
+    "storage_bucket": "iqamty-estin-pp.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:559394782861:android:7e8f12c5c63d15e11a2cc4",
+        "mobilesdk_app_id": "1:229444084306:android:6236f84693e8540170b58b",
         "android_client_info": {
           "package_name": "com.example.iqamty"
         }
@@ -15,7 +15,26 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC5az2PVCMF0zOUT9xcUxkrI9CTVAf0F2M"
+          "current_key": "AIzaSyDCs0-59kMO7wMKZdApfhpqu_qeN-UNAAo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:229444084306:android:7cd45a4e692c811770b58b",
+        "android_client_info": {
+          "package_name": "com.spinko.iqamty"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCs0-59kMO7wMKZdApfhpqu_qeN-UNAAo"
         }
       ],
       "services": {

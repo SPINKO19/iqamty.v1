@@ -23,10 +23,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -50,19 +47,30 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCMec0x33ivodajagpQ9_oShQBE7oBcBPY',
-    appId: '1:559394782861:web:82e6b89d305e33ed1a2cc4',
-    messagingSenderId: '559394782861',
-    projectId: 'iqamty-41729',
-    authDomain: 'iqamty-41729.firebaseapp.com',
-    storageBucket: 'iqamty-41729.firebasestorage.app',
+    apiKey: 'AIzaSyCGR1bvdhVrqCIuy2qSmHDxpRghovER3qk',
+    appId: '1:229444084306:web:626cd5d1e3b32f0870b58b',
+    messagingSenderId: '229444084306',
+    projectId: 'iqamty-estin-pp',
+    authDomain: 'iqamty-estin-pp.firebaseapp.com',
+    storageBucket: 'iqamty-estin-pp.firebasestorage.app',
+    measurementId: 'G-JVL08FMZTX',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyC5az2PVCMF0zOUT9xcUxkrI9CTVAf0F2M',
-    appId: '1:559394782861:android:7e8f12c5c63d15e11a2cc4',
-    messagingSenderId: '559394782861',
-    projectId: 'iqamty-41729',
-    storageBucket: 'iqamty-41729.firebasestorage.app',
+    apiKey: 'AIzaSyDCs0-59kMO7wMKZdApfhpqu_qeN-UNAAo',
+    appId: '1:229444084306:android:6236f84693e8540170b58b',
+    messagingSenderId: '229444084306',
+    projectId: 'iqamty-estin-pp',
+    storageBucket: 'iqamty-estin-pp.firebasestorage.app',
   );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyDFJJ3iFjJNkefQSMOamRcZBT6qYcZ4FLM',
+    appId: '1:229444084306:ios:daab73994a4bcd4370b58b',
+    messagingSenderId: '229444084306',
+    projectId: 'iqamty-estin-pp',
+    storageBucket: 'iqamty-estin-pp.firebasestorage.app',
+    iosBundleId: 'com.example.iqamty',
+  );
+
 }

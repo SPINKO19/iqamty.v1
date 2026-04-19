@@ -6,6 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../components/custom_menu_button.dart';
 import '../providers/language_provider.dart';
+import '../services/firestore_service.dart';
+import '../providers/auth_provider.dart';
+import '../models/types.dart';
 import '../core/theme/colors.dart';
 import 'dart:io';
 import 'dart:math' as math;
@@ -77,15 +80,16 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
 
-      // Save metadata to Firestore
-      await FirebaseFirestore.instance.collection('documents').add({
-        'title': _pickedFile!.name,
-        'type': _pickedFile!.extension?.toLowerCase() ?? 'unknown',
-        'size': _formatBytes(_pickedFile!.size),
-        'url': downloadUrl,
-        'createdAt': FieldValue.serverTimestamp(),
-        'target': 'students',
-      });
+      // Save metadata to Firestore using service
+      final auth = context.read<AuthProvider>();
+      final firestore = context.read<FirestoreService>();
+      await firestore.addDocument(
+        title: _pickedFile!.name,
+        type: _pickedFile!.extension?.toLowerCase() ?? 'unknown',
+        size: _formatBytes(_pickedFile!.size),
+        url: downloadUrl,
+        residenceId: auth.currentResidenceId,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -118,94 +122,132 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
-    final isDark = context.isDark;
 
-    return Scaffold(
-      backgroundColor: context.appBackground,
-      appBar: AppBar(
-        title: Text(lp.getText('documents'), style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CustomMenuButton(
-            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-            iconColor: AppColors.primary,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Upload New Document',
-              style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w900, color: context.appTextPrimary),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Share resources, forms, or guides with students.',
-              style: GoogleFonts.inter(color: context.appTextSecondary),
-            ),
-            const SizedBox(height: 32),
-            
-            // Upload Tool
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: context.appCard,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: context.appBorder),
-              ),
-              child: Column(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 900;
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (_selectedFileName == null)
-                    _buildPickArea(context)
-                  else
-                    _buildSelectedFileArea(context),
-                  
-                  if (_isUploading) ...[
-                    const SizedBox(height: 24),
-                    LinearProgressIndicator(
-                      value: _uploadProgress,
-                      backgroundColor: context.appBorder,
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    const SizedBox(height: 8),
-                    Text('${(_uploadProgress * 100).toInt()}% uploaded', style: GoogleFonts.inter(fontSize: 12)),
-                  ],
-                  
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: (_pickedFile == null || _isUploading) ? null : _uploadDocument,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                      ),
-                      child: _isUploading 
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Confirm Upload', style: TextStyle(fontWeight: FontWeight.bold)),
+                  // Upload Section
+                  Expanded(
+                    flex: isWide ? 1 : 0,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader('Nouveau Document', 'Partagez des ressources, formulaires ou guides.'),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                          ),
+                          child: Column(
+                            children: [
+                              if (_selectedFileName == null)
+                                _buildPickArea(context)
+                              else
+                                _buildSelectedFileArea(context),
+                              
+                              if (_isUploading) ...[
+                                const SizedBox(height: 24),
+                                LinearProgressIndicator(
+                                  value: _uploadProgress,
+                                  backgroundColor: const Color(0xFFE5E7EB),
+                                  color: const Color(0xFF1D5C35),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                const SizedBox(height: 8),
+                                Text('${(_uploadProgress * 100).toInt()}% uploaded', style: GoogleFonts.inter(fontSize: 12)),
+                              ],
+                              
+                              const SizedBox(height: 24),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: (_pickedFile == null || _isUploading) ? null : _uploadDocument,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF0E2318),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    elevation: 0,
+                                  ),
+                                  child: _isUploading 
+                                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                    : const Text('Confirmer l\'envoi', style: TextStyle(fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  
+                  if (isWide) const SizedBox(width: 24),
+
+                  // History Section
+                  if (isWide)
+                    Expanded(
+                      flex: 1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionHeader('Uploads Récents', 'Historique des documents partagés.'),
+                          const SizedBox(height: 16),
+                          _buildRecentUploadsList(context),
+                        ],
+                      ),
+                    ),
                 ],
-              ),
-            ),
-            
-            const SizedBox(height: 48),
-            Text(
-              'Recent Uploads',
-              style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800, color: context.appTextPrimary),
-            ),
-            const SizedBox(height: 16),
-            _buildRecentUploadsList(context),
-          ],
-        ),
+              );
+            },
+          ),
+          
+          // Show history below on mobile
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth <= 900) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 32),
+                    _buildSectionHeader('Uploads Récents', 'Historique des documents partagés.'),
+                    const SizedBox(height: 16),
+                    _buildRecentUploadsList(context),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, String subtitle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF111827)),
+        ),
+        Text(
+          subtitle,
+          style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
+        ),
+      ],
     );
   }
 
@@ -262,17 +304,20 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
   }
 
   Widget _buildRecentUploadsList(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('documents').orderBy('createdAt', descending: true).limit(5).snapshots(),
+    final auth = context.read<AuthProvider>();
+    final firestore = context.read<FirestoreService>();
+    final residenceId = auth.currentResidenceId;
+
+    return StreamBuilder<List<DocumentModel>>(
+      stream: firestore.getDocuments(residenceId: residenceId),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         
-        final docs = snapshot.data!.docs;
+        final docs = snapshot.data ?? [];
         if (docs.isEmpty) return const Text('No recent uploads found.');
 
         return Column(
-          children: docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
+          children: docs.take(5).map((doc) {
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(12),
@@ -283,19 +328,19 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
               ),
               child: Row(
                 children: [
-                  _getIconForType(data['type']),
+                  _getIconForType(doc.fileType),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(data['title'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), maxLines: 1),
-                        Text(data['size'] ?? '', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                        Text(doc.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), maxLines: 1),
+                        Text(doc.fileSize, style: const TextStyle(fontSize: 11, color: Colors.grey)),
                       ],
                     ),
                   ),
                   IconButton(
-                    onPressed: () => _deleteDocument(doc.id, data['url']),
+                    onPressed: doc.id != null ? () => _deleteDocument(context, doc.id!, doc.fileUrl) : null,
                     icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
                   ),
                 ],
@@ -319,9 +364,10 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
     }
   }
 
-  Future<void> _deleteDocument(String docId, String url) async {
+  Future<void> _deleteDocument(BuildContext context, String docId, String url) async {
     try {
-      await FirebaseFirestore.instance.collection('documents').doc(docId).delete();
+      final firestore = context.read<FirestoreService>();
+      await firestore.deleteDocument(docId);
       await FirebaseStorage.instance.refFromURL(url).delete();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Document deleted')));

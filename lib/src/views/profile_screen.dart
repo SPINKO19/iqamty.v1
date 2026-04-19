@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+import 'package:image_picker/image_picker.dart';
+import '../services/firestore_service.dart';
 
 import '../components/custom_menu_button.dart';
 
@@ -22,10 +24,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   late AnimationController _flipController;
   late Animation<double> _flipAnimation;
   bool _isShowingResidence = true;
+  final _phoneController = TextEditingController();
+  bool _isEditingPhone = false;
 
   @override
   void initState() {
     super.initState();
+    final auth = context.read<AuthProvider>();
+    _phoneController.text = auth.currentUserData?['phoneNumber'] ?? '';
     _flipController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -38,6 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   @override
   void dispose() {
     _flipController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -54,7 +61,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    final student = context.watch<AuthProvider>().currentStudent;
+    final auth = context.watch<AuthProvider>();
+    final student = auth.currentStudent;
     final lp = context.watch<LanguageProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -69,11 +77,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
        }
     }
 
-    final safeNomFr = student?.nomFr ?? '';
-    final safePrenomFr = student?.prenomFr ?? '';
-    final displayName = '$safeNomFr $safePrenomFr'.trim().isEmpty 
-        ? lp.getText('no_name') 
-        : '$safeNomFr $safePrenomFr'.trim();
+    final safeNomFr = student?.nomFr ?? auth.currentUserData?['displayName']?.split(' ')?.first ?? '';
+    final prenomData = auth.currentUserData?['displayName']?.split(' ');
+    final safePrenomFr = student?.prenomFr ?? ((prenomData != null && prenomData.length > 1) ? prenomData.last : '');
+    
+    final role = auth.currentUserData?['role'] ?? 'student';
+    final isWorkerOrAdmin = role == 'worker' || role == 'administrator';
+
+    String displayName = '$safeNomFr $safePrenomFr'.trim();
+    if (displayName.isEmpty) {
+       displayName = auth.currentUserData?['displayName'] ?? lp.getText('no_name');
+    }
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -103,54 +117,60 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
             child: Column(
               children: [
-                // Header Section
-                _buildProfileHeader(context, student, displayName, isDark),
-                const SizedBox(height: 32),
-
-                // Vertical Flippable Card Section (Rotated Content)
-                GestureDetector(
-                  onTap: _toggleCard,
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 400),
-                    child: AspectRatio(
-                      aspectRatio: 0.63, // Portrait ratio (1 / 1.58)
-                      child: RotatedBox(
-                        quarterTurns: 3, // 90° counter-clockwise
-                        child: AnimatedBuilder(
-                          animation: _flipAnimation,
-                          builder: (context, child) {
-                            final angle = _flipAnimation.value * math.pi;
-                            return Transform(
-                              transform: Matrix4.identity()
-                                ..setEntry(3, 2, 0.001) // Perspective
-                                ..rotateY(angle),
-                              alignment: Alignment.center,
-                              child: angle < math.pi / 2
-                                  ? _buildOfficialCard(context, student, displayName, dobFormatted, true) // Front: Residence
-                                  : Transform(
-                                      transform: Matrix4.identity()..rotateY(math.pi),
-                                      alignment: Alignment.center,
-                                      child: _buildOfficialCard(context, student, displayName, dobFormatted, false), // Back: Student
-                                    ),
-                            );
-                          },
+                // Conditional Identity Section
+                if (!isWorkerOrAdmin) ...[
+                  // Vertical Flippable Card Section (Students only)
+                  GestureDetector(
+                    onTap: _toggleCard,
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: AspectRatio(
+                        aspectRatio: 0.63, 
+                        child: RotatedBox(
+                          quarterTurns: 3, 
+                          child: AnimatedBuilder(
+                            animation: _flipAnimation,
+                            builder: (context, child) {
+                              final angle = _flipAnimation.value * math.pi;
+                              return Transform(
+                                transform: Matrix4.identity()
+                                  ..setEntry(3, 2, 0.001) 
+                                  ..rotateY(angle),
+                                alignment: Alignment.center,
+                                child: angle < math.pi / 2
+                                    ? _buildOfficialCard(context, student, displayName, dobFormatted, true) 
+                                    : Transform(
+                                        transform: Matrix4.identity()..rotateY(math.pi),
+                                        alignment: Alignment.center,
+                                        child: _buildOfficialCard(context, student, displayName, dobFormatted, false), 
+                                      ),
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                
-                const SizedBox(height: 12),
-                Text(
-                  lp.getText('press_to_flip'),
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary.withOpacity(0.6),
+                  const SizedBox(height: 12),
+                  Text(
+                    lp.getText('press_to_flip'),
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary.withOpacity(0.6),
+                    ),
                   ),
-                ),
+                ] else ...[
+                  // Professional Identity Pass (Workers/Admins)
+                  _buildProfessionalIdentityCard(context, auth, lp, isDark),
+                ],
                 
                 const SizedBox(height: 32),
+
+                if (isWorkerOrAdmin) ...[
+                   _buildPhoneSection(context, lp, isDark, auth),
+                   const SizedBox(height: 12),
+                ],
 
                 // Restored Logout Button
                 Padding(
@@ -170,6 +190,57 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
       ),
     );
+  }
+
+  Widget _buildPhoneSection(BuildContext context, LanguageProvider lp, bool isDark, AuthProvider auth) {
+     return Container(
+       padding: const EdgeInsets.all(20),
+       decoration: BoxDecoration(
+          color: context.appCard,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: context.appBorder),
+       ),
+       child: Column(
+         crossAxisAlignment: CrossAxisAlignment.start,
+         children: [
+           Row(
+             children: [
+               Icon(Icons.phone_android_rounded, color: AppColors.primary, size: 20),
+               const SizedBox(width: 12),
+               Text('Numéro de téléphone', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
+               const Spacer(),
+               IconButton(
+                 onPressed: () async {
+                   if (_isEditingPhone) {
+                      // Save
+                      await context.read<FirestoreService>().updateUserProfile(auth.currentUserData?['uid'] ?? '', {'phoneNumber': _phoneController.text.trim()});
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil mis à jour')));
+                   }
+                   setState(() => _isEditingPhone = !_isEditingPhone);
+                 },
+                 icon: Icon(_isEditingPhone ? Icons.check_circle : Icons.edit, color: AppColors.primary, size: 20),
+               ),
+             ],
+           ),
+           const SizedBox(height: 8),
+           _isEditingPhone 
+             ? TextField(
+                 controller: _phoneController,
+                 keyboardType: TextInputType.phone,
+                 decoration: InputDecoration(
+                   hintText: 'Entrez votre numéro',
+                   filled: true,
+                   fillColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                 ),
+               )
+             : Text(
+                 _phoneController.text.isEmpty ? 'Non renseigné' : _phoneController.text,
+                 style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13),
+               ),
+         ],
+       ),
+     );
   }
 
   Widget _buildTitledCardSection(String title, LanguageProvider lp, dynamic student, String name, String dob, bool isResidence) {
@@ -194,8 +265,212 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
+  Widget _buildProfessionalIdentityCard(BuildContext context, AuthProvider auth, LanguageProvider lp, bool isDark) {
+    final data = auth.currentUserData;
+    final String role = (data?['role'] ?? 'worker').toString().toUpperCase();
+    final String dept = data?['department'] ?? 'Général';
+    final String residence = data?['residenceName'] ?? 'Non assigné';
+    final String name = data?['displayName'] ?? 'Personnel';
+    
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: context.appBorder),
+        boxShadow: isDark ? null : [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10)),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Curved Decorative Header
+          Container(
+            height: 100,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark 
+                  ? [const Color(0xFF1B4332), const Color(0xFF081C15)]
+                  : [AppColors.primary, const Color(0xFF064E3B)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(27)),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -20,
+                  top: -20,
+                  child: Opacity(
+                    opacity: 0.1,
+                    child: Icon(Icons.security, size: 120, color: Colors.white),
+                  ),
+                ),
+                Center(
+                  child: Text(
+                    'CARTE PROFESSIONNELLE',
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withValues(alpha: 0.4),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 10,
+                      letterSpacing: 4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Identity Section
+          Transform.translate(
+            offset: const Offset(0, -40),
+            child: Column(
+              children: [
+                // Premium Avatar
+                _buildPremiumAvatar(context, auth, isDark),
+                const SizedBox(height: 16),
+                
+                // Name & Badge
+                Text(
+                  name.toUpperCase(),
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: context.appTextPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.verified_user, size: 12, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      Text(
+                        role,
+                        style: GoogleFonts.inter(
+                          color: AppColors.primary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+                  child: Divider(height: 1),
+                ),
+                
+                // Details Grid
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Column(
+                    children: [
+                      _buildDetailRow(Icons.business_center_rounded, 'DÉPARTEMENT', dept, context),
+                      const SizedBox(height: 20),
+                      _buildDetailRow(Icons.domain_rounded, 'RÉSIDENCE', residence, context),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumAvatar(BuildContext context, AuthProvider auth, bool isDark) {
+    final photoUrl = auth.currentUserData?['photoUrl'];
+    
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: context.appCard,
+          ),
+          child: CircleAvatar(
+            radius: 54,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+            child: CircleAvatar(
+              radius: 50,
+              backgroundColor: isDark ? Colors.white12 : Colors.grey[100],
+              backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+              child: photoUrl == null ? Icon(Icons.person, size: 40, color: Colors.grey[400]) : null,
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: () => _updatePhoto(context, auth),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+              border: Border.all(color: context.appCard, width: 3),
+            ),
+            child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _updatePhoto(BuildContext context, AuthProvider auth) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 400, maxHeight: 400);
+    if (image != null) {
+      final bytes = await image.readAsBytes();
+      final base64String = base64Encode(bytes);
+      await context.read<FirestoreService>().updateUserProfile(auth.currentUserData?['uid'] ?? '', {'photoUrl': 'data:image/png;base64,$base64String'});
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo mise à jour')));
+    }
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value, BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: context.appBackground,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: context.appTextSecondary, size: 18),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w800, color: context.appTextSecondary, letterSpacing: 1)),
+              const SizedBox(height: 4),
+              Text(value, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildProfileHeader(BuildContext context, dynamic student, String name, bool isDark) {
     final lp = context.read<LanguageProvider>();
+    final auth = context.read<AuthProvider>();
     return Column(
       children: [
         Stack(
@@ -217,21 +492,24 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   backgroundColor: isDark ? AppColors.borderColorDark : Colors.grey[200],
                   backgroundImage: student?.photoBase64 != null 
                     ? MemoryImage(base64Decode(student!.photoBase64!))
-                    : (student?.photo != null ? NetworkImage(student!.photo!) : null) as ImageProvider?,
-                  child: student?.photoBase64 == null && student?.photo == null
+                    : ( (student?.photo ?? auth.currentUserData?['photoUrl']) != null ? NetworkImage(student?.photo ?? auth.currentUserData!['photoUrl']) : null) as ImageProvider?,
+                  child: student?.photoBase64 == null && student?.photo == null && auth.currentUserData?['photoUrl'] == null
                     ? Icon(Icons.person_rounded, size: 50, color: Colors.grey[400])
                     : null,
                 ),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: Color(0xFF10B981),
-                shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+            GestureDetector(
+              onTap: () => _updatePhoto(context, auth),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF10B981),
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                ),
+                child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
               ),
-              child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
             )
           ],
         ),
@@ -253,7 +531,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            student?.residence?.toUpperCase() ?? lp.getText('not_assigned').toUpperCase(),
+            (student?.residence ?? auth.currentUserData?['residenceName'] ?? lp.getText('not_assigned')).toUpperCase(),
             style: GoogleFonts.inter(
               color: AppColors.primary,
               fontSize: 11,

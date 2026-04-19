@@ -22,6 +22,7 @@ class ComplaintsView extends StatelessWidget {
     final auth = context.read<AuthProvider>();
     final firestore = context.read<FirestoreService>();
     final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
+    final residenceId = auth.currentResidenceId ?? '';
     final lp = context.watch<LanguageProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -43,7 +44,7 @@ class ComplaintsView extends StatelessWidget {
         elevation: 0,
       ),
       body: StreamBuilder<List<Complaint>>(
-        stream: firestore.getMyComplaints(userId),
+        stream: firestore.getMyComplaints(userId, residenceId: residenceId),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
@@ -143,7 +144,7 @@ class ComplaintsView extends StatelessWidget {
     );
   }
 
-  void _showComplaintDetails(BuildContext context, Complaint complaint) {
+  static void showComplaintDetails(BuildContext context, Complaint complaint) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -246,7 +247,7 @@ class _ModernComplaintCard extends StatelessWidget {
             ),
           ),
           InkWell(
-            onTap: () => ComplaintsView()._showComplaintDetails(context, complaint),
+            onTap: () => ComplaintsView.showComplaintDetails(context, complaint),
             borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(24),
               bottomRight: Radius.circular(24),
@@ -450,6 +451,7 @@ class _ComplaintSubmissionSheet extends StatefulWidget {
 class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
+  String _selectedCategory = 'category_plumbing';
   XFile? _imageFile;
   bool _isUploading = false;
   Uint8List? _previewBytes;
@@ -488,18 +490,20 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
       final firestore = context.read<FirestoreService>();
       final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
 
+      final residenceId = auth.currentResidenceId;
+
       final complaint = Complaint(
+        title: _titleController.text.trim(),
+        description: _descController.text.trim(),
+        category: context.read<LanguageProvider>().getText(_selectedCategory),
         userId: userId,
-        title: _titleController.text,
-        description: _descController.text,
-        category: 'General', // Default for now
         priority: Priority.medium,
         status: Status.received,
-        imageUrl: imageUrl,
         timestamp: DateTime.now(),
+        imageUrl: imageUrl,
       );
 
-      await firestore.submitComplaint(complaint);
+      await firestore.submitComplaint(complaint, residenceId: residenceId);
       
       if (mounted) {
         Navigator.pop(context);
@@ -579,61 +583,93 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
             ],
           ),
           const SizedBox(height: 32),
-          _buildFieldLabel(lp.getText('complaint_title_label')),
-          const SizedBox(height: 10),
-          _buildModernTextField(
-            context: context,
-            controller: _titleController,
-            hint: lp.getText('complaint_title_hint'),
-          ),
-          const SizedBox(height: 24),
-          _buildFieldLabel(lp.getText('detailed_description')),
-          const SizedBox(height: 10),
           Expanded(
-            child: _buildModernTextField(
-              context: context,
-              controller: _descController,
-              hint: lp.getText('describe_problem_hint'),
-              maxLines: null,
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildFieldLabel(lp.getText('photo_optional')),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: _isUploading ? null : _pickImage,
-            child: _previewBytes != null 
-              ? Container(
-                  height: 120,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    image: DecorationImage(
-                      image: MemoryImage(_previewBytes!),
-                      fit: BoxFit.cover,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildFieldLabel(lp.getText('complaint_title_label')),
+                  const SizedBox(height: 10),
+                  _buildModernTextField(
+                    context: context,
+                    controller: _titleController,
+                    hint: lp.getText('complaint_title_hint'),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildFieldLabel(lp.getText('category') == 'category' ? 'Catégorie' : lp.getText('category')),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: isDark ? context.appBackground : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: context.appBorder),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedCategory,
+                        isExpanded: true,
+                        dropdownColor: isDark ? context.appCard : Colors.white,
+                        items: ['category_plumbing', 'category_electricity', 'category_cleaning', 'category_furniture', 'category_other']
+                            .map((catKey) => DropdownMenuItem(value: catKey, child: Text(lp.getText(catKey), style: GoogleFonts.inter(color: context.appTextPrimary))))
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) setState(() => _selectedCategory = val);
+                        },
+                      ),
                     ),
                   ),
-                )
-              : _UploadPlaceholder(),
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: _isUploading ? null : _handleSubmit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              child: _isUploading 
-                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : Text(
-                    lp.getText('submit_complaint'),
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 14),
+                  const SizedBox(height: 24),
+                  _buildFieldLabel(lp.getText('detailed_description')),
+                  const SizedBox(height: 10),
+                  _buildModernTextField(
+                    context: context,
+                    controller: _descController,
+                    hint: lp.getText('describe_problem_hint'),
+                    maxLines: 5,
                   ),
+                  const SizedBox(height: 24),
+                  _buildFieldLabel(lp.getText('photo_optional')),
+                  const SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: _isUploading ? null : _pickImage,
+                    child: _previewBytes != null 
+                      ? Container(
+                          height: 120,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            image: DecorationImage(
+                              image: MemoryImage(_previewBytes!),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        )
+                      : _UploadPlaceholder(),
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _isUploading ? null : _handleSubmit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: _isUploading 
+                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : Text(
+                            lp.getText('submit_complaint'),
+                            style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 14),
+                          ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

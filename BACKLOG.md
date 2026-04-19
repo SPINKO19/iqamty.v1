@@ -3,7 +3,7 @@
 | Task | Module | Owner | Status |
 | :--- | :--- | :--- | :--- |
 | Refactor Login UI | Auth & Profile | - | [ ] |
-| Implement Chat Websockets | Communication | - | [ ] |
+| Implement Chat Websockets | Communichation | - | [ ] |
 | Admin User Management | Admin Portal | - | [ ] |
 | Dining Menu API Integration | Campus Services | - | [ ] |
 | Profile Page Enhancements | Auth & Profile | - | [ ] |

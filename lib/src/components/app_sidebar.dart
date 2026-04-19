@@ -19,11 +19,24 @@ class AppSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nav = context.watch<NavProvider>();
-    return Scaffold(
-      key: nav.scaffoldKey,
-      backgroundColor: context.appBackground,
-      drawer: _buildSidebar(context),
-      body: child,
+    return PopScope(
+      // Don't let the system pop (exit app) automatically.
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        final router = GoRouter.of(context);
+        // If the router can go back, go back one step.
+        if (router.canPop()) {
+          router.pop();
+        }
+        // If we are at the root already, do nothing (keeps app open).
+      },
+      child: Scaffold(
+        key: nav.scaffoldKey,
+        backgroundColor: context.appBackground,
+        drawer: _buildSidebar(context),
+        body: child,
+      ),
     );
   }
 

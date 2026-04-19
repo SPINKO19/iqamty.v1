@@ -10,65 +10,44 @@ class AdminPlaceholderView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const kGreen = Color(0xFF2D6A4F);
+    const kGreen = Color(0xFF1D5C35);
     final lp = context.watch<LanguageProvider>();
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark 
-          ? const Color(0xFF0F172A) 
-          : const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: kGreen,
-        foregroundColor: Colors.white,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CustomMenuButton(
-            backgroundColor: Colors.white.withValues(alpha: 0.2),
-            iconColor: Colors.white,
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: kGreen.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.construction_rounded, size: 64, color: kGreen),
           ),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.inter(fontWeight: FontWeight.w900, letterSpacing: -0.5),
-        ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: kGreen.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.construction_rounded, size: 64, color: kGreen),
+          const SizedBox(height: 24),
+          Text(
+            lp.getText('feature_coming_soon'),
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: kGreen,
             ),
-            const SizedBox(height: 24),
-            Text(
-              lp.getText('feature_coming_soon'),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              'Cette section est en cours de développement pour améliorer votre expérience administrative.',
+              textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: kGreen,
+                fontSize: 14,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                'Cette section est en cours de développement pour améliorer votre expérience administrative.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

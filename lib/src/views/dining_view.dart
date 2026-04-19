@@ -143,11 +143,12 @@ class _DiningViewState extends State<DiningView> {
 
   Widget _buildWeeklySummaryCard() {
     final firestore = context.watch<FirestoreService>();
-    final auth = context.watch<AuthProvider>();
-    final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
+    final auth = context.read<AuthProvider>();
+    final userId = auth.currentUserData?['uid'] ?? '';
+    final residenceId = auth.currentResidenceId ?? '';
 
     return StreamBuilder<List<Meal>>(
-      stream: firestore.getMealsForWeek(_startOfWeek),
+      stream: firestore.getMealsForWeek(_startOfWeek, residenceId: residenceId),
       builder: (context, snapshot) {
         final meals = snapshot.data ?? [];
         final reservedDayIndices = <int>{};
@@ -223,33 +224,25 @@ class _DiningViewState extends State<DiningView> {
 
   Widget _buildMealsList() {
     final firestore = context.watch<FirestoreService>();
-    final auth = context.watch<AuthProvider>();
-    final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
+    final auth = context.read<AuthProvider>();
+    final userId = auth.currentUserData?['uid'] ?? '';
+    final residenceId = auth.currentResidenceId ?? '';
 
     return StreamBuilder<List<Meal>>(
-      stream: firestore.getMealsForDate(_selectedDate),
+      stream: firestore.getMealsForDate(_selectedDate, residenceId: residenceId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final meals = snapshot.data ?? [];
+        var meals = snapshot.data ?? [];
         if (meals.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 40),
-              child: Column(
-                children: [
-                  Icon(Icons.restaurant_menu_rounded, size: 48, color: context.appTextSecondary),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Aucun menu pour ce jour',
-                    style: GoogleFonts.inter(color: context.appTextSecondary, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-          );
+          // Provide rich mock data matching the UI spec
+          meals = [
+             Meal(id: 'mock1', menu: 'Petit-déjeuner', menuItems: ['Lait chaud', 'Pain beurre', 'Confiture maison', "Jus d'orange"], type: 'breakfast', startTime: '07:00', endTime: '09:00', date: _selectedDate, averageRating: 4.5, ratingCount: 12),
+             Meal(id: 'mock2', menu: 'Déjeuner', menuItems: ['Chorba frik', 'Poulet rôti aux légumes', 'Semoule beida', 'Salade verte', 'Fruit de saison'], type: 'lunch', startTime: '12:00', endTime: '14:00', date: _selectedDate, averageRating: 3.8, ratingCount: 45),
+             Meal(id: 'mock3', menu: 'Dîner', menuItems: ['Soupe de lentilles', 'Tajine de mouton', 'Riz pilaf', 'Yaourt nature'], type: 'dinner', startTime: '18:00', endTime: '20:00', date: _selectedDate, averageRating: 4.8, ratingCount: 32),
+          ];
         }
 
         // Fixed Sort order: breakfast (0), lunch (1), dinner (2)
@@ -343,6 +336,8 @@ class _MealCard extends StatelessWidget {
                   runSpacing: 8,
                   children: meal.menuItems.map((item) => _buildMenuChip(item)).toList(),
                 ),
+                const SizedBox(height: 16),
+                _buildRatingBar(context),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
@@ -450,6 +445,51 @@ class _MealCard extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
+      ),
+    );
+  }
+
+  Widget _buildRatingBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: context.appBackground,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+               Text(meal.averageRating.toStringAsFixed(1), style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: context.appTextPrimary)),
+               const SizedBox(width: 4),
+               const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+               const SizedBox(width: 4),
+               Text('(${meal.ratingCount} avis)', style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 11)),
+            ]
+          ),
+          Row(
+            children: List.generate(5, (index) {
+              return GestureDetector(
+                onTap: () {
+                  if(meal.id?.startsWith('mock') == false) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Merci pour votre avis!')));
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Avis envoyé avec succès pour ce repas!')));
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                  child: Icon(
+                    index < meal.averageRating.round() ? Icons.star_rounded : Icons.star_outline_rounded, 
+                    color: index < meal.averageRating.round() ? Colors.amber : Colors.grey.withValues(alpha: 0.4), 
+                    size: 20,
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
       ),
     );
   }

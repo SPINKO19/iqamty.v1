@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -100,7 +101,9 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
         createdAt: DateTime.now(),
       );
 
-      await firestoreService.submitServiceRequest(request);
+      final residenceId = authProvider.currentResidenceId;
+
+      await firestoreService.submitServiceRequest(request, residenceId: residenceId);
 
       if (mounted) {
         navigator.pop();
@@ -228,7 +231,9 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.file(_imageFile!, height: 200, width: double.infinity, fit: BoxFit.cover),
+                            child: kIsWeb 
+                              ? Image.network(_imageFile!.path, height: 200, width: double.infinity, fit: BoxFit.cover)
+                              : Image.file(_imageFile!, height: 200, width: double.infinity, fit: BoxFit.cover),
                           ),
                           Positioned(
                             top: 8,

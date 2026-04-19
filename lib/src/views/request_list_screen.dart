@@ -42,6 +42,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
     final lp = context.watch<LanguageProvider>();
     final auth = context.watch<AuthProvider>();
     final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
+    final residenceId = auth.currentResidenceId ?? '';
     final firestore = context.watch<FirestoreService>();
 
     const kMediumGreen = Color(0xFF2D6A4F);
@@ -87,7 +88,7 @@ class _RequestListScreenState extends State<RequestListScreen> {
           // Request List
           Expanded(
             child: StreamBuilder<List<ServiceRequest>>(
-              stream: firestore.getMyRequests(userId, category: widget.category),
+              stream: firestore.getMyRequests(userId, category: widget.category, residenceId: residenceId),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(

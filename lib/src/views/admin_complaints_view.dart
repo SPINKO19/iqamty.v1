@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
+import '../providers/auth_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/firestore_service.dart';
@@ -16,35 +17,17 @@ class AdminComplaintsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
+    final auth = context.watch<AuthProvider>();
+    final firestore = context.read<FirestoreService>();
+    final residenceId = auth.currentResidenceId;
 
-    return Scaffold(
-      backgroundColor: context.appBackground,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: _kGreen,
-        foregroundColor: Colors.white,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CustomMenuButton(
-            backgroundColor: Colors.white.withValues(alpha: 0.2),
-            iconColor: Colors.white,
-          ),
-        ),
-        title: Text(
-          lp.getText('complaints_management'),
-          style: GoogleFonts.inter(fontWeight: FontWeight.w900, letterSpacing: -0.5),
-        ),
-        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.filter_list_rounded, color: Colors.white)),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.search_rounded, color: Colors.white)),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 1400),
-          child: StreamBuilder<List<Complaint>>(
-            stream: context.read<FirestoreService>().getAllComplaints(),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          StreamBuilder<List<Complaint>>(
+            stream: firestore.getAllComplaints(residenceId: residenceId),
             builder: (context, snapshot) {
               if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
               if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
@@ -52,43 +35,37 @@ class AdminComplaintsView extends StatelessWidget {
               final complaints = snapshot.data ?? [];
               if (complaints.isEmpty) {
                 return Center(
-                  child: Text(
-                    lp.getText('no_complaints_msg'),
-                    style: GoogleFonts.inter(color: context.appTextSecondary),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Text(
+                      lp.getText('no_complaints_msg'),
+                      style: GoogleFonts.inter(color: context.appTextSecondary),
+                    ),
                   ),
                 );
               }
 
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  final isDesktop = constraints.maxWidth > 900;
-                  
-                  if (isDesktop) {
-                    return GridView.builder(
-                      padding: const EdgeInsets.all(24),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 24,
-                        mainAxisSpacing: 24,
-                        childAspectRatio: 1.5,
-                      ),
-                      itemCount: complaints.length,
-                      itemBuilder: (context, index) => _AdminComplaintCard(complaint: complaints[index]),
-                    );
-                  }
-                  
-                  return ListView.separated(
-                    padding: const EdgeInsets.all(24),
-                    physics: const BouncingScrollPhysics(),
+                  final cardsPerRow = constraints.maxWidth > 800 ? 2 : 1;
+                  return GridView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: cardsPerRow,
+                      crossAxisSpacing: 24,
+                      mainAxisSpacing: 24,
+                      mainAxisExtent: 250,
+                    ),
                     itemCount: complaints.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 20),
                     itemBuilder: (context, index) => _AdminComplaintCard(complaint: complaints[index]),
                   );
                 },
               );
             },
           ),
-        ),
+        ],
       ),
     );
   }
@@ -311,7 +288,7 @@ class _AssignWorkerSheet extends StatelessWidget {
           const SizedBox(height: 24),
           Flexible(
             child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: firestore.getWorkers(),
+              stream: firestore.getWorkers(residenceId: context.read<AuthProvider>().currentResidenceId),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
                 final workers = snapshot.data ?? [];

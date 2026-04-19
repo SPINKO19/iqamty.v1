@@ -6,6 +6,9 @@ import 'package:provider/provider.dart';
 import '../components/custom_menu_button.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
+import '../services/firestore_service.dart';
+import '../providers/auth_provider.dart';
+import '../models/types.dart';
 
 class DocumentsView extends StatelessWidget {
   const DocumentsView({super.key});
@@ -45,11 +48,8 @@ class DocumentsView extends StatelessWidget {
           style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w800),
         ),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('documents')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
+      body: StreamBuilder<List<DocumentModel>>(
+        stream: context.read<FirestoreService>().getDocuments(residenceId: context.watch<AuthProvider>().currentResidenceId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: Color(0xFF2D6A4F)));
@@ -64,7 +64,7 @@ class DocumentsView extends StatelessWidget {
             );
           }
 
-          final docs = snapshot.data?.docs ?? [];
+          final docs = snapshot.data ?? [];
 
           if (docs.isEmpty) {
             return Center(
@@ -90,8 +90,8 @@ class DocumentsView extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             itemCount: docs.length,
             itemBuilder: (context, index) {
-              final data = docs[index].data() as Map<String, dynamic>;
-              return _buildDocCard(context, data);
+              final doc = docs[index];
+              return _buildDocCard(context, doc);
             },
           );
         },
@@ -99,8 +99,8 @@ class DocumentsView extends StatelessWidget {
     );
   }
 
-  Widget _buildDocCard(BuildContext context, Map<String, dynamic> data) {
-    final String type = (data['type'] ?? 'unknown').toLowerCase();
+  Widget _buildDocCard(BuildContext context, DocumentModel doc) {
+    final String type = doc.fileType.toLowerCase();
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -126,14 +126,14 @@ class DocumentsView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  data['title'] ?? 'Untitled',
+                  doc.title,
                   style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${type.toUpperCase()} • ${data['size'] ?? ''}',
+                  '${type.toUpperCase()} • ${doc.fileSize}',
                   style: GoogleFonts.inter(
                     color: context.appTextSecondary,
                     fontSize: 11,
@@ -144,7 +144,7 @@ class DocumentsView extends StatelessWidget {
             ),
           ),
           ElevatedButton(
-            onPressed: () => _openDocument(data['url']),
+            onPressed: () => _openDocument(doc.fileUrl),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2D6A4F).withOpacity(0.1),
               foregroundColor: const Color(0xFF2D6A4F),

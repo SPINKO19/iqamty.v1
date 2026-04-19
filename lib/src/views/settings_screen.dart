@@ -3,6 +3,8 @@ import '../core/theme/colors.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/language_provider.dart';
+import '../providers/auth_provider.dart';
+import '../services/notification_service.dart';
 
 import '../components/custom_menu_button.dart';
 
@@ -15,6 +17,13 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
+  bool _isSyncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationsEnabled = NotificationService().isEnabled();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,9 +61,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.notifications_outlined,
                   title: languageProvider.getText('notifications'),
                   value: _notificationsEnabled,
-                  onChanged: (val) => setState(() => _notificationsEnabled = val),
+                  onChanged: (val) async {
+                    await NotificationService().setEnabled(val);
+                    setState(() => _notificationsEnabled = val);
+                  },
                   textTheme: textTheme,
                 ),
+                Divider(color: context.appBorder, height: 1),
+                _buildSyncRow(context, textTheme, languageProvider),
               ],
             ),
             const SizedBox(height: 24),
@@ -281,6 +295,93 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildSyncRow(BuildContext context, TextTheme textTheme, LanguageProvider lp) {
+    final label = lp.currentLocale.languageCode == 'ar'
+        ? 'مزامنة الملف الشخصي'
+        : (lp.currentLocale.languageCode == 'en' ? 'Sync Profile' : 'Synchroniser le profil');
+
+    return InkWell(
+      onTap: _isSyncing ? null : () => _handleSync(context, lp),
+      child: _buildRowBase(
+        icon: Icons.sync_rounded,
+        title: label,
+        textTheme: textTheme,
+        trailing: _isSyncing
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+              )
+            : Icon(Icons.chevron_right, color: context.appTextSecondary, size: 20),
+      ),
+    );
+  }
+
+  Future<void> _handleSync(BuildContext context, LanguageProvider lp) async {
+    final auth = context.read<AuthProvider>();
+
+    // Check rate-limit before starting
+    final remaining = await auth.getTimeUntilNextSync();
+    if (remaining > 0) {
+      final hours = (remaining / (1000 * 60 * 60)).ceil();
+      if (mounted) {
+        final msg = lp.currentLocale.languageCode == 'ar'
+            ? 'يرجى الانتظار $hours ساعات قبل المزامنة مرة أخرى'
+            : (lp.currentLocale.languageCode == 'en'
+                ? 'Please wait ~${hours}h before syncing again'
+                : 'Veuillez patienter ~${hours}h avant de resynchroniser');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: Colors.orange.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isSyncing = true);
+
+    try {
+      final refreshed = await auth.refreshProfile();
+      if (mounted) {
+        final msg = refreshed
+            ? (lp.currentLocale.languageCode == 'ar'
+                ? 'تم تحديث الملف الشخصي بنجاح'
+                : (lp.currentLocale.languageCode == 'en' ? 'Profile updated successfully' : 'Profil mis à jour avec succès'))
+            : (lp.currentLocale.languageCode == 'ar'
+                ? 'يرجى الانتظار 24 ساعة'
+                : (lp.currentLocale.languageCode == 'en' ? 'Please wait 24h' : 'Veuillez patienter 24h'));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: refreshed ? AppColors.primary : Colors.orange.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = lp.currentLocale.languageCode == 'ar'
+            ? 'فشل في التحديث. حاول مرة أخرى'
+            : (lp.currentLocale.languageCode == 'en' ? 'Sync failed. Try again later.' : 'Échec de la synchronisation. Réessayez.');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
   }
 
   Widget _buildThemeSelection(BuildContext context, ThemeProvider themeProvider, TextTheme textTheme, LanguageProvider lp) {

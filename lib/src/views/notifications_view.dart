@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../models/types.dart';
 import '../providers/auth_provider.dart';
+import '../services/firestore_service.dart';
 import '../core/theme/colors.dart';
 
 import '../components/custom_menu_button.dart';
@@ -18,42 +19,24 @@ class NotificationsView extends StatefulWidget {
 class _NotificationsViewState extends State<NotificationsView> {
   int _selectedTabIndex = 0; // 0: Toutes, 1: Non lues
 
-  Stream<List<NotificationModel>> _getNotificationsStream() {
-    final userId = context.read<AuthProvider>().currentStudent?.id?.toString() ?? '';
-    return FirebaseFirestore.instance
-        .collection('notifications')
-        .where('userId', isEqualTo: userId)
-        .where('isDeleted', isNotEqualTo: true)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snap) {
-      return snap.docs
-          .map((doc) => NotificationModel.fromJson(doc.data(), doc.id))
-          .toList();
-    });
+  Stream<List<NotificationModel>> _getNotificationsStream(BuildContext context) {
+    final auth = context.read<AuthProvider>();
+    final firestore = context.read<FirestoreService>();
+    final userId = auth.currentUserData?['uid'] ?? '';
+    final residenceId = auth.currentResidenceId;
+    return firestore.getNotifications(userId, residenceId: residenceId);
   }
 
-  Future<void> _markAsRead(String notificationId) async {
-    await FirebaseFirestore.instance
-        .collection('notifications')
-        .doc(notificationId)
-        .update({'isRead': true});
+  Future<void> _markAsRead(BuildContext context, String notificationId) async {
+    await context.read<FirestoreService>().markNotificationAsRead(notificationId);
   }
 
-  Future<void> _ignoreNotification(String notificationId) async {
-    await FirebaseFirestore.instance
-        .collection('notifications')
-        .doc(notificationId)
-        .update({'isDeleted': true});
+  Future<void> _ignoreNotification(BuildContext context, String notificationId) async {
+    await context.read<FirestoreService>().deleteNotification(notificationId);
   }
 
-  Future<void> _markAllAsRead(List<NotificationModel> unreadNotifs) async {
-    final batch = FirebaseFirestore.instance.batch();
-    for (var n in unreadNotifs) {
-      final docRef = FirebaseFirestore.instance.collection('notifications').doc(n.id);
-      batch.update(docRef, {'isRead': true});
-    }
-    await batch.commit();
+  Future<void> _markAllAsRead(BuildContext context, List<NotificationModel> unreadNotifs) async {
+    await context.read<FirestoreService>().markAllNotificationsAsRead(unreadNotifs.map((n) => n.id).toList());
   }
 
   @override
@@ -83,7 +66,7 @@ class _NotificationsViewState extends State<NotificationsView> {
         ),
         actions: [
           StreamBuilder<List<NotificationModel>>(
-            stream: _getNotificationsStream(),
+            stream: _getNotificationsStream(context),
             builder: (context, snapshot) {
               final notifs = snapshot.data ?? [];
               final unread = notifs.where((n) => !n.isRead).toList();
@@ -92,14 +75,14 @@ class _NotificationsViewState extends State<NotificationsView> {
               return IconButton(
                 icon: const Icon(Icons.done_all_rounded, color: Colors.white),
                 tooltip: 'Tout marquer comme lu',
-                onPressed: () => _markAllAsRead(unread),
+                onPressed: () => _markAllAsRead(context, unread),
               );
             },
           ),
         ],
       ),
       body: StreamBuilder<List<NotificationModel>>(
-        stream: _getNotificationsStream(),
+        stream: _getNotificationsStream(context),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(
@@ -168,8 +151,8 @@ class _NotificationsViewState extends State<NotificationsView> {
         itemBuilder: (context, index) {
           return _NotificationCard(
             notification: unreadNotifs[index],
-            onTap: () => _markAsRead(unreadNotifs[index].id),
-            onIgnore: () => _ignoreNotification(unreadNotifs[index].id),
+            onTap: () => _markAsRead(context, unreadNotifs[index].id),
+            onIgnore: () => _ignoreNotification(context, unreadNotifs[index].id),
           );
         },
       );
@@ -207,8 +190,8 @@ class _NotificationsViewState extends State<NotificationsView> {
           ...unreadNotifs.map((n) {
             return _NotificationCard(
               notification: n,
-              onTap: () => _markAsRead(n.id),
-              onIgnore: () => _ignoreNotification(n.id),
+              onTap: () => _markAsRead(context, n.id),
+              onIgnore: () => _ignoreNotification(context, n.id),
             );
           }),
           const SizedBox(height: 16),
@@ -235,7 +218,7 @@ class _NotificationsViewState extends State<NotificationsView> {
             return _NotificationCard(
               notification: n,
               onTap: () {}, // Already read
-              onIgnore: () => _ignoreNotification(n.id),
+              onIgnore: () => _ignoreNotification(context, n.id),
             );
           }),
         ]

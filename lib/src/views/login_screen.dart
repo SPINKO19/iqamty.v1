@@ -50,9 +50,20 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     final auth = context.read<AuthProvider>();
-    final success = _useEmail
-        ? await auth.loginWithEmail(identifier, password)
-        : await auth.login(identifier, password);
+    
+    bool success = false;
+    if (_selectedRole == 'student') {
+      success = _useEmail
+          ? await auth.loginWithEmail(identifier, password)
+          : await auth.login(identifier, password);
+    } else {
+      // For Admin/Worker, try custom ID login first, then fallback to email if identifier looks like email
+      if (identifier.contains('@')) {
+        success = await auth.loginWithEmail(identifier, password);
+      } else {
+        success = await auth.loginWithId(identifier, password);
+      }
+    }
 
     if (success && mounted) {
       final role = auth.currentStudent?.role ?? auth.currentUserData?['role'] ?? 'student';

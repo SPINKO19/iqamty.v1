@@ -15,85 +15,6 @@ extension StringExtension on String {
   String capitalize() => "${this[0].toUpperCase()}${substring(1)}";
 }
 
-
-class _SimplePostInput extends StatefulWidget {
-  final String userId;
-  const _SimplePostInput({required this.userId});
-
-  @override
-  State<_SimplePostInput> createState() => _SimplePostInputState();
-}
-
-class _SimplePostInputState extends State<_SimplePostInput> {
-  final _controller = TextEditingController();
-  bool _isPosting = false;
-
-  Future<void> _submit() async {
-    final text = _controller.text.trim();
-    if (text.isEmpty || _isPosting) return;
-
-    setState(() => _isPosting = true);
-    final auth = context.read<AuthProvider>();
-    final firestore = context.read<FirestoreService>();
-
-    try {
-      final post = ForumPost(
-        title: '',
-        content: text,
-        authorId: widget.userId,
-        authorName: auth.currentUserData?['displayName'] ?? 'User',
-        type: 'post',
-        createdAt: DateTime.now(),
-      );
-      await firestore.addForumPost(post);
-      if (!mounted) return;
-      _controller.clear();
-      FocusScope.of(context).unfocus();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-    } finally {
-      if (mounted) setState(() => _isPosting = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final lp = context.watch<LanguageProvider>();
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).viewInsets.bottom + 16),
-      decoration: BoxDecoration(
-        color: context.appCard,
-        boxShadow: context.isDark ? null : const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                hintText: lp.getText('post_text_hint'),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-                filled: true,
-                fillColor: context.isDark ? const Color(0xFF111811) : Colors.black.withValues(alpha: 0.05),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-              maxLines: null,
-            ),
-          ),
-          const SizedBox(width: 8),
-          _isPosting
-              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-              : IconButton(
-                  onPressed: _submit,
-                  icon: Icon(Icons.send, color: AppColors.primary),
-                ),
-        ],
-      ),
-    );
-  }
-}
-
 String _formatTime(DateTime time) {
 
   final now = DateTime.now();
@@ -163,8 +84,10 @@ class _FeedTab extends StatelessWidget {
     
     return Stack(
       children: [
-        StreamBuilder<List<ForumPost>>(
-          stream: firestore.streamForumPosts(type: postType, limit: 10),
+        StreamBuilder(
+          stream: postType == 'announcement' 
+            ? firestore.getAnnouncements(residenceId: auth.currentResidenceId)
+            : firestore.streamForumPosts(type: postType, limit: 10, residenceId: auth.currentResidenceId),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return Center(
@@ -197,7 +120,25 @@ class _FeedTab extends StatelessWidget {
                 itemBuilder: (ctx, i) => _buildSkeleton(context, isDark),
               );
             }
-            final posts = snapshot.data ?? [];
+
+            final List<ForumPost> posts;
+            if (postType == 'announcement') {
+              final annDocs = snapshot.data as List<Announcement>? ?? [];
+              posts = annDocs.map((a) => ForumPost(
+                id: a.id,
+                type: 'announcement',
+                title: a.title,
+                content: a.content,
+                authorId: 'admin',
+                authorName: 'Administration',
+                createdAt: a.timestamp,
+                attachments: a.imageUrls.isNotEmpty ? a.imageUrls : (a.imageUrl != null ? [a.imageUrl!] : null),
+                isPinned: true,
+              )).toList();
+            } else {
+              posts = snapshot.data as List<ForumPost>? ?? [];
+            }
+
             if (posts.isEmpty) {
               return Center(
                 child: Column(
@@ -214,26 +155,6 @@ class _FeedTab extends StatelessWidget {
               );
             }
             
-            if (postType == 'post') {
-              return Column(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
-                      itemCount: posts.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _PostCard(post: posts[index], userId: userData?['uid'] ?? '').animate().fade(duration: 300.ms).slideY(begin: 0.1, end: 0, duration: 300.ms),
-                        );
-                      },
-                    ),
-                  ),
-                  _SimplePostInput(userId: userData?['uid'] ?? ''),
-                ],
-              );
-            }
-
             return ListView.builder(
               padding: const EdgeInsets.only(bottom: 80, top: 16, left: 16, right: 16),
               itemCount: posts.length,
@@ -247,17 +168,13 @@ class _FeedTab extends StatelessWidget {
           },
         ),
         
-        if (postType != 'post')
+        if (postType != 'announcement' || userData?['role'] == 'administrator')
           Positioned(
             bottom: 16,
             right: 16,
             child: FloatingActionButton(
               backgroundColor: AppColors.primary,
               onPressed: () {
-                 if (postType == 'announcement' && userData?['role'] != 'administrator') {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Only admins can post announcements')));
-                    return;
-                 }
                  _showCreateSheet(context, postType);
               },
               child: const Icon(Icons.edit, color: Colors.white),
@@ -306,68 +223,118 @@ class _PostCardState extends State<_PostCard> {
     final isOfficial = widget.post.type == 'announcement';
 
     Widget card = Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isOfficial ? AppColors.primary.withValues(alpha: 0.05) : context.appCard,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isOfficial ? AppColors.primary.withValues(alpha: 0.3) : context.appBorder),
-        boxShadow: isDark ? null : const [BoxShadow(color: Colors.black12, blurRadius: 10)],
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.4)),
+        boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 16, 
-                backgroundColor: isOfficial ? AppColors.primary : Colors.grey[300], 
-                child: Icon(isOfficial ? Icons.verified : Icons.person, size: 16, color: isOfficial ? Colors.white : Colors.black54)
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.post.authorName, style: TextStyle(fontWeight: FontWeight.bold, color: isOfficial ? AppColors.primary : (isDark ? Colors.white : Colors.black))),
-                    Text(_formatTime(widget.post.createdAt), style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                  ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20, 
+                  backgroundColor: isOfficial ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2), 
+                  child: Icon(isOfficial ? Icons.verified_rounded : Icons.person_rounded, size: 20, color: isOfficial ? AppColors.primary : Colors.grey[600])
                 ),
-              ),
-              if (widget.post.isPinned) const Icon(Icons.push_pin, size: 16, color: Colors.red),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: Text(badgeText, style: TextStyle(color: badgeColor, fontSize: 10, fontWeight: FontWeight.bold)),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(child: Text(widget.post.authorName, style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 15, color: context.appTextPrimary), overflow: TextOverflow.ellipsis)),
+                          if (isOfficial) ...[
+                            const SizedBox(width: 4),
+                            const Icon(Icons.check_circle_rounded, color: Colors.blue, size: 14),
+                          ]
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(_formatTime(widget.post.createdAt), style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary)),
+                          const SizedBox(width: 4),
+                          Icon(Icons.public, size: 12, color: context.appTextSecondary),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (widget.post.isPinned) const Icon(Icons.push_pin_rounded, size: 18, color: Colors.red),
+                _buildCardMenu(),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          if (widget.post.title.isNotEmpty) Text(widget.post.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          if (widget.post.title.isNotEmpty) const SizedBox(height: 4),
-          Text(widget.post.content),
+          
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.post.title.isNotEmpty) Text(widget.post.title, style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: context.appTextPrimary, letterSpacing: -0.3)),
+                if (widget.post.title.isNotEmpty) const SizedBox(height: 6),
+                Text(widget.post.content, style: GoogleFonts.inter(fontSize: 14, height: 1.5, color: context.appTextPrimary)),
+              ],
+            ),
+          ),
+          
+          if (widget.post.attachments != null && widget.post.attachments!.isNotEmpty)
+            Padding(
+               padding: const EdgeInsets.only(top: 12),
+               child: Image.network(widget.post.attachments!.first, width: double.infinity, fit: BoxFit.cover, height: 250),
+            ),
           
           if (widget.post.type == 'poll' && widget.post.pollOptions != null)
-            _buildPollOptions(context),
+            Padding(
+               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+               child: _buildPollOptions(context),
+            ),
             
           const SizedBox(height: 12),
-          const Divider(height: 1),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _LikeButton(post: widget.post, userId: widget.userId, isLiked: isLiked),
-              const SizedBox(width: 16),
-              InkWell(
-                onTap: () => _showRepliesSheet(context, widget.post, widget.userId),
-                child: Row(
+          
+          if (widget.post.likesCount > 0 || widget.post.commentsCount > 0)
+            Padding(
+               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+               child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(Icons.chat_bubble_outline, size: 20, color: Colors.grey),
-                    const SizedBox(width: 6),
-                    Text('${widget.post.commentsCount}', style: const TextStyle(color: Colors.grey)),
+                     Row(
+                        children: [
+                           if(widget.post.likesCount > 0) ... [
+                             Container(
+                               padding: const EdgeInsets.all(4),
+                               decoration: const BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
+                               child: const Icon(Icons.thumb_up_rounded, color: Colors.white, size: 10),
+                             ),
+                             const SizedBox(width: 6),
+                             Text('${widget.post.likesCount}', style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13)),
+                           ]
+                        ],
+                     ),
+                     if(widget.post.commentsCount > 0)
+                       Text('${widget.post.commentsCount} commentaires', style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13)),
                   ],
-                ),
-              ),
-            ],
+               ),
+            ),
+
+          const Divider(height: 1, thickness: 0.5),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(child: _buildActionButton(isLiked ? Icons.thumb_up_rounded : Icons.thumb_up_outlined, 'J\'aime', isLiked ? Colors.blue : context.appTextSecondary, () => _toggleLike(isLiked))),
+                Expanded(child: _buildActionButton(Icons.chat_bubble_outline_rounded, 'Commenter', context.appTextSecondary, () => _showRepliesSheet(context, widget.post, widget.userId))),
+                Expanded(child: _buildActionButton(Icons.share_outlined, 'Partager', context.appTextSecondary, () {})),
+              ],
+            ),
           ),
         ],
       ),
@@ -433,49 +400,39 @@ class _PostCardState extends State<_PostCard> {
       }),
     );
   }
-}
-
-class _LikeButton extends StatefulWidget {
-  final ForumPost post;
-  final String userId;
-  final bool isLiked;
-  const _LikeButton({required this.post, required this.userId, required this.isLiked});
-  @override
-  State<_LikeButton> createState() => _LikeButtonState();
-}
-
-class _LikeButtonState extends State<_LikeButton> {
-  bool _toggling = false;
-
-  void _toggle() async {
-    setState(() => _toggling = true);
+  void _toggleLike(bool isLiked) async {
     try {
       await context.read<FirestoreService>().toggleLike(widget.post.id!, widget.userId);
-    } finally {
-      if(mounted) setState(() => _toggling = false);
+    } catch (e) {
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur lors de la mise à jour.')));
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    Widget icon = Icon(
-      widget.isLiked ? Icons.favorite : Icons.favorite_border, 
-      size: 20, 
-      color: widget.isLiked ? Colors.red : Colors.grey,
+  Widget _buildCardMenu() {
+    return IconButton(
+      icon: Icon(Icons.more_horiz_rounded, color: Colors.grey[500]),
+      onPressed: () {},
+      splashRadius: 20,
     );
-    
-    if (_toggling) {
-      icon = icon.animate().scale(begin: const Offset(1,1), end: const Offset(1.2,1.2), duration: 150.ms).then().scale(begin: const Offset(1.2,1.2), end: const Offset(1,1), duration: 150.ms);
-    }
-    
-    return InkWell(
-      onTap: _toggle,
-      child: Row(
-        children: [
-          icon,
-          const SizedBox(width: 6),
-          Text('${widget.post.likesCount}', style: const TextStyle(color: Colors.grey)),
-        ],
+  }
+
+  Widget _buildActionButton(IconData icon, String label, Color color, VoidCallback onTap) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+         onTap: onTap,
+         borderRadius: BorderRadius.circular(8),
+         child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+               mainAxisAlignment: MainAxisAlignment.center,
+               children: [
+                  Icon(icon, color: color, size: 22),
+                  const SizedBox(width: 6),
+                  Text(label, style: GoogleFonts.inter(color: color, fontWeight: FontWeight.w600, fontSize: 13)),
+               ],
+            ),
+         ),
       ),
     );
   }
@@ -728,7 +685,7 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
       pollOptions: opts,
     );
 
-    await context.read<FirestoreService>().addForumPost(post);
+    await context.read<FirestoreService>().addForumPost(post, residenceId: context.read<AuthProvider>().currentResidenceId);
     if(mounted) {
        setState(() => _isLoading = false);
        Navigator.pop(context);

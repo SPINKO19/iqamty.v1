@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:diacritic/diacritic.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -34,24 +35,83 @@ class AuthService extends ChangeNotifier {
 
   AuthService() {
     _auth?.authStateChanges().listen(_onAuthStateChanged);
+    // Try to restore session from cache on startup
+    _restoreSessionFromCache();
   }
 
+  // ---------------------------------------------------------------------------
+  // Session Persistence: restore on cold launch
+  // ---------------------------------------------------------------------------
+
+  Future<void> _restoreSessionFromCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString('user_data_cache');
+      if (cached != null && cached.isNotEmpty) {
+        final Map<String, dynamic> data = jsonDecode(cached);
+        // Only restore if there is no active Firebase user providing data
+        if (_userData == null) {
+          _userData = data;
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) print('Restore session failed: $e');
+    }
+  }
+
+  Future<void> _persistUserData(Map<String, dynamic> data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_data_cache', jsonEncode(data));
+    } catch (e) {
+      if (kDebugMode) print('Persist user data failed: $e');
+    }
+  }
+
+  Future<void> _clearPersistedUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('user_data_cache');
+      await prefs.remove('auth_token');
+      await prefs.remove('residence_id');
+      await prefs.remove('last_sync_timestamp');
+    } catch (e) {
+      if (kDebugMode) print('Clear persisted data failed: $e');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Firebase Auth state listener (for admin / worker email logins)
+  // ---------------------------------------------------------------------------
+
   Future<void> _onAuthStateChanged(User? user) async {
-    if (_isDevUser) return; // Ignore Firebase changes if we are using a dev bypass
+    if (_isDevUser) return;
 
     if (user != null) {
-      // Sync user data
       _firestore?.collection('users').doc(user.uid).snapshots().listen((doc) {
         if (doc.exists) {
           _userData = doc.data();
+          _persistUserData(_userData!);
           notifyListeners();
         }
       });
     } else {
+      // Only clear if this is not a WebEtu (anonymous) session
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString('user_data_cache');
+      if (cached != null) {
+        // Keep WebEtu session alive — do not clear
+        return;
+      }
       _userData = null;
       notifyListeners();
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Dev bypass
+  // ---------------------------------------------------------------------------
 
   /// TESTING ONLY - bypass Firebase
   void injectDevUser(String role) {
@@ -63,6 +123,8 @@ class AuthService extends ChangeNotifier {
         'email': 'student@dev.test',
         'role': 'student',
         'residence': 'Résidence A',
+        'residenceId': 'residence-dev-001',
+        'residenceName': 'Résidence A',
         'bloc': 'B1',
         'room': '204',
         'isBanned': false,
@@ -74,6 +136,8 @@ class AuthService extends ChangeNotifier {
         'email': 'worker@dev.test',
         'role': 'worker',
         'department': 'Plumbing',
+        'residenceId': 'residence-dev-001',
+        'residenceName': 'Résidence A',
         'isBanned': false,
       };
     } else if (role == 'administrator') {
@@ -82,6 +146,8 @@ class AuthService extends ChangeNotifier {
         'displayName': 'Test Admin',
         'email': 'admin@dev.test',
         'role': 'administrator',
+        'residenceId': 'residence-dev-001',
+        'residenceName': 'Résidence A',
         'isBanned': false,
       };
     }
@@ -95,10 +161,45 @@ class AuthService extends ChangeNotifier {
     _onAuthStateChanged(_auth?.currentUser);
   }
 
-  // --- Auth Methods ---
+  // ---------------------------------------------------------------------------
+  // Auth Methods (Firebase email — admin / worker)
+  // ---------------------------------------------------------------------------
 
   Future<void> signIn(String email, String password) async {
     await _auth?.signInWithEmailAndPassword(email: email, password: password);
+  }
+
+  /// New: Staff Login via custom ID/Password (easy login)
+  Future<bool> loginWithId(String id, String password) async {
+    if (_firestore == null) return false;
+    try {
+      final query = await _firestore!
+          .collection('users')
+          .where('customId', isEqualTo: id)
+          .where('customPassword', isEqualTo: password)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) return false;
+
+      final data = query.docs.first.data();
+      _userData = data;
+      _userData!['id'] = query.docs.first.id;
+      
+      // Persist locally
+      await _persistUserData(_userData!);
+      
+      // Ensure we have a Firebase session for security rules
+      if (_auth?.currentUser == null) {
+        await _auth?.signInAnonymously();
+      }
+      
+      notifyListeners();
+      return true;
+    } catch (e) {
+      if (kDebugMode) print('loginWithId failed: $e');
+      return false;
+    }
   }
 
   Future<void> register(String email, String password, Map<String, dynamic> extraData) async {
@@ -119,6 +220,12 @@ class AuthService extends ChangeNotifier {
     } else {
       await _auth?.signOut();
       _userData = null;
+      await _clearPersistedUserData();
+      
+      // Also clear any custom staff login markers
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('user_data_cache');
+      
       notifyListeners();
     }
   }
@@ -127,8 +234,13 @@ class AuthService extends ChangeNotifier {
     await _auth?.sendPasswordResetEmail(email: email);
   }
 
+  // ---------------------------------------------------------------------------
+  // WebEtu login (students)
+  // ---------------------------------------------------------------------------
+
   Future<void> loginWithWebEtu(String matricule, String password) async {
     try {
+      // Step 1: Always authenticate with Progres to verify credentials
       final response = await http.post(
         Uri.parse('${AppConfig.apiBaseUrl}/authentication/v1/'),
         headers: {'Content-Type': 'application/json'},
@@ -150,33 +262,57 @@ class AuthService extends ChangeNotifier {
         } catch (e) {
           token = response.body.trim();
         }
-        
+
         token = token.replaceAll('"', '');
         if (token.isEmpty) throw Exception('Token empty');
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', token);
 
-        // Fetch profile
+        // Step 2: Check for cached profile (P1.1 — skip Progres fetch)
+        final cached = prefs.getString('user_data_cache');
+        if (cached != null && cached.isNotEmpty) {
+          try {
+            final Map<String, dynamic> cachedData = jsonDecode(cached);
+            // Verify the cached data belongs to the same user
+            if (cachedData['uid'] == matricule ||
+                cachedData['matricule'] == matricule) {
+              _userData = cachedData;
+              notifyListeners();
+              // Sync to Firebase in background (non-blocking)
+              _syncToFirebaseInBackground();
+              if (kDebugMode) print('P1.1: Loaded profile from cache — skipped Progres API');
+              return;
+            }
+          } catch (_) {
+            // Cache corrupted — fall through to full fetch
+          }
+        }
+
+        // Step 3: No valid cache — full fetch from Progres API
+        if (kDebugMode) print('P1.1: No cache found — fetching from Progres API');
         final student = await _fetchWebEtuProfile(token);
-        
-        _userData = student.toJson();
-        _userData!['uid'] = student.matricule ?? matricule;
-        _userData!['role'] = 'student';
-        _userData!['displayName'] = '${student.prenomFr ?? ''} ${student.nomFr ?? ''}'.trim();
-        _userData!['isBanned'] = false;
-        
+
+        // Resolve / auto-create the residence document in Firestore
+        String? residenceId;
+        if (student.residence != null && student.residence!.isNotEmpty) {
+          residenceId = await _resolveResidence(student.residence!);
+        }
+
+        _userData = _buildUserData(student, matricule, residenceId);
+
+        // Persist locally for auto-login
+        await _persistUserData(_userData!);
+        if (residenceId != null) {
+          await prefs.setString('residence_id', residenceId);
+        }
+        // Record sync timestamp for rate-limiting
+        await prefs.setInt('last_sync_timestamp', DateTime.now().millisecondsSinceEpoch);
+
         notifyListeners();
 
-        // Optional: Firebase anonymous sync
-        try {
-          await _auth?.signInAnonymously();
-          if (_auth?.currentUser != null) {
-            await _firestore?.collection('users').doc(_auth!.currentUser!.uid).set(
-              _userData!, SetOptions(merge: true)
-            );
-          }
-        } catch (_) {}
+        // Sync to Firebase in background
+        _syncToFirebaseInBackground();
       } else {
         throw Exception('Login failed: ${response.statusCode}');
       }
@@ -186,21 +322,214 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Residence resolution (P0.2)
+  // ---------------------------------------------------------------------------
+
+  /// Normalizes a raw residence name to a stable slug (lowercase, no diacritics, no spaces).
+  String _normalizeResidenceName(String raw) {
+    // Remove diacritics, lowercase, collapse spaces/dashes/underscores to single dash
+    final clean = removeDiacritics(raw.toLowerCase())
+        .replaceAll(RegExp(r'[\s\-_]+'), '-')
+        .replaceAll(RegExp(r'[^a-z0-9\-]'), '')
+        .replaceAll(RegExp(r'-+'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
+    return clean;
+  }
+
+  /// Finds an existing residence by nameKey or creates one with status 'pending_setup'.
+  /// Returns the Firestore document ID.
+  Future<String?> _resolveResidence(String rawName) async {
+    if (_firestore == null) return null;
+    try {
+      final nameKey = _normalizeResidenceName(rawName);
+      if (nameKey.isEmpty) return null;
+
+      final query = await _firestore!
+          .collection('residences')
+          .where('nameKey', isEqualTo: nameKey)
+          .limit(1)
+          .get();
+
+      if (query.docs.isNotEmpty) {
+        return query.docs.first.id;
+      }
+
+      // Auto-create the residence document
+      final docRef = await _firestore!.collection('residences').add({
+        'name': rawName.trim(),
+        'nameKey': nameKey,
+        'status': 'pending_setup',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      return docRef.id;
+    } catch (e) {
+      if (kDebugMode) print('_resolveResidence failed: $e');
+      return null;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Shared helpers
+  // ---------------------------------------------------------------------------
+
+  /// Builds the standard _userData map from a Student object.
+  Map<String, dynamic> _buildUserData(Student student, String matricule, String? residenceId) {
+    final data = student.toJson();
+    data['uid'] = student.matricule ?? matricule;
+    data['role'] = 'student';
+    data['displayName'] = '${student.prenomFr ?? ''} ${student.nomFr ?? ''}'.trim();
+    data['isBanned'] = false;
+    if (residenceId != null) {
+      data['residenceId'] = residenceId;
+    }
+    return data;
+  }
+
+  /// Syncs current user data to Firebase anonymously (non-blocking).
+  Future<void> _syncToFirebaseInBackground() async {
+    try {
+      try {
+        if (_auth?.currentUser == null) {
+          await _auth?.signInAnonymously();
+        }
+      } catch (e) {
+        if (kDebugMode) print("Anonymous sign-in failed (likely disabled), ignoring... $e");
+      }
+      
+      if (_userData != null && _firestore != null) {
+        final docId = _userData!['uid'] ?? _auth?.currentUser?.uid;
+        if (docId != null) {
+          await _firestore!.collection('users').doc(docId).set(
+            _userData!, SetOptions(merge: true),
+          );
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) print("Ext sync error: $e");
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Refresh Profile (P1.2 — rate-limited to once per 24h)
+  // ---------------------------------------------------------------------------
+
+  /// Returns true if profile was refreshed, false if rate-limited.
+  /// Throws if the refresh fails (e.g. network error, no token).
+  Future<bool> refreshProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Rate-limit: reject if last sync was less than 24 hours ago
+    final lastSync = prefs.getInt('last_sync_timestamp') ?? 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    if (now - lastSync < twentyFourHours) {
+      return false; // Rate-limited
+    }
+
+    final token = prefs.getString('auth_token');
+    if (token == null || token.isEmpty) {
+      throw Exception('No auth token found. Please log in again.');
+    }
+
+    // Full re-fetch from Progres API
+    final student = await _fetchWebEtuProfile(token);
+
+    // Resolve residence
+    String? residenceId;
+    if (student.residence != null && student.residence!.isNotEmpty) {
+      residenceId = await _resolveResidence(student.residence!);
+    }
+
+    final matricule = _userData?['uid'] ?? _userData?['matricule'] ?? student.matricule ?? '';
+    _userData = _buildUserData(student, matricule, residenceId);
+
+    // Persist updated data
+    await _persistUserData(_userData!);
+    if (residenceId != null) {
+      await prefs.setString('residence_id', residenceId);
+    }
+    await prefs.setInt('last_sync_timestamp', now);
+
+    notifyListeners();
+
+    // Sync to Firebase
+    _syncToFirebaseInBackground();
+
+    return true;
+  }
+
+  /// Returns how many milliseconds remain before the next sync is allowed,
+  /// or 0 if sync is available now.
+  Future<int> getTimeUntilNextSync() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastSync = prefs.getInt('last_sync_timestamp') ?? 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    final remaining = twentyFourHours - (now - lastSync);
+    return remaining > 0 ? remaining : 0;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Progres API profile fetch (P1.3 — Parallel)
+  // ---------------------------------------------------------------------------
+
   Future<Student> _fetchWebEtuProfile(String token) async {
     Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
     final String uuid = decodedToken['uuid'] ?? decodedToken['sub'] ?? '';
-    
+
     final header = {
-      'Authorization': token, 
+      'Authorization': token,
       'Content-Type': 'application/json',
     };
 
-    Map<String, dynamic> profileJson = {};
     final List<String> idTypes = [
-      uuid, 
+      uuid,
       decodedToken['idIndividu']?.toString() ?? '',
     ]..removeWhere((id) => id.isEmpty);
 
+    // P1.3: Fire ALL API calls in parallel instead of sequentially
+    final stopwatch = Stopwatch()..start();
+    final results = await Future.wait<dynamic>([
+      _fetchBaseProfile(idTypes, header),
+      _fetchIndividuData(uuid, header),
+      _fetchHousingData(uuid, header),
+      _fetchPhotoData(uuid, header),
+      _fetchDiasData(uuid, header),
+    ]);
+    stopwatch.stop();
+    if (kDebugMode) print('P1.3: All API calls completed in ${stopwatch.elapsedMilliseconds}ms (parallel)');
+
+    // Merge results
+    Map<String, dynamic> profileJson = results[0] as Map<String, dynamic>;
+    final individu = results[1] as Map<String, dynamic>;
+    final housingResult = results[2] as Map<String, dynamic>;
+    final photoBase64 = results[3] as String?;
+    final diasResult = results[4] as Map<String, dynamic>;
+
+    profileJson.addAll(individu);
+    if (photoBase64 != null) profileJson['photoBase64'] = photoBase64;
+
+    // Merge dias profile data
+    final diasProfile = diasResult['profileData'] as Map<String, dynamic>?;
+    if (diasProfile != null) profileJson.addAll(diasProfile);
+
+    // Resolve housing: prefer housing endpoint, fallback to dias
+    String? residence = housingResult['residence'] as String? ?? diasResult['residence'] as String?;
+    String? bloc = housingResult['bloc'] as String? ?? diasResult['bloc'] as String?;
+    String? chambre = housingResult['chambre'] as String? ?? diasResult['chambre'] as String?;
+
+    profileJson['matricule'] ??= decodedToken['sub']?.toString();
+
+    return Student.fromJson(profileJson,
+        residence: residence, bloc: bloc, chambre: chambre);
+  }
+
+  /// Tries bac/etudiant endpoints with multiple IDs (sequential fallback).
+  Future<Map<String, dynamic>> _fetchBaseProfile(
+      List<String> idTypes, Map<String, String> header) async {
+    Map<String, dynamic> profileJson = {};
     bool found = false;
     for (var id in idTypes) {
       for (var endpoint in ['bac', 'etudiant']) {
@@ -222,85 +551,119 @@ class AuthService extends ChangeNotifier {
       }
       if (found) break;
     }
-
-    // 3. Individu
-    try {
-      final indivResponse = await http.get(Uri.parse('${AppConfig.apiBaseUrl}/infos/bac/$uuid/individu'), headers: header);
-      if (indivResponse.statusCode == 200) {
-        profileJson.addAll(jsonDecode(utf8.decode(indivResponse.bodyBytes)));
-      }
-    } catch (_) {}
-
-    // 4. Housing
-    String? residence;
-    String? bloc;
-    String? chambre;
-    
-    try {
-      final housingResponse = await http.get(Uri.parse('${AppConfig.apiBaseUrl}/infos/bac/$uuid/demandesHebregement'), headers: header);
-      if (housingResponse.statusCode == 200) {
-        final List<dynamic> housingList = jsonDecode(utf8.decode(housingResponse.bodyBytes));
-        if (housingList.isNotEmpty) {
-           final latestHousing = housingList.reduce((a, b) => 
-               (a['idAnneeAcademique'] ?? 0) > (b['idAnneeAcademique'] ?? 0) ? a : b);
-           
-           residence = latestHousing['llResidanceLatin'];
-           String affectation = latestHousing['llAffectation'] ?? '';
-           if (affectation.contains('-')) {
-             final parts = affectation.split('-');
-             bloc = parts[0].trim();
-             chambre = parts.sublist(1).join('-').trim();
-           } else if (affectation.isNotEmpty) {
-             final match = RegExp(r'^([a-zA-Z\s]+)(\d+)$').firstMatch(affectation);
-             if (match != null) {
-               bloc = match.group(1)?.trim();
-               chambre = match.group(2)?.trim();
-             } else {
-               chambre = affectation;
-             }
-           }
-        }
-      }
-    } catch (_) {}
-
-    // 5. Photo
-    try {
-      final photoResponse = await http.get(Uri.parse('${AppConfig.apiBaseUrl}/infos/image/$uuid'), headers: header);
-      if (photoResponse.statusCode == 200) {
-        profileJson['photoBase64'] = photoResponse.body.trim();
-      }
-    } catch (_) {}
-
-    // 6. DIAS (Fallback)
-    try {
-      final diasResponse = await http.get(Uri.parse('${AppConfig.apiBaseUrl}/infos/bac/$uuid/dias'), headers: header);
-      if (diasResponse.statusCode == 200) {
-        final List<dynamic> diasJsonList = jsonDecode(utf8.decode(diasResponse.bodyBytes));
-        if (diasJsonList.isNotEmpty) {
-           final latestDia = diasJsonList.last as Map<String, dynamic>;
-           profileJson.addAll(latestDia);
-           
-           residence ??= latestDia['lieuHebergement'];
-           bloc ??= latestDia['bloc'];
-           chambre ??= latestDia['chambre']?.toString();
-        }
-      }
-    } catch (_) {}
-
-    profileJson['matricule'] ??= decodedToken['sub']?.toString();
-    
-    return Student.fromJson(profileJson, residence: residence, bloc: bloc, chambre: chambre);
+    return profileJson;
   }
+
+  /// Fetches individu data.
+  Future<Map<String, dynamic>> _fetchIndividuData(
+      String uuid, Map<String, String> header) async {
+    try {
+      final response = await http.get(
+          Uri.parse('${AppConfig.apiBaseUrl}/infos/bac/$uuid/individu'),
+          headers: header);
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded is Map<String, dynamic>) return decoded;
+      }
+    } catch (_) {}
+    return {};
+  }
+
+  /// Fetches housing (demandesHebregement) data.
+  Future<Map<String, dynamic>> _fetchHousingData(
+      String uuid, Map<String, String> header) async {
+    try {
+      final response = await http.get(
+          Uri.parse('${AppConfig.apiBaseUrl}/infos/bac/$uuid/demandesHebregement'),
+          headers: header);
+      if (response.statusCode == 200) {
+        final List<dynamic> housingList =
+            jsonDecode(utf8.decode(response.bodyBytes));
+        if (housingList.isNotEmpty) {
+          final latestHousing = housingList.reduce((a, b) =>
+              (a['idAnneeAcademique'] ?? 0) > (b['idAnneeAcademique'] ?? 0)
+                  ? a
+                  : b);
+
+          String? residence = latestHousing['llResidanceLatin'];
+          String? bloc;
+          String? chambre;
+
+          String affectation = latestHousing['llAffectation'] ?? '';
+          if (affectation.contains('-')) {
+            final parts = affectation.split('-');
+            bloc = parts[0].trim();
+            chambre = parts.sublist(1).join('-').trim();
+          } else if (affectation.isNotEmpty) {
+            final match =
+                RegExp(r'^([a-zA-Z\s]+)(\d+)$').firstMatch(affectation);
+            if (match != null) {
+              bloc = match.group(1)?.trim();
+              chambre = match.group(2)?.trim();
+            } else {
+              chambre = affectation;
+            }
+          }
+          return {'residence': residence, 'bloc': bloc, 'chambre': chambre};
+        }
+      }
+    } catch (_) {}
+    return {};
+  }
+
+  /// Fetches the student photo as a base64 string.
+  Future<String?> _fetchPhotoData(
+      String uuid, Map<String, String> header) async {
+    try {
+      final response = await http.get(
+          Uri.parse('${AppConfig.apiBaseUrl}/infos/image/$uuid'),
+          headers: header);
+      if (response.statusCode == 200) {
+        return response.body.trim();
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Fetches DIAS data (fallback for housing + extra profile data).
+  Future<Map<String, dynamic>> _fetchDiasData(
+      String uuid, Map<String, String> header) async {
+    try {
+      final response = await http.get(
+          Uri.parse('${AppConfig.apiBaseUrl}/infos/bac/$uuid/dias'),
+          headers: header);
+      if (response.statusCode == 200) {
+        final List<dynamic> diasJsonList =
+            jsonDecode(utf8.decode(response.bodyBytes));
+        if (diasJsonList.isNotEmpty) {
+          final latestDia = diasJsonList.last as Map<String, dynamic>;
+          return {
+            'profileData': latestDia,
+            'residence': latestDia['lieuHebergement'],
+            'bloc': latestDia['bloc'],
+            'chambre': latestDia['chambre']?.toString(),
+          };
+        }
+      }
+    } catch (_) {}
+    return {};
+  }
+
+  // ---------------------------------------------------------------------------
+  // Admin / Worker helpers
+  // ---------------------------------------------------------------------------
 
   Future<void> updateFcmToken(String token) async {
     if (_isDevUser) return;
     final user = _auth?.currentUser;
     if (user != null) {
-      await _firestore?.collection('users').doc(user.uid).update({'fcmToken': token});
+      await _firestore
+          ?.collection('users')
+          .doc(user.uid)
+          .update({'fcmToken': token});
     }
   }
 
-  // Admin and Worker methods
   Future<void> banUser(String uid) async {
     await _firestore?.collection('users').doc(uid).update({'isBanned': true});
   }

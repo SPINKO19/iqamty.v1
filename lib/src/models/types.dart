@@ -51,8 +51,12 @@ class Complaint {
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       category: json['category'] ?? '',
-      priority: Priority.values.firstWhere((e) => e.toString() == json['priority'], orElse: () => Priority.medium),
-      status: Status.values.firstWhere((e) => e.toString() == json['status'], orElse: () => Status.received),
+      priority: Priority.values.firstWhere(
+        (e) => e.toString() == json['priority'] || e.name == json['priority'], 
+        orElse: () => Priority.medium),
+      status: Status.values.firstWhere(
+        (e) => e.toString() == json['status'] || e.name == json['status'], 
+        orElse: () => Status.received),
       imageUrl: json['imageUrl'],
       timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       adminComment: json['adminComment'],
@@ -86,6 +90,8 @@ class Announcement {
   final String content;
   final DateTime timestamp;
   final String? imageUrl;
+  final List<String> imageUrls;
+  final String urgency;
 
   Announcement({
     this.id,
@@ -93,17 +99,27 @@ class Announcement {
     required this.content,
     required this.timestamp,
     this.imageUrl,
+    this.imageUrls = const [],
+    this.urgency = 'normal',
   });
 
   factory Announcement.fromJson(Map<String, dynamic> json) {
+    // Migrate old single string imageUrl to new list
+    List<String> parsedUrls = [];
+    if (json['imageUrls'] != null) {
+      parsedUrls = List<String>.from(json['imageUrls']);
+    } else if (json['imageUrl'] != null) {
+      parsedUrls = [json['imageUrl']];
+    }
+    
     return Announcement(
       id: json['id'],
       title: json['title'] ?? '',
-      // Firestore stores the body as 'content'; fall back to 'description'
-      // for any legacy documents that used the old field name.
       content: json['content'] ?? json['description'] ?? '',
       timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       imageUrl: json['imageUrl'],
+      imageUrls: parsedUrls,
+      urgency: json['urgency'] ?? 'normal',
     );
   }
 
@@ -112,6 +128,8 @@ class Announcement {
       'title': title,
       'content': content,
       'imageUrl': imageUrl,
+      'imageUrls': imageUrls,
+      'urgency': urgency,
       // timestamp is added by the server
     };
   }
@@ -165,6 +183,8 @@ class Meal {
   final String startTime;
   final String endTime;
   final List<String> reservedBy; // List of student matricules/ids
+  final double averageRating;
+  final int ratingCount;
 
   Meal({
     this.id,
@@ -175,6 +195,8 @@ class Meal {
     this.startTime = '',
     this.endTime = '',
     this.reservedBy = const [],
+    this.averageRating = 0.0,
+    this.ratingCount = 0,
   });
 
   bool isReserved(String userId) => reservedBy.contains(userId);
@@ -206,6 +228,8 @@ class Meal {
       startTime: json['startTime'] ?? '',
       endTime: json['endTime'] ?? '',
       reservedBy: List<String>.from(json['reservedBy'] ?? []),
+      averageRating: (json['averageRating'] ?? 0.0).toDouble(),
+      ratingCount: json['ratingCount'] ?? 0,
     );
   }
 
@@ -219,6 +243,8 @@ class Meal {
       'startTime': startTime,
       'endTime': endTime,
       'reservedBy': reservedBy,
+      'averageRating': averageRating,
+      'ratingCount': ratingCount,
     };
   }
 }

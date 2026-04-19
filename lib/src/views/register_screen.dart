@@ -17,13 +17,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _residenceController = TextEditingController();
-  final _blocController = TextEditingController();
-  final _roomController = TextEditingController();
-  final _deptController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  String _selectedRole = 'student';
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -32,10 +27,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _residenceController.dispose();
-    _blocController.dispose();
-    _roomController.dispose();
-    _deptController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -55,15 +46,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final auth = context.read<AuthProvider>();
     final lang = context.read<LanguageProvider>();
 
+    // Role is always 'student' — admins/workers are created via admin invite flow
     final success = await auth.register(
       email: _emailController.text.trim(),
       password: _passwordController.text,
       name: _nameController.text.trim(),
-      role: _selectedRole,
-      residence: _selectedRole == 'student' ? _residenceController.text.trim() : null,
-      bloc: _selectedRole == 'student' ? _blocController.text.trim() : null,
-      room: _selectedRole == 'student' ? _roomController.text.trim() : null,
-      department: _selectedRole == 'worker' ? _deptController.text.trim() : null,
+      role: 'student',
     );
 
     if (success) {
@@ -77,46 +65,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  Widget _buildMiniRoleSelector(LanguageProvider lang, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111811) : const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _miniRoleButton('student', lang.getText('student'), lang, isDark),
-          _miniRoleButton('worker', lang.getText('worker'), lang, isDark),
-          _miniRoleButton('administrator', lang.getText('administrator'), lang, isDark),
-        ],
-      ),
-    );
-  }
-
-  Widget _miniRoleButton(String role, String label, LanguageProvider lang, bool isDark) {
-    bool isSelected = _selectedRole == role;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedRole = role),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? Colors.white : (isDark ? Colors.white38 : Colors.grey[600]),
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -143,13 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Top-Left Role Selector
-                  Row(
-                    children: [
-                      _buildMiniRoleSelector(lang, isDark),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
+                  // (No role selector — students only. Admins/workers are invited by admins)
 
                   // IQAMTY Branding
                   Container(
@@ -221,56 +163,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        if (_selectedRole == 'student') ...[
-                          _buildTextField(
-                            controller: _residenceController,
-                            label: lang.getText('residence_label'),
-                            icon: Icons.home_work_outlined,
-                            isDark: isDark,
-                            lang: lang,
-                            textInputAction: TextInputAction.next,
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: _blocController,
-                                  label: lang.getText('bloc_label'),
-                                  icon: Icons.grid_view_rounded,
-                                  isDark: isDark,
-                                  lang: lang,
-                                  textInputAction: TextInputAction.next,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: _roomController,
-                                  label: lang.getText('room_no_label'),
-                                  icon: Icons.door_front_door_outlined,
-                                  isDark: isDark,
-                                  keyboardType: TextInputType.number,
-                                  lang: lang,
-                                  textInputAction: TextInputAction.next,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        if (_selectedRole == 'worker') ...[
-                          _buildTextField(
-                            controller: _deptController,
-                            label: lang.getText('department_label'),
-                            icon: Icons.business_center_outlined,
-                            isDark: isDark,
-                            lang: lang,
-                            textInputAction: TextInputAction.next,
-                          ),
-                          const SizedBox(height: 20),
-                        ],
                         _buildTextField(
                           controller: _passwordController,
                           label: lang.getText('password_label'),

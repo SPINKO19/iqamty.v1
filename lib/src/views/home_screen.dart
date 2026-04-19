@@ -25,6 +25,8 @@ class HomeScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lp = context.watch<LanguageProvider>();
 
+    final String residenceId = auth.currentResidenceId ?? '';
+    
     return Scaffold(
       backgroundColor: context.appBackground,
       body: CustomScrollView(
@@ -34,7 +36,7 @@ class HomeScreen extends StatelessWidget {
           SliverToBoxAdapter(
             child: Column(
               children: [
-                _buildHeaderSection(context, student, lp, isDark),
+                _buildHeaderSection(context, student, lp, isDark, auth),
               ],
             ),
           ),
@@ -49,9 +51,9 @@ class HomeScreen extends StatelessWidget {
                 _buildSectionHeader(context, lp.getText('recent_announcements'), lp, onPressed: () => context.go('/community')),
                 const SizedBox(height: 16),
                 SizedBox(
-                  height: 160,
+                  height: 250,
                   child: StreamBuilder<List<Announcement>>(
-                    stream: firestore.getAnnouncements(),
+                    stream: firestore.getAnnouncements(residenceId: residenceId),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) return const SizedBox.shrink(); // Hide if error
                       final announcements = snapshot.data ?? [];
@@ -87,7 +89,7 @@ class HomeScreen extends StatelessWidget {
                       childAspectRatio: constraints.maxWidth > 800 ? 1.4 : 1.05,
                       children: [
                         StreamBuilder<List<Complaint>>(
-                          stream: firestore.getMyComplaints(student?.id?.toString() ?? ''),
+                          stream: firestore.getMyComplaints(student?.id?.toString() ?? '', residenceId: residenceId),
                           builder: (context, snapshot) {
                             if (snapshot.hasError) return _QuickActionCard(
                                 title: lp.getText('complaints'),
@@ -118,7 +120,7 @@ class HomeScreen extends StatelessWidget {
                           onTap: () => context.go('/dining'),
                         ),
                         StreamBuilder<List<ServiceRequest>>(
-                          stream: firestore.getMyRequests(student?.id?.toString() ?? ''),
+                          stream: firestore.getMyRequests(student?.id?.toString() ?? '', residenceId: residenceId),
                           builder: (context, snapshot) {
                             final count = snapshot.data?.where((r) => r.status != 'completed').length ?? 0;
                             return _QuickActionCard(
@@ -159,7 +161,7 @@ class HomeScreen extends StatelessWidget {
                 _buildSectionHeader(context, lp.getText('recent_activity') == 'recent_activity' ? 'Activité récente' : lp.getText('recent_activity'), lp),
                 const SizedBox(height: 16),
                 StreamBuilder<List<ServiceRequest>>(
-                  stream: firestore.getMyRequests(student?.id?.toString() ?? ''),
+                  stream: firestore.getMyRequests(student?.id?.toString() ?? '', residenceId: residenceId),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) return const Center(child: Text('Erreur d\'activité'));
                     final activities = snapshot.data ?? [];
@@ -194,11 +196,11 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
-  }  Widget _buildHeaderSection(BuildContext context, dynamic student, LanguageProvider lp, bool isDark) {
+  }  Widget _buildHeaderSection(BuildContext context, dynamic student, LanguageProvider lp, bool isDark, AuthProvider auth) {
     final String prenom = student?.prenomFr ?? '';
     final String nom = student?.nomFr ?? '';
     final String fullName = '$prenom $nom'.trim().isEmpty ? lp.getText('student') : '$prenom $nom';
-    final String residence = student?.residence?.toString() ?? 'ru amizour 2 - béjaïa';
+    final String residence = auth.currentUserData?['residenceName'] ?? student?.residence?.toString() ?? lp.getText('not_assigned');
     
     final String initials = (prenom.isNotEmpty ? prenom[0].toUpperCase() : '') + (nom.isNotEmpty ? nom[0].toUpperCase() : 'S');
     
@@ -268,7 +270,7 @@ class HomeScreen extends StatelessWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildGreetingColumn(fullName),
+                    _buildGreetingColumn(fullName, lp),
                     const SizedBox(height: 16),
                     _buildResidenceHeaderPill(residence),
                   ],
@@ -280,7 +282,7 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Flexible(
-                    child: _buildGreetingColumn(fullName),
+                    child: _buildGreetingColumn(fullName, lp),
                   ),
                   const SizedBox(width: 16),
                   _buildResidenceHeaderPill(residence),
@@ -293,13 +295,13 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGreetingColumn(String fullName) {
+  Widget _buildGreetingColumn(String fullName, LanguageProvider lp) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Bienvenue,,',
+          '${lp.getText('welcome')}',
           style: GoogleFonts.inter(
             color: Colors.white.withValues(alpha: 0.9),
             fontSize: 14,
@@ -440,7 +442,7 @@ class _AnnouncementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 260,
+      width: 280,
       child: Material(
         color: context.appCard,
         borderRadius: BorderRadius.circular(24),
@@ -464,26 +466,53 @@ class _AnnouncementCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFE4E6), // light pink/red
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'URGENT',
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFFE11D48), // rose
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
+                    if (announcement.urgency == 'urgent' || announcement.urgency == 'important')
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: announcement.urgency == 'urgent' ? const Color(0xFFFFE4E6) : const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          announcement.urgency.toUpperCase(),
+                          style: GoogleFonts.inter(
+                            color: announcement.urgency == 'urgent' ? const Color(0xFFE11D48) : const Color(0xFFD97706),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1,
+                          ),
                         ),
                       ),
-                    ),
                     const Spacer(),
                     Icon(Icons.push_pin_rounded, size: 16, color: isDark ? Colors.white30 : const Color(0xFF9CA3AF)),
                   ],
                 ),
+                if (announcement.imageUrls.isNotEmpty)
+                  Container(
+                    height: 100,
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(top: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      image: DecorationImage(
+                        image: NetworkImage(announcement.imageUrls.first),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  )
+                else if (announcement.imageUrl != null)
+                  Container(
+                    height: 100,
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(top: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      image: DecorationImage(
+                        image: NetworkImage(announcement.imageUrl!),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 12),
                 Text(
                   announcement.title,

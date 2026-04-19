@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../components/app_sidebar.dart';
+import '../components/admin_shell.dart';
 import '../providers/auth_provider.dart';
 import '../views/login_screen.dart';
 import '../views/home_screen.dart'; // Dashboard
@@ -21,12 +22,14 @@ import '../views/admin_requests_view.dart';
 import '../views/admin_users_view.dart';
 import '../views/admin_announcements_view.dart';
 import '../views/admin_documents_view.dart';
+import '../views/admin_workers_view.dart';
 import '../views/announcement_detail_screen.dart';
 import '../views/request_list_screen.dart';
 import '../views/create_request_screen.dart';
 import '../views/register_screen.dart';
 import '../views/placeholder_screen.dart';
 import '../views/admin_placeholder_view.dart';
+import '../views/admin_dining_config_view.dart';
 import '../views/gym_view.dart';
 import '../views/weightlifting_view.dart';
 import '../views/hamam_view.dart';
@@ -108,7 +111,18 @@ class AppRouter {
           GoRoute(path: '/notifications', pageBuilder: (context, state) => const NoTransitionPage(child: NotificationsView())),
           GoRoute(path: '/documents', pageBuilder: (context, state) => const NoTransitionPage(child: DocumentsView())),
             GoRoute(path: '/community', pageBuilder: (context, state) => const NoTransitionPage(child: ForumView())),
-            GoRoute(path: '/chat', pageBuilder: (context, state) => const NoTransitionPage(child: ChatView())),
+            GoRoute(
+              path: '/chat/:chatId', 
+              builder: (context, state) {
+                final chatId = state.pathParameters['chatId'];
+                final extra = state.extra as Map<String, dynamic>?;
+                return ChatView(
+                  chatId: chatId, 
+                  name: extra?['name'],
+                  isAdmin: extra?['isAdmin'] ?? false,
+                );
+              }
+            ),
             GoRoute(
               path: '/announcement',
               builder: (context, state) {
@@ -143,7 +157,14 @@ class AppRouter {
             GoRoute(path: '/weightlifting', pageBuilder: (context, state) => const NoTransitionPage(child: WeightliftingView())),
             GoRoute(path: '/hamam', pageBuilder: (context, state) => const NoTransitionPage(child: HamamView())),
             
-            // Admin Routes
+            GoRoute(path: '/worker-dashboard', pageBuilder: (context, state) => const NoTransitionPage(child: WorkerDashboard())),
+          ],
+        ),
+        ShellRoute(
+          builder: (context, state, child) {
+            return AdminShell(child: child);
+          },
+          routes: [
             GoRoute(path: '/admin', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDashboard())),
             GoRoute(path: '/admin/complaints', pageBuilder: (context, state) => const NoTransitionPage(child: AdminComplaintsView())),
             GoRoute(
@@ -155,9 +176,10 @@ class AppRouter {
             GoRoute(path: '/admin/documents', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDocumentsView())),
             GoRoute(path: '/admin/resources', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Resources'))),
             GoRoute(path: '/admin/dining', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Dining Config'))),
-            
-            // Worker Routes
-            GoRoute(path: '/worker-dashboard', pageBuilder: (context, state) => const NoTransitionPage(child: WorkerDashboard())),
+            GoRoute(path: '/admin/dining-config', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDiningConfigView())),
+            GoRoute(path: '/admin/workers', pageBuilder: (context, state) => const NoTransitionPage(child: AdminWorkersView())),
+            GoRoute(path: '/admin/maintenance', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Maintenance'))),
+            GoRoute(path: '/admin/settings', pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen())),
           ],
         ),
       ],
