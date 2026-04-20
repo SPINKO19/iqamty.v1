@@ -96,21 +96,6 @@ class AuthService extends ChangeNotifier {
     if (_isDevUser) return;
 
     if (user != null) {
-<<<<<<< HEAD
-      // Setup listener for the Firebase Auth UID
-      _firestore?.collection('users').doc(user.uid).snapshots().listen((doc) {
-        if (doc.exists) {
-          final data = doc.data()!;
-          _userData = data;
-          _persistUserData(_userData!);
-          notifyListeners();
-          
-          // If this is a student and we have a matricule, we should ALSO 
-          // optionally listen to the matricule doc if they are different
-          final matricule = data['matricule']?.toString() ?? data['uid']?.toString();
-          if (matricule != null && matricule != user.uid) {
-            _setupMatriculeListener(matricule);
-=======
       // Robust Real-time sync: Watch the correct document
       // Priority 1: Use the ID from cached _userData if available
       // Priority 2: Use the Firebase UID
@@ -120,10 +105,16 @@ class AuthService extends ChangeNotifier {
         if (doc.exists) {
           final data = doc.data();
           if (data != null) {
-             _userData = data;
-             _persistUserData(_userData!);
-             notifyListeners();
->>>>>>> 58ecaf86e10f96527016faf5e573cb6072c3269b
+            _userData = data;
+            _persistUserData(_userData!);
+            notifyListeners();
+            
+            // If this is a student and we have a matricule that's different from the listener doc,
+            // we should ALSO optionally listen to it.
+            final matricule = data['matricule']?.toString() ?? data['uid']?.toString();
+            if (matricule != null && matricule != docId) {
+              _setupMatriculeListener(matricule);
+            }
           }
         }
       });

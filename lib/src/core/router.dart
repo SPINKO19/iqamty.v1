@@ -34,11 +34,7 @@ import '../views/admin_dining_config_view.dart';
 import '../views/gym_view.dart';
 import '../views/weightlifting_view.dart';
 import '../views/hamam_view.dart';
-<<<<<<< HEAD
 import '../views/admin_chat_list_view.dart';
-=======
-import '../views/banned_screen.dart';
->>>>>>> 58ecaf86e10f96527016faf5e573cb6072c3269b
 import '../models/types.dart';
 
 class AppRouter {

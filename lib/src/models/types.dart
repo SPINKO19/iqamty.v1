@@ -161,14 +161,8 @@ class DocumentModel {
       fileUrl: json['fileUrl'] ?? json['url'] ?? '',
       fileType: json['fileType'] ?? json['type'] ?? '',
       fileSize: json['fileSize'] ?? json['size'] ?? '',
-<<<<<<< HEAD
-      uploadedAt: (json['uploadedAt'] as Timestamp?)?.toDate() ?? (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-=======
       target: json['target'] ?? 'students',
-      uploadedAt: (json['uploadedAt'] as Timestamp?)?.toDate() ?? 
-                  (json['createdAt'] as Timestamp?)?.toDate() ?? 
-                  DateTime.now(),
->>>>>>> 58ecaf86e10f96527016faf5e573cb6072c3269b
+      uploadedAt: (json['uploadedAt'] as Timestamp?)?.toDate() ?? (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
