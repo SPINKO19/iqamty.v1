@@ -228,33 +228,62 @@ class _DiningViewState extends State<DiningView> {
     final userId = auth.currentUserData?['uid'] ?? '';
     final residenceId = auth.currentResidenceId ?? '';
 
-    return StreamBuilder<List<Meal>>(
-      stream: firestore.getMealsForDate(_selectedDate, residenceId: residenceId),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+    return StreamBuilder<bool>(
+      stream: firestore.streamRestaurantStatus(residenceId),
+      builder: (context, statusSnapshot) {
+        final isOpen = statusSnapshot.data ?? true;
+
+        if (!isOpen) {
+          return Center(
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
+                Icon(Icons.do_not_disturb_on_rounded, size: 64, color: Colors.red.withOpacity(0.5)),
+                const SizedBox(height: 16),
+                Text(
+                  'Restaurant Fermé',
+                  style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: context.appTextPrimary),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Le restaurant universitaire est actuellement fermé.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(color: context.appTextSecondary),
+                ),
+              ],
+            ),
+          );
         }
 
-        var meals = snapshot.data ?? [];
-        if (meals.isEmpty) {
-          // Provide rich mock data matching the UI spec
-          meals = [
-             Meal(id: 'mock1', menu: 'Petit-déjeuner', menuItems: ['Lait chaud', 'Pain beurre', 'Confiture maison', "Jus d'orange"], type: 'breakfast', startTime: '07:00', endTime: '09:00', date: _selectedDate, averageRating: 4.5, ratingCount: 12),
-             Meal(id: 'mock2', menu: 'Déjeuner', menuItems: ['Chorba frik', 'Poulet rôti aux légumes', 'Semoule beida', 'Salade verte', 'Fruit de saison'], type: 'lunch', startTime: '12:00', endTime: '14:00', date: _selectedDate, averageRating: 3.8, ratingCount: 45),
-             Meal(id: 'mock3', menu: 'Dîner', menuItems: ['Soupe de lentilles', 'Tajine de mouton', 'Riz pilaf', 'Yaourt nature'], type: 'dinner', startTime: '18:00', endTime: '20:00', date: _selectedDate, averageRating: 4.8, ratingCount: 32),
-          ];
-        }
+        return StreamBuilder<List<Meal>>(
+          stream: firestore.getMealsForDate(_selectedDate, residenceId: residenceId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-        // Fixed Sort order: breakfast (0), lunch (1), dinner (2)
-        const order = {'breakfast': 0, 'lunch': 1, 'dinner': 2};
-        meals.sort((a, b) => (order[a.mealType] ?? 3).compareTo(order[b.mealType] ?? 3));
+            var meals = snapshot.data ?? [];
+            if (meals.isEmpty) {
+              // Provide rich mock data matching the UI spec
+              meals = [
+                Meal(id: 'mock1', menu: 'Petit-déjeuner', menuItems: ['Lait chaud', 'Pain beurre', 'Confiture maison', "Jus d'orange"], type: 'breakfast', startTime: '07:00', endTime: '09:00', date: _selectedDate, averageRating: 4.5, ratingCount: 12),
+                Meal(id: 'mock2', menu: 'Déjeuner', menuItems: ['Chorba frik', 'Poulet rôti aux légumes', 'Semoule beida', 'Salade verte', 'Fruit de saison'], type: 'lunch', startTime: '12:00', endTime: '14:00', date: _selectedDate, averageRating: 3.8, ratingCount: 45),
+                Meal(id: 'mock3', menu: 'Dîner', menuItems: ['Soupe de lentilles', 'Tajine de mouton', 'Riz pilaf', 'Yaourt nature'], type: 'dinner', startTime: '18:00', endTime: '20:00', date: _selectedDate, averageRating: 4.8, ratingCount: 32),
+              ];
+            }
 
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: meals.length,
-          itemBuilder: (context, index) {
-            return _MealCard(meal: meals[index], userId: userId);
+            // Fixed Sort order: breakfast (0), lunch (1), dinner (2)
+            const order = {'breakfast': 0, 'lunch': 1, 'dinner': 2};
+            meals.sort((a, b) => (order[a.mealType] ?? 3).compareTo(order[b.mealType] ?? 3));
+
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: meals.length,
+              itemBuilder: (context, index) {
+                return _MealCard(meal: meals[index], userId: userId);
+              },
+            );
           },
         );
       },

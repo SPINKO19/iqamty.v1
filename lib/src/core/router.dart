@@ -27,12 +27,14 @@ import '../views/announcement_detail_screen.dart';
 import '../views/request_list_screen.dart';
 import '../views/create_request_screen.dart';
 import '../views/register_screen.dart';
+import '../views/banned_screen.dart';
 import '../views/placeholder_screen.dart';
 import '../views/admin_placeholder_view.dart';
 import '../views/admin_dining_config_view.dart';
 import '../views/gym_view.dart';
 import '../views/weightlifting_view.dart';
 import '../views/hamam_view.dart';
+import '../views/admin_chat_list_view.dart';
 import '../models/types.dart';
 
 class AppRouter {
@@ -91,7 +93,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/banned',
-          builder: (context, state) => const PlaceholderScreen(title: 'Account Suspended'),
+          builder: (context, state) => const BannedScreen(),
         ),
         ShellRoute(
           builder: (context, state, child) {
@@ -111,6 +113,10 @@ class AppRouter {
           GoRoute(path: '/notifications', pageBuilder: (context, state) => const NoTransitionPage(child: NotificationsView())),
           GoRoute(path: '/documents', pageBuilder: (context, state) => const NoTransitionPage(child: DocumentsView())),
             GoRoute(path: '/community', pageBuilder: (context, state) => const NoTransitionPage(child: ForumView())),
+            GoRoute(
+              path: '/chat', 
+              pageBuilder: (context, state) => const NoTransitionPage(child: ChatView()),
+            ),
             GoRoute(
               path: '/chat/:chatId', 
               builder: (context, state) {
@@ -178,6 +184,19 @@ class AppRouter {
             GoRoute(path: '/admin/dining', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Dining Config'))),
             GoRoute(path: '/admin/dining-config', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDiningConfigView())),
             GoRoute(path: '/admin/workers', pageBuilder: (context, state) => const NoTransitionPage(child: AdminWorkersView())),
+            GoRoute(path: '/admin/chat', pageBuilder: (context, state) => const NoTransitionPage(child: AdminChatListView())),
+            GoRoute(
+              path: '/admin/chat/:chatId',
+              builder: (context, state) {
+                final chatId = state.pathParameters['chatId'];
+                final extra = state.extra as Map<String, dynamic>?;
+                return ChatView(
+                  chatId: chatId, 
+                  name: extra?['name'],
+                  isAdmin: true,
+                );
+              }
+            ),
             GoRoute(path: '/admin/maintenance', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Maintenance'))),
             GoRoute(path: '/admin/settings', pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen())),
           ],

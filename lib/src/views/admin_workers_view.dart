@@ -24,74 +24,98 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
     final lp = context.watch<LanguageProvider>();
     final resId = auth.currentResidenceId;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      physics: const BouncingScrollPhysics(),
-      child: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: firestore.getWorkers(residenceId: resId),
-        builder: (context, snapshot) {
-          final workers = snapshot.data ?? [];
-          final active = workers.where((w) => w['isBanned'] != true).length;
-          final blocked = workers.length - active;
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: firestore.getWorkers(residenceId: resId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Erreur: ${snapshot.error}'));
+        }
 
-          final filtered = workers.where((w) {
-            final name = (w['displayName'] ?? '').toString().toLowerCase();
-            final id = (w['customId'] ?? '').toString().toLowerCase();
-            return name.contains(_searchQuery) || id.contains(_searchQuery);
-          }).toList();
+        final workers = snapshot.data ?? [];
+        final active = workers.where((w) => w['isBanned'] != true).length;
+        final blocked = workers.length - active;
 
-          return Column(
+        final filtered = workers.where((w) {
+          final name = (w['displayName'] ?? '').toString().toLowerCase();
+          final id = (w['customId'] ?? '').toString().toLowerCase();
+          return name.contains(_searchQuery) || id.contains(_searchQuery);
+        }).toList();
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          physics: const BouncingScrollPhysics(),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Stats Row
               Row(
                 children: [
-                  _buildSmallStat('Total', workers.length.toString(), const Color(0xFF1D5C35)),
-                  const SizedBox(width: 12),
+                  _buildSmallStat('Total', workers.length.toString(), const Color(0xFF1D5C35), isActive: true),
+                  const SizedBox(width: 16),
                   _buildSmallStat('Actifs', active.toString(), const Color(0xFF10B981)),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   _buildSmallStat('Bloqués', blocked.toString(), const Color(0xFFEF4444)),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
-              // Header Action Row
+              // Search & Add Row
               Row(
                 children: [
                   Expanded(
                     child: Container(
+                      height: 56,
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        color: context.appCard,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: context.appBorder),
+                        boxShadow: [
+                           BoxShadow(
+                             color: Colors.black.withOpacity(0.02),
+                             blurRadius: 10,
+                             offset: const Offset(0, 2),
+                           )
+                        ]
                       ),
                       child: TextField(
                         controller: _searchController,
                         onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
                         decoration: InputDecoration(
                           hintText: 'Rechercher un ouvrier...',
-                          hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
-                          prefixIcon: const Icon(Icons.search, size: 18, color: Colors.grey),
+                          hintStyle: GoogleFonts.inter(fontSize: 14, color: context.appTextSecondary),
+                          prefixIcon: Icon(Icons.search, size: 20, color: context.appTextSecondary),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    onPressed: () => _showAddWorkerDialog(context, firestore, resId),
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: Text(lp.getText('add_staff') == 'add_staff' ? 'Ajouter' : lp.getText('add_staff'), style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0E2318),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  const SizedBox(width: 16),
+                  Container(
+                    height: 56,
+                    width: 56,
+                    decoration: BoxDecoration(
+                      color: context.appCard,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: context.appBorder),
+                    ),
+                    child: IconButton(
+                      onPressed: () => _showAddWorkerDialog(context, firestore, resId),
+                      icon: const Icon(Icons.person_add_alt_1_rounded, color: Colors.black87),
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  '${filtered.length} travailleurs trouvés',
+                  style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary, fontWeight: FontWeight.w500),
+                ),
               ),
               const SizedBox(height: 24),
               
@@ -99,61 +123,72 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.all(60),
-                    child: Text('Aucun travailleur trouvé', style: GoogleFonts.inter(color: Colors.grey)),
+                    child: Text('Aucun travailleur trouvé', style: GoogleFonts.inter(color: context.appTextSecondary)),
                   ),
                 )
               else
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final cardsPerRow = constraints.maxWidth > 800 ? 2 : 1;
+                    final cardsPerRow = constraints.maxWidth > 900 ? 2 : 1;
                     return GridView.builder(
                       shrinkWrap: true,
+                      padding: EdgeInsets.zero,
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: cardsPerRow,
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
-                        mainAxisExtent: 80,
+                        mainAxisExtent: 100,
                       ),
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         final worker = filtered[index];
                         final isBanned = worker['isBanned'] == true;
                         return Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                            color: context.appCard,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: context.appBorder),
+                            boxShadow: [
+                               BoxShadow(
+                                 color: Colors.black.withOpacity(0.01),
+                                 blurRadius: 10,
+                                 offset: const Offset(0, 4),
+                               )
+                            ]
                           ),
                           child: Row(
                             children: [
                               Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: isBanned ? Colors.grey.withOpacity(0.1) : const Color(0xFF1D5C35).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(Icons.engineering_rounded, color: isBanned ? Colors.grey : const Color(0xFF1D5C35), size: 18),
+                                width: 48,
+                                height: 48,
+                                  decoration: BoxDecoration(
+                                    color: isBanned ? context.appBorder : (context.isDark ? AppColors.primary.withOpacity(0.2) : const Color(0xFFF1F5F9)),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                child: Icon(Icons.person_3_outlined, color: isBanned ? context.appTextSecondary : const Color(0xFF1D5C35), size: 24),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(worker['displayName'] ?? 'Inconnu', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black)),
-                                    const SizedBox(height: 2),
+                                    Text(
+                                      worker['displayName'] ?? 'Inconnu', 
+                                      style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: context.appTextPrimary)
+                                    ),
+                                    const SizedBox(height: 4),
                                     Text(
                                       'ID: ${worker['customId'] ?? '--'} • ${worker['department'] ?? 'Pas de dép.'}',
-                                      style: GoogleFonts.inter(fontSize: 11, color: Colors.grey),
+                                      style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary, fontWeight: FontWeight.w500),
                                     ),
                                   ],
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 22),
                                 onPressed: () => _confirmDelete(context, firestore, worker['id']),
                               ),
                             ],
@@ -164,27 +199,34 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
                   },
                 ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildSmallStat(String label, String value, Color color) {
+  Widget _buildSmallStat(String label, String value, Color color, {bool isActive = false}) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          color: context.appCard,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isActive ? const Color(0xFF1D5C35) : context.appBorder, width: isActive ? 2 : 1),
+          boxShadow: [
+             BoxShadow(
+               color: Colors.black.withOpacity(0.02),
+               blurRadius: 10,
+               offset: const Offset(0, 4),
+             )
+          ]
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.grey)),
-            const SizedBox(height: 8),
-            Text(value, style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: color)),
+            Text(label, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: context.appTextSecondary)),
+            const SizedBox(height: 12),
+            Text(value, style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w800, color: color)),
           ],
         ),
       ),
@@ -196,14 +238,14 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: context.appCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Supprimer', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: Text('Voulez-vous vraiment supprimer ce travailleur ?', style: GoogleFonts.inter()),
+        title: Text('Supprimer', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+        content: Text('Voulez-vous vraiment supprimer ce travailleur ?', style: GoogleFonts.inter(color: context.appTextSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx), 
-            child: Text('Annuler', style: GoogleFonts.inter(color: Colors.grey, fontWeight: FontWeight.bold))
+            child: Text('Annuler', style: GoogleFonts.inter(color: context.appTextSecondary, fontWeight: FontWeight.bold))
           ),
           ElevatedButton(
             onPressed: () async {

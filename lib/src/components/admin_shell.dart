@@ -21,7 +21,7 @@ class AdminShell extends StatelessWidget {
         final isDesktop = constraints.maxWidth > 1100;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAF9), // Light background for main content area
+          backgroundColor: context.appBackground, // Uses theme-aware background
           drawer: isDesktop ? null : Drawer(
             width: 200,
             child: _AdminSidebarContent(),
@@ -58,7 +58,7 @@ class _AdminSidebarContent extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final currentRoute = GoRouterState.of(context).uri.toString();
     final firestore = context.read<FirestoreService>();
-    final resId = auth.currentResidenceId;
+    final resId = auth.currentResidenceId ?? auth.currentUserData?['residenceId'];
 
     return Container(
       color: const Color(0xFF0E2318), // Deep Night Green
@@ -162,6 +162,14 @@ class _AdminSidebarContent extends StatelessWidget {
                 ),
                 
                 _buildNavItem(context, Icons.people_rounded, lp.getText('users'), '/admin/users', currentRoute),
+                _buildNavItemWithBadge(
+                  context, 
+                  Icons.chat_bubble_rounded, 
+                  lp.getText('messaging'), 
+                  '/admin/chat', 
+                  currentRoute,
+                  stream: firestore.getAllChats(residenceId: resId).map((list) => list.where((c) => c['hasUnreadAdmin'] == true).length),
+                ),
                 _buildNavItem(context, Icons.engineering_rounded, 'Travailleurs', '/admin/workers', currentRoute),
                 _buildNavItem(context, Icons.file_copy_rounded, lp.getText('documents'), '/admin/documents', currentRoute),
                 _buildNavItem(context, Icons.restaurant_rounded, lp.getText('restoration'), '/admin/dining-config', currentRoute),
@@ -273,10 +281,10 @@ class _AdminSidebarContent extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: Text(lp.getText('logout_confirm_title')),
         content: Text(lp.getText('logout_confirm_msg')),
-        actions: [
+          actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(lp.getText('cancel')),
+            child: Text(lp.getText('cancel'), style: GoogleFonts.inter(color: context.appTextSecondary)),
           ),
           TextButton(
             onPressed: () {
@@ -284,7 +292,7 @@ class _AdminSidebarContent extends StatelessWidget {
               context.read<AuthProvider>().logout();
             },
             style: TextButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
-            child: Text(lp.getText('confirm')),
+            child: Text(lp.getText('confirm'), style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -305,9 +313,9 @@ class _AdminHeader extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+      decoration: BoxDecoration(
+        color: context.appCard,
+        border: Border(bottom: BorderSide(color: context.appBorder)),
       ),
       child: Row(
         children: [
@@ -321,11 +329,11 @@ class _AdminHeader extends StatelessWidget {
             children: [
               Text(
                 _getPageTitle(context, lp),
-                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: const Color(0xFF111827)),
+                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: context.appTextPrimary),
               ),
               Text(
                 dateStr,
-                style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF6B7280)),
+                style: GoogleFonts.inter(fontSize: 11, color: context.appTextSecondary),
               ),
             ],
           ),
@@ -336,10 +344,10 @@ class _AdminHeader extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                  border: Border.all(color: context.appBorder),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.notifications_none_rounded, size: 18, color: Color(0xFF6B7280)),
+                child: Icon(Icons.notifications_none_rounded, size: 18, color: context.appTextSecondary),
               ),
               Positioned(
                 top: 8,
@@ -363,6 +371,7 @@ class _AdminHeader extends StatelessWidget {
     if (route.startsWith('/admin/complaints')) return lp.getText('complaints');
     if (route.startsWith('/admin/requests')) return lp.getText('requests');
     if (route.startsWith('/admin/users')) return lp.getText('users');
+    if (route.startsWith('/admin/chat')) return lp.getText('messaging');
     if (route.startsWith('/admin/workers')) return 'Travailleurs';
     if (route.startsWith('/admin/resources')) return 'Chambres';
     if (route.startsWith('/admin/announcements')) return lp.getText('announcements');

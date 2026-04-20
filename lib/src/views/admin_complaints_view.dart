@@ -56,7 +56,7 @@ class AdminComplaintsView extends StatelessWidget {
                       crossAxisCount: cardsPerRow,
                       crossAxisSpacing: 24,
                       mainAxisSpacing: 24,
-                      mainAxisExtent: 250,
+                      mainAxisExtent: 280,
                     ),
                     itemCount: complaints.length,
                     itemBuilder: (context, index) => _AdminComplaintCard(complaint: complaints[index]),
@@ -100,7 +100,7 @@ class AdminComplaintsView extends StatelessWidget {
               maxLines: 4,
               decoration: InputDecoration(
                 hintText: "Expliquez comment le problème a été réglé...",
-                hintStyle: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
+                hintStyle: GoogleFonts.inter(fontSize: 14, color: context.appTextSecondary),
                 filled: true,
                 fillColor: context.appBackground.withValues(alpha: 0.5),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
@@ -120,7 +120,7 @@ class AdminComplaintsView extends StatelessWidget {
               );
               if (context.mounted) Navigator.pop(context);
             },
-            child: const Text("Confirmer", style: TextStyle(color: Colors.white)),
+            child: Text("Confirmer", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

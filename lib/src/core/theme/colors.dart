@@ -22,6 +22,10 @@ class AppColors {
   static Color borderColorDark = const Color(0xFF1E1E1E); // Subtle dark boundary
   static Color highlightDark = const Color(0xFF245F40); // Deep forest highlight
   static Color alertBgDark = const Color(0xFF3F1313); // Deep muted red
+  static Color successBgDark = const Color(0xFF064E3B); // Deep muted green
+  static Color warningBgDark = const Color(0xFF451A03); // Deep muted amber
+  static Color successBgLight = const Color(0xFFDCFCE7); // Light green
+  static Color warningBgLight = const Color(0xFFFEF3C7); // Light amber
 
   // Deprecated direct properties
   static Color backgroundLightOld = backgroundLight;
@@ -44,4 +48,10 @@ extension AppThemeColors on BuildContext {
   Color get appBorder => isDark ? AppColors.borderColorDark : AppColors.borderColorLight;
   Color get appHighlight => isDark ? AppColors.highlightDark : AppColors.highlightLight;
   Color get appAlertBg => isDark ? AppColors.alertBgDark : AppColors.alertBgLight;
+  Color get appSuccessBg => isDark ? AppColors.successBgDark : AppColors.successBgLight;
+  Color get appWarningBg => isDark ? AppColors.warningBgDark : AppColors.warningBgLight;
+
+  Color get appSuccessText => isDark ? const Color(0xFF34D399) : const Color(0xFF166534);
+  Color get appWarningText => isDark ? const Color(0xFFFBBF24) : const Color(0xFF92400E);
+  Color get appErrorText => isDark ? const Color(0xFFF87171) : const Color(0xFF991B1B);
 }

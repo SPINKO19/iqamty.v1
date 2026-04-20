@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'package:diacritic/diacritic.dart';
 import 'package:flutter/foundation.dart';
@@ -63,7 +65,12 @@ class AuthService extends ChangeNotifier {
   Future<void> _persistUserData(Map<String, dynamic> data) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_data_cache', jsonEncode(data));
+      // Handle Timestamps during serialization
+      final encoded = jsonEncode(data, toEncodable: (item) {
+        if (item is Timestamp) return item.toDate().toIso8601String();
+        return item;
+      });
+      await prefs.setString('user_data_cache', encoded);
     } catch (e) {
       if (kDebugMode) print('Persist user data failed: $e');
     }
@@ -89,11 +96,20 @@ class AuthService extends ChangeNotifier {
     if (_isDevUser) return;
 
     if (user != null) {
+      // Setup listener for the Firebase Auth UID
       _firestore?.collection('users').doc(user.uid).snapshots().listen((doc) {
         if (doc.exists) {
-          _userData = doc.data();
+          final data = doc.data()!;
+          _userData = data;
           _persistUserData(_userData!);
           notifyListeners();
+          
+          // If this is a student and we have a matricule, we should ALSO 
+          // optionally listen to the matricule doc if they are different
+          final matricule = data['matricule']?.toString() ?? data['uid']?.toString();
+          if (matricule != null && matricule != user.uid) {
+            _setupMatriculeListener(matricule);
+          }
         }
       });
     } else {
@@ -107,6 +123,18 @@ class AuthService extends ChangeNotifier {
       _userData = null;
       notifyListeners();
     }
+  }
+
+  StreamSubscription<DocumentSnapshot>? _matriculeSub;
+  void _setupMatriculeListener(String matricule) {
+    _matriculeSub?.cancel();
+    _matriculeSub = _firestore?.collection('users').doc(matricule).snapshots().listen((doc) {
+      if (doc.exists) {
+        _userData = doc.data();
+        _persistUserData(_userData!);
+        notifyListeners();
+      }
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -317,31 +345,8 @@ class AuthService extends ChangeNotifier {
 
         notifyListeners();
 
-<<<<<<< HEAD
         // Sync to Firebase in background
         _syncToFirebaseInBackground();
-=======
-        // Sign in anonymously to get Firebase Auth token for Firestore access
-        try {
-          final anonCredential = await _auth?.signInAnonymously();
-          final anonUid = anonCredential?.user?.uid;
-          final matriculeUid = _userData!['uid']?.toString() ?? matricule;
-          
-          // Save student data under their matricule ID
-          await _firestore?.collection('users').doc(matriculeUid).set(
-            _userData!, SetOptions(merge: true)
-          );
-          
-          // Also save a reference under the anonymous UID so auth works
-          if (anonUid != null && anonUid != matriculeUid) {
-            await _firestore?.collection('users').doc(anonUid).set(
-              _userData!, SetOptions(merge: true)
-            );
-          }
-        } catch (e) {
-          if (kDebugMode) print('Firebase sync error: $e');
-        }
->>>>>>> 42a62bf40ac657d101d5b1649ab9e83385b1cb25
       } else {
         throw Exception('Login failed: ${response.statusCode}');
       }
@@ -419,18 +424,31 @@ class AuthService extends ChangeNotifier {
   /// Syncs current user data to Firebase anonymously (non-blocking).
   Future<void> _syncToFirebaseInBackground() async {
     try {
+      String? anonUid;
       try {
         if (_auth?.currentUser == null) {
-          await _auth?.signInAnonymously();
+          final cred = await _auth?.signInAnonymously();
+          anonUid = cred?.user?.uid;
+        } else {
+          anonUid = _auth?.currentUser?.uid;
         }
       } catch (e) {
         if (kDebugMode) print("Anonymous sign-in failed (likely disabled), ignoring... $e");
       }
       
       if (_userData != null && _firestore != null) {
-        final docId = _userData!['uid'] ?? _auth?.currentUser?.uid;
-        if (docId != null) {
-          await _firestore!.collection('users').doc(docId).set(
+        final matriculeUid = _userData!['uid']?.toString() ?? _userData!['matricule']?.toString();
+        
+        // 1. Save student data under their matricule ID (primary record)
+        if (matriculeUid != null) {
+          await _firestore!.collection('users').doc(matriculeUid).set(
+            _userData!, SetOptions(merge: true),
+          );
+        }
+
+        // 2. Also save a reference under the anonymous UID so security rules work (request.auth.uid)
+        if (anonUid != null && anonUid != matriculeUid) {
+          await _firestore!.collection('users').doc(anonUid).set(
             _userData!, SetOptions(merge: true),
           );
         }

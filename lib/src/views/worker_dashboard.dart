@@ -259,7 +259,7 @@ class WorkerDashboard extends StatelessWidget {
           Icons.chat_bubble_rounded,
           const Color(0xFF3B82F6),
           () async {
-             final chatId = await firestore.startOrGetChat(userId, userName, residenceId: residenceId);
+             final chatId = await firestore.startOrGetChat(userId, userName, residenceId: residenceId, role: 'worker');
              if (context.mounted) {
                context.push('/chat/$chatId', extra: {'name': 'Administration', 'isAdmin': false});
              }

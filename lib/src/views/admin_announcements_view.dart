@@ -64,7 +64,7 @@ class AdminAnnouncementsView extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 60),
                     child: Text(
                       "Aucune communication trouvée",
-                      style: GoogleFonts.inter(color: Colors.grey),
+                      style: GoogleFonts.inter(color: context.appTextSecondary),
                     ),
                   ),
                 );
@@ -104,12 +104,13 @@ class AdminAnnouncementsView extends StatelessWidget {
   }
 
   Widget _buildHeaderAction({required BuildContext context, required IconData icon, required VoidCallback onTap, required String label}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ElevatedButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 18),
       label: Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF0E2318),
+        backgroundColor: isDark ? AppColors.primary : const Color(0xFF0E2318),
         foregroundColor: Colors.white,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -129,28 +130,33 @@ class AdminAnnouncementsView extends StatelessWidget {
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           return AlertDialog(
+            backgroundColor: context.appCard,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Text(lp.getText('create_announcement'), style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+            title: Text(lp.getText('create_announcement'), style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
+                  Text("Rédigez une annonce pour tous les résidents.", style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13)),
+                  const SizedBox(height: 24),
+                  _buildModernInput(
+                    context: context,
                     controller: titleController,
-                    decoration: InputDecoration(
-                      hintText: lp.getText('title') == 'title' ? 'Titre' : lp.getText('title'),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
+                    label: lp.getText('title') == 'title' ? 'Titre' : lp.getText('title'),
+                    icon: Icons.title_rounded,
+                    isDark: isDark,
                   ),
                   const SizedBox(height: 16),
-                  TextField(
+                  _buildModernInput(
+                    context: context,
                     controller: bodyController,
+                    label: lp.getText('description') == 'description' ? 'Message' : lp.getText('description'),
+                    icon: Icons.message_rounded,
+                    isDark: isDark,
                     maxLines: 4,
-                    decoration: InputDecoration(
-                      hintText: lp.getText('description') == 'description' ? 'Message' : lp.getText('description'),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
                   ),
                   const SizedBox(height: 16),
                   if (selectedImages.isNotEmpty)
@@ -164,8 +170,7 @@ class AdminAnnouncementsView extends StatelessWidget {
                           width: 80,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
-                            color: Colors.grey[200],
-                            // For web we use NetworkImage due to file paths being fake, fallback to standard if not web but image_picker network image usually works cross web
+                            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200],
                             image: DecorationImage(
                               image: NetworkImage(selectedImages[index].path),
                               fit: BoxFit.cover,
@@ -185,7 +190,7 @@ class AdminAnnouncementsView extends StatelessWidget {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: () async {
                       final ImagePicker picker = ImagePicker();
@@ -198,6 +203,8 @@ class AdminAnnouncementsView extends StatelessWidget {
                     label: const Text('Ajouter des photos'),
                     style: OutlinedButton.styleFrom(
                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                       side: BorderSide(color: AppColors.primary),
+                       foregroundColor: AppColors.primary,
                     ),
                   ),
                 ],
@@ -367,7 +374,7 @@ class AdminAnnouncementsView extends StatelessWidget {
                         ));
                       }
                     },
-                    child: const Icon(Icons.delete_outline, size: 20, color: Colors.grey),
+                    child: Icon(Icons.delete_outline, size: 20, color: AppColors.error),
                   ),
                 ],
               ),
@@ -378,6 +385,33 @@ class AdminAnnouncementsView extends StatelessWidget {
           const SizedBox(height: 8),
           Text(ann.content, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 14, height: 1.5, fontWeight: FontWeight.w400)),
         ],
+      ),
+    );
+  }
+  Widget _buildModernInput({
+    required BuildContext context,
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required bool isDark,
+    String? hint,
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      style: GoogleFonts.inter(color: context.appTextPrimary, fontSize: 15),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        labelStyle: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 14),
+        prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
+        filled: true,
+        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }

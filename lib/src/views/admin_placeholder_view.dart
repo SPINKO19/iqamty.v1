@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/language_provider.dart';
 import 'package:provider/provider.dart';
 import '../components/custom_menu_button.dart';
+import '../core/theme/colors.dart';
 
 class AdminPlaceholderView extends StatelessWidget {
   final String title;
@@ -23,7 +24,7 @@ class AdminPlaceholderView extends StatelessWidget {
               color: kGreen.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.construction_rounded, size: 64, color: kGreen),
+            child: Icon(Icons.construction_rounded, size: 64, color: AppColors.primary),
           ),
           const SizedBox(height: 24),
           Text(
@@ -31,7 +32,7 @@ class AdminPlaceholderView extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: kGreen,
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(height: 8),
@@ -42,7 +43,7 @@ class AdminPlaceholderView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: context.appTextSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),

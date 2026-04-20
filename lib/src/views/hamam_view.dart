@@ -13,13 +13,13 @@ class HamamView extends StatelessWidget {
     final lp = context.watch<LanguageProvider>();
     
     final schedules = {
-      'Dimanche': ['20:00 - 00:00'],
-      'Lundi': ['17:00 - 22:00'],
-      'Mardi': ['09:00 - 11:30', '17:00 - 22:00'],
-      'Mercredi': ['17:30 - 23:00'],
-      'Jeudi': ['17:30 - 23:00'],
-      'Vendredi': ['07:00 - 11:30', '21:00 - 00:00'],
-      'Samedi': ['07:00 - 11:30', '21:00 - 00:00'],
+      'Sunday': ['20:00 - 00:00'],
+      'Monday': ['17:00 - 22:00'],
+      'Tuesday': ['09:00 - 11:30', '17:00 - 22:00'],
+      'Wednesday': ['17:30 - 23:00'],
+      'Thursday': ['17:30 - 23:00'],
+      'Friday': ['07:00 - 11:30', '21:00 - 00:00'],
+      'Saturday': ['07:00 - 11:30', '21:00 - 00:00'],
     };
 
     return Scaffold(

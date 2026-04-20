@@ -151,19 +151,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       ),
                     ),
                   ),
-<<<<<<< HEAD
                   const SizedBox(height: 12),
                   Text(
-                
-                const SizedBox(height: 12),
-                Text(
-                  lp.getText('press_to_flip'),
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary.withValues(alpha: 0.6),
+                    lp.getText('press_to_flip'),
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary.withValues(alpha: 0.6),
+                    ),
                   ),
-                ),
                 ] else ...[
                   // Professional Identity Pass (Workers/Admins)
                   _buildProfessionalIdentityCard(context, auth, lp, isDark),
@@ -196,7 +192,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-<<<<<<< HEAD
   Widget _buildPhoneSection(BuildContext context, LanguageProvider lp, bool isDark, AuthProvider auth) {
      return Container(
        padding: const EdgeInsets.all(20),
@@ -472,9 +467,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       ],
     );
   }
-
-=======
->>>>>>> 42a62bf40ac657d101d5b1649ab9e83385b1cb25
   Widget _buildProfileHeader(BuildContext context, dynamic student, String name, bool isDark) {
     final lp = context.read<LanguageProvider>();
     final auth = context.read<AuthProvider>();

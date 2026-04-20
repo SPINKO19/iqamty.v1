@@ -5,6 +5,7 @@ import '../services/firestore_service.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
 import '../providers/auth_provider.dart';
+import '../providers/language_provider.dart';
 
 import '../components/custom_menu_button.dart';
 
@@ -15,6 +16,7 @@ class AdminRequestsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lp = context.watch<LanguageProvider>();
     final auth = context.watch<AuthProvider>();
     final firestore = context.read<FirestoreService>();
     final residenceId = auth.currentResidenceId;
@@ -41,12 +43,12 @@ class AdminRequestsView extends StatelessWidget {
 
               final requests = snapshot.data ?? [];
               if (requests.isEmpty) {
-                return const Center(
+                return Center(
                   child: Padding(
-                    padding: EdgeInsets.all(40),
+                    padding: const EdgeInsets.all(40),
                     child: Text(
-                      'Aucune demande',
-                      style: TextStyle(color: Colors.grey),
+                      lp.getText('no_complaints_msg'),
+                      style: GoogleFonts.inter(color: context.appTextSecondary),
                     ),
                   ),
                 );
@@ -164,7 +166,7 @@ class AdminRequestsView extends StatelessWidget {
               else
                 Text(
                   'Non assigné',
-                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                  style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary),
                 ),
             ],
           ),

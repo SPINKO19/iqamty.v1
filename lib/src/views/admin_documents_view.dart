@@ -34,7 +34,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
         allowedExtensions: ['pdf', 'docx', 'doc', 'png', 'jpg', 'jpeg'],
       );
 
-      if (result != null) {
+      if (result != null && result.files.isNotEmpty) {
         setState(() {
           _pickedFile = result.files.first;
           _selectedFileName = _pickedFile!.name;
@@ -64,8 +64,10 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
       
       UploadTask uploadTask;
       if (kIsWeb) {
+        if (_pickedFile!.bytes == null) throw Exception("Les données du fichier sont manquantes (Web)");
         uploadTask = storageRef.putData(_pickedFile!.bytes!);
       } else {
+        if (_pickedFile!.path == null) throw Exception("Le chemin du fichier est manquant");
         uploadTask = storageRef.putFile(File(_pickedFile!.path!));
       }
 
@@ -91,9 +93,14 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
         residenceId: auth.currentResidenceId,
       );
 
+      final lp = context.read<LanguageProvider>();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Document uploaded successfully')),
+          SnackBar(
+            content: Text(lp.getText('document_uploaded') == 'document_uploaded' ? 'Document mis en ligne avec succès' : lp.getText('document_uploaded')),
+            backgroundColor: _kGreen,
+          ),
         );
         setState(() {
           _pickedFile = null;
@@ -122,6 +129,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -141,19 +149,19 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionHeader('Nouveau Document', 'Partagez des ressources, formulaires ou guides.'),
+                        _buildSectionHeader(lp.getText('new_document') == 'new_document' ? 'Nouveau Document' : lp.getText('new_document'), lp.getText('document_share_subtitle') == 'document_share_subtitle' ? 'Partagez des ressources, formulaires ou guides.' : lp.getText('document_share_subtitle')),
                         const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: context.appCard,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                            border: Border.all(color: context.appBorder),
                           ),
                           child: Column(
                             children: [
                               if (_selectedFileName == null)
-                                _buildPickArea(context)
+                                _buildPickArea(context, lp)
                               else
                                 _buildSelectedFileArea(context),
                               
@@ -161,12 +169,11 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
                                 const SizedBox(height: 24),
                                 LinearProgressIndicator(
                                   value: _uploadProgress,
-                                  backgroundColor: const Color(0xFFE5E7EB),
-                                  color: const Color(0xFF1D5C35),
+                                  backgroundColor: context.appBorder,
+                                  color: AppColors.primary,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                const SizedBox(height: 8),
-                                Text('${(_uploadProgress * 100).toInt()}% uploaded', style: GoogleFonts.inter(fontSize: 12)),
+                                Text('${(_uploadProgress * 100).toInt()}% uploaded', style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary)),
                               ],
                               
                               const SizedBox(height: 24),
@@ -176,14 +183,14 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
                                 child: ElevatedButton(
                                   onPressed: (_pickedFile == null || _isUploading) ? null : _uploadDocument,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0E2318),
+                                    backgroundColor: isDark ? AppColors.primary : const Color(0xFF0E2318),
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                     elevation: 0,
                                   ),
                                   child: _isUploading 
                                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                    : const Text('Confirmer l\'envoi', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    : Text(lp.getText('confirm_send') == 'confirm_send' ? 'Confirmer l\'envoi' : lp.getText('confirm_send'), style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
                                 ),
                               ),
                             ],
@@ -202,7 +209,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildSectionHeader('Uploads Récents', 'Historique des documents partagés.'),
+                          _buildSectionHeader(lp.getText('recent_uploads') == 'recent_uploads' ? 'Uploads Récents' : lp.getText('recent_uploads'), lp.getText('document_history_subtitle') == 'document_history_subtitle' ? 'Historique des documents partagés.' : lp.getText('document_history_subtitle')),
                           const SizedBox(height: 16),
                           _buildRecentUploadsList(context),
                         ],
@@ -221,7 +228,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 32),
-                    _buildSectionHeader('Uploads Récents', 'Historique des documents partagés.'),
+                    _buildSectionHeader(lp.getText('recent_uploads') == 'recent_uploads' ? 'Uploads Récents' : lp.getText('recent_uploads'), lp.getText('document_history_subtitle') == 'document_history_subtitle' ? 'Historique des documents partagés.' : lp.getText('document_history_subtitle')),
                     const SizedBox(height: 16),
                     _buildRecentUploadsList(context),
                   ],
@@ -241,17 +248,17 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
       children: [
         Text(
           title,
-          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF111827)),
+          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: context.appTextPrimary),
         ),
         Text(
           subtitle,
-          style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
+          style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary),
         ),
       ],
     );
   }
 
-  Widget _buildPickArea(BuildContext context) {
+  Widget _buildPickArea(BuildContext context, LanguageProvider lp) {
     return InkWell(
       onTap: _pickFile,
       child: Container(
@@ -264,9 +271,9 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
         ),
         child: Column(
           children: [
-            const Icon(Icons.cloud_upload_outlined, size: 48, color: Color(0xFF2D6A4F)),
+            Icon(Icons.cloud_upload_outlined, size: 48, color: AppColors.primary),
             const SizedBox(height: 12),
-            Text('Tap to select a file', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.primary)),
+            Text(lp.getText('tap_select_file') == 'tap_select_file' ? 'Cliquez pour sélectionner' : lp.getText('tap_select_file'), style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.primary)),
             Text('PDF, DOCX, Images...', style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary)),
           ],
         ),
@@ -283,14 +290,14 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.description_rounded, color: Color(0xFF2D6A4F), size: 32),
+          Icon(Icons.description_rounded, color: AppColors.primary, size: 32),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_selectedFileName!, style: const TextStyle(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text('${(_pickedFile!.size / 1024).toStringAsFixed(1)} KB', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(_selectedFileName!, style: TextStyle(fontWeight: FontWeight.bold, color: context.appTextPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text('${(_pickedFile!.size / 1024).toStringAsFixed(1)} KB', style: TextStyle(fontSize: 12, color: context.appTextSecondary)),
               ],
             ),
           ),
@@ -307,6 +314,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
     final auth = context.read<AuthProvider>();
     final firestore = context.read<FirestoreService>();
     final residenceId = auth.currentResidenceId;
+    final lp = context.watch<LanguageProvider>();
 
     return StreamBuilder<List<DocumentModel>>(
       stream: firestore.getDocuments(residenceId: residenceId),
@@ -314,7 +322,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         
         final docs = snapshot.data ?? [];
-        if (docs.isEmpty) return const Text('No recent uploads found.');
+        if (docs.isEmpty) return Text(lp.getText('no_recent_uploads') == 'no_recent_uploads' ? 'Aucun document trouvé.' : lp.getText('no_recent_uploads'), style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13));
 
         return Column(
           children: docs.take(5).map((doc) {
@@ -334,8 +342,8 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(doc.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), maxLines: 1),
-                        Text(doc.fileSize, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                        Text(doc.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.appTextPrimary), maxLines: 1),
+                        Text(doc.fileSize, style: TextStyle(fontSize: 11, color: context.appTextSecondary)),
                       ],
                     ),
                   ),
@@ -351,6 +359,8 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
       },
     );
   }
+
+  static const _kGreen = Color(0xFF1D5C35);
 
   Widget _getIconForType(String type) {
     switch (type.toLowerCase()) {

@@ -145,8 +145,8 @@ class HomeScreen extends StatelessWidget {
                           onTap: () => context.go('/documents'),
                         ),
                         _QuickActionCard(
-                          title: 'Planning',
-                          subtitle: 'Consulter l\'emploi du temps',
+                          title: lp.getText('sports_program') == 'sports_program' ? 'Planning' : lp.getText('sports_program'),
+                          subtitle: lp.getText('sports_subtitle') == 'sports_subtitle' ? 'Programme et douches' : lp.getText('sports_subtitle'),
                           icon: Icons.calendar_month_rounded,
                           color: const Color(0xFFF59E0B),
                           isDark: isDark,

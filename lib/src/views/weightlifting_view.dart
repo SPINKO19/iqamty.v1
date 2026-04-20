@@ -13,9 +13,9 @@ class WeightliftingView extends StatelessWidget {
     final lp = context.watch<LanguageProvider>();
     
     final schedules = {
-      'Lundi - Vendredi': ['08:00 - 22:00'],
-      'Samedi': ['10:00 - 18:00'],
-      'Dimanche': ['Fermé'],
+      'Monday - Friday': ['08:00 - 22:00'],
+      'Saturday': ['10:00 - 18:00'],
+      'Sunday': ['Closed'],
     };
 
     return Scaffold(

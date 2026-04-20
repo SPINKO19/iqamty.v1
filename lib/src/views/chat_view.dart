@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/language_provider.dart';
@@ -34,7 +35,13 @@ class _ChatViewState extends State<ChatView> {
   Future<void> _initChat() async {
     if (widget.chatId != null) {
       _chatId = widget.chatId;
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {});
+        final auth = context.read<AuthProvider>();
+        final firestore = context.read<FirestoreService>();
+        final isAdmin = auth.currentUserData?['role'] == 'administrator' || widget.isAdmin;
+        firestore.markChatAsRead(_chatId!, isAdmin);
+      }
       return;
     }
 
@@ -43,10 +50,15 @@ class _ChatViewState extends State<ChatView> {
     final studentId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
     final studentName = auth.currentUserData?['displayName'] ?? auth.currentStudent?.nomFr ?? 'Student';
     
-    final residenceId = auth.currentResidenceId;
+    final residenceId = auth.currentResidenceId ?? auth.currentUserData?['residenceId'];
     
     _chatId = await firestore.startOrGetChat(studentId, studentName, residenceId: residenceId);
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      // Mark as read after ID is resolved
+      final isAdmin = auth.currentUserData?['role'] == 'administrator' || widget.isAdmin;
+      firestore.markChatAsRead(_chatId!, isAdmin);
+    }
   }
 
   Future<void> _sendMessage() async {
@@ -82,14 +94,20 @@ class _ChatViewState extends State<ChatView> {
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CustomMenuButton(
-            backgroundColor: isDark 
-                ? Colors.white.withValues(alpha: 0.1) 
-                : AppColors.primary.withValues(alpha: 0.1),
-            iconColor: isDark ? Colors.white : AppColors.primary,
-          ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: context.appTextPrimary, size: 20),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              final isAdmin = auth.currentUserData?['role'] == 'administrator' || widget.isAdmin;
+              if (isAdmin) {
+                context.go('/admin/chat');
+              } else {
+                context.go('/');
+              }
+            }
+          },
         ),
         title: Text(widget.name ?? lp.getText('messaging'), style: TextStyle(color: context.appTextPrimary)),
         backgroundColor: context.appCard,

@@ -74,6 +74,45 @@ class FirestoreService extends ChangeNotifier {
         .toList());
   }
 
+  Future<void> saveMeal(Meal meal, {String? residenceId}) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final data = meal.toJson();
+    if (residenceId != null) {
+      data['residenceId'] = residenceId;
+    }
+    
+    CollectionReference meals = _db!.collection('meals');
+    if (meal.id != null) {
+      await meals.doc(meal.id).set(data, SetOptions(merge: true));
+    } else {
+      // Find if meal already exists for this date, type, and residence
+      final query = await meals
+          .where('date', isEqualTo: data['date'])
+          .where('type', isEqualTo: data['type'])
+          .where('residenceId', isEqualTo: residenceId)
+          .limit(1)
+          .get();
+          
+      if (query.docs.isNotEmpty) {
+        await query.docs.first.reference.set(data, SetOptions(merge: true));
+      } else {
+        await meals.add(data);
+      }
+    }
+  }
+
+  Stream<bool> streamRestaurantStatus(String? residenceId) {
+    if (_db == null || residenceId == null) return Stream.value(true);
+    return _db!.collection('residences').doc(residenceId).snapshots().map((doc) => doc.data()?['isRestaurantOpen'] ?? true);
+  }
+
+  Future<void> toggleRestaurantStatus(String residenceId, bool isOpen) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    await _db!.collection('residences').doc(residenceId).update({
+      'isRestaurantOpen': isOpen,
+    });
+  }
+
   Future<void> toggleMealReservation(String mealId, String userId, bool isReserving) async {
     if (_db == null) throw Exception("Firestore not initialized");
     final docRef = _db!.collection('meals').doc(mealId);
@@ -167,10 +206,11 @@ class FirestoreService extends ChangeNotifier {
 
   // Get all workers from users collection
   Stream<List<Map<String, dynamic>>> getWorkers({String? residenceId}) {
-    if (_db == null || residenceId == null || residenceId.isEmpty) return Stream.value([]);
-    Query query = _db!.collection('users')
-        .where('residenceId', isEqualTo: residenceId)
-        .where('role', isEqualTo: 'worker');
+    if (_db == null) return Stream.value([]);
+    Query query = _db!.collection('users').where('role', isEqualTo: 'worker');
+    if (residenceId != null && residenceId.isNotEmpty) {
+      query = query.where('residenceId', isEqualTo: residenceId);
+    }
     return query.snapshots().map((snapshot) => snapshot.docs
         .map((doc) => doc.data() as Map<String, dynamic>..['id'] = doc.id)
         .toList());
@@ -178,15 +218,14 @@ class FirestoreService extends ChangeNotifier {
 
   // Get all students from users collection
   Stream<List<Map<String, dynamic>>> getStudents({String? residenceId}) {
-    if (_db == null || residenceId == null || residenceId.isEmpty) return Stream.value([]);
-    Query query = _db!.collection('users')
-        .where('residenceId', isEqualTo: residenceId)
-        .where('role', isEqualTo: 'student');
-    return query
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => doc.data() as Map<String, dynamic>..['id'] = doc.id)
-            .toList());
+    if (_db == null) return Stream.value([]);
+    Query query = _db!.collection('users').where('role', isEqualTo: 'student');
+    if (residenceId != null && residenceId.isNotEmpty) {
+      query = query.where('residenceId', isEqualTo: residenceId);
+    }
+    return query.snapshots().map((snapshot) => snapshot.docs
+        .map((doc) => doc.data() as Map<String, dynamic>..['id'] = doc.id)
+        .toList());
   }
 
   Future<void> toggleUserBan(String userId, bool isBanned) async {
@@ -250,10 +289,10 @@ class FirestoreService extends ChangeNotifier {
     if (_db == null) throw Exception("Firestore not initialized");
     final data = {
       'title': title,
-      'type': type,
-      'size': size,
-      'url': url,
-      'createdAt': FieldValue.serverTimestamp(),
+      'fileType': type,
+      'fileSize': size,
+      'fileUrl': url,
+      'uploadedAt': FieldValue.serverTimestamp(),
       'target': 'students',
     };
     if (residenceId != null) data['residenceId'] = residenceId;
@@ -266,14 +305,37 @@ class FirestoreService extends ChangeNotifier {
   }
 
   Stream<List<DocumentModel>> getDocuments({String? residenceId}) {
-    if (_db == null || residenceId == null || residenceId.isEmpty) return Stream.value([]);
-    Query query = _db!.collection('documents').where('residenceId', isEqualTo: residenceId);
-    return query
-        .orderBy('createdAt', descending: true)
+    if (_db == null) return Stream.value([]);
+    
+    // Fetch all documents from the collection. 
+    // We filter in code to:
+    // 1. Avoid requiring Firestore composite indexes for sorting.
+    // 2. Allow showing both specific and global documents easily.
+    return _db!.collection('documents')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => DocumentModel.fromJson(doc.data() as Map<String, dynamic>..['id'] = doc.id))
-            .toList());
+        .map((snapshot) {
+          final allDocs = snapshot.docs.map((docSnap) {
+            final data = docSnap.data() as Map<String, dynamic>;
+            return {
+              'model': DocumentModel.fromJson(data..['id'] = docSnap.id),
+              'residenceId': data['residenceId'],
+            };
+          }).toList();
+
+          // Apply filtering logic
+          final filtered = allDocs.where((item) {
+            final docResId = item['residenceId'];
+            // If student has no residenceId, show everything (safe for dev/testing)
+            if (residenceId == null || residenceId.isEmpty) return true;
+            // Otherwise show global documents OR documents matching the student's residence
+            return docResId == null || docResId == residenceId;
+          }).map((item) => item['model'] as DocumentModel).toList();
+
+          // Sort by date (descending)
+          filtered.sort((a, b) => b.uploadedAt.compareTo(a.uploadedAt));
+          
+          return filtered;
+        });
   }
 
   // Transport
@@ -419,14 +481,16 @@ class FirestoreService extends ChangeNotifier {
   }
 
   // Chats
-  Future<String> startOrGetChat(String studentId, String studentName, {String? residenceId}) async {
+  Future<String> startOrGetChat(String studentId, String studentName, {String? residenceId, String role = 'student'}) async {
     if (_db == null) throw Exception("Firestore not initialized");
 
-    if (residenceId == null || residenceId.isEmpty) throw Exception("Residence ID required");
+    // Relaxed requirement for dev, but we still prefer having it
+    // if (residenceId == null || residenceId.isEmpty) throw Exception("Residence ID required");
 
-    Query query = _db!.collection('chats')
-        .where('residenceId', isEqualTo: residenceId)
-        .where('studentId', isEqualTo: studentId);
+    Query query = _db!.collection('chats').where('studentId', isEqualTo: studentId);
+    if (residenceId != null && residenceId.isNotEmpty) {
+      query = query.where('residenceId', isEqualTo: residenceId);
+    }
 
     final chats = await query.limit(1).get();
 
@@ -441,6 +505,7 @@ class FirestoreService extends ChangeNotifier {
       'lastMessageText': '',
       'hasUnreadStudent': false,
       'hasUnreadAdmin': false,
+      'studentRole': role,
     };
 
     if (residenceId != null) {
@@ -487,6 +552,31 @@ class FirestoreService extends ChangeNotifier {
     await _db!.collection('chats').doc(chatId).update({
       if (isAdmin) 'hasUnreadAdmin': false else 'hasUnreadStudent': false,
     });
+  }
+
+  Stream<List<Map<String, dynamic>>> getAllChats({String? residenceId}) {
+    if (_db == null) return Stream.value([]);
+    
+    // We fetch all chats and filter in code to ensure visibility even if residenceId 
+    // is partially missing or mismatched during dev, and to avoid index requirements.
+    return _db!.collection('chats')
+        .snapshots()
+        .map((snap) {
+          final allChats = snap.docs.map((doc) => doc.data()..['id'] = doc.id).toList();
+          
+          if (residenceId == null || residenceId.isEmpty) return allChats;
+          
+          final filtered = allChats.where((chat) => chat['residenceId'] == residenceId).toList();
+          
+          // Sort by time
+          filtered.sort((a, b) {
+            final tA = (a['lastMessageTime'] as Timestamp?)?.toDate() ?? DateTime(0);
+            final tB = (b['lastMessageTime'] as Timestamp?)?.toDate() ?? DateTime(0);
+            return tB.compareTo(tA);
+          });
+          
+          return filtered;
+        });
   }
 
   // Forum

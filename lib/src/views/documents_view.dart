@@ -57,8 +57,8 @@ class DocumentsView extends StatelessWidget {
           if (snapshot.hasError) {
             return Center(
               child: Text(
-                'Error loading documents: ${snapshot.error}',
-                style: const TextStyle(color: Colors.red),
+                '${lp.getText('error_loading')}: ${snapshot.error}',
+                style: GoogleFonts.inter(color: Colors.red, fontSize: 13),
               ),
             );
           }
@@ -73,9 +73,9 @@ class DocumentsView extends StatelessWidget {
                   Icon(Icons.folder_open_outlined, size: 60, color: context.appTextSecondary.withValues(alpha: 0.3)),
                   const SizedBox(height: 16),
                   Text(
-                    'No documents available',
+                    lp.getText('no_documents_msg') == 'no_documents_msg' ? 'Aucun document disponible' : lp.getText('no_documents_msg'),
                     style: GoogleFonts.inter(
-                      fontSize: 16,
+                      fontSize: 15,
                       color: context.appTextSecondary,
                       fontWeight: FontWeight.w600,
                     ),
@@ -90,7 +90,7 @@ class DocumentsView extends StatelessWidget {
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final doc = docs[index];
-              return _buildDocCard(context, doc);
+              return _buildDocCard(context, doc, lp);
             },
           );
         },
@@ -98,7 +98,7 @@ class DocumentsView extends StatelessWidget {
     );
   }
 
-  Widget _buildDocCard(BuildContext context, DocumentModel doc) {
+  Widget _buildDocCard(BuildContext context, DocumentModel doc, LanguageProvider lp) {
     final String type = doc.fileType.toLowerCase();
     
     return Container(
@@ -151,12 +151,12 @@ class DocumentsView extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.open_in_new_rounded, size: 14),
-                SizedBox(width: 6),
-                Text('Open', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                const Icon(Icons.open_in_new_rounded, size: 14),
+                const SizedBox(width: 6),
+                Text(lp.getText('open') == 'open' ? 'Ouvrir' : lp.getText('open'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
               ],
             ),
           ),

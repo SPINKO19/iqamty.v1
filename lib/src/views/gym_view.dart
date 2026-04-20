@@ -13,13 +13,13 @@ class GymView extends StatelessWidget {
     final lp = context.watch<LanguageProvider>();
 
     final schedules = {
-      'Samedi': ['17:00 - 19:00 (Foot INT)', '21:00 - 23:30 (Foot NAT/INT)'],
-      'Dimanche': ['17:00 - 18:30 (Volley-ball NAT/INT)', '18:30 - 21:30 (Foot ET/NAT)', '21:30 - 23:30 (Foot ET/INT)'],
-      'Lundi': ['17:00 - 18:30 (Basket-ball NAT/INT)', '18:30 - 20:00 (Volley-ball NAT/INT)', '20:00 - 21:30 (Foot ET/INT)', '21:30 - 23:30 (Foot ET/NAT)'],
-      'Mardi': ['17:00 - 18:30 (Hand-ball NAT/INT)', '18:30 - 21:30 (Foot ET/NAT)', '21:30 - 23:30 (Foot ET/INT)'],
-      'Mercredi': ['17:00 - 18:30 (Basket-ball NAT/INT)', '18:30 - 20:30 (Foot ET/INT)', '20:30 - 23:30 (Foot ET/NAT)'],
-      'Jeudi': ['17:00 - 18:30 (Hand-ball NAT/INT)', '18:30 - 20:30 (Foot ET/INT)', '20:30 - 23:30 (Foot ET/NAT)'],
-      'Vendredi': ['17:00 - 20:00 (Foot ET/NAT)', '20:30 - 21:30 (Volley-ball)', '21:30 - 23:30 (Foot ET/INT)'],
+      'Saturday': ['17:00 - 19:00 (Foot INT)', '21:00 - 23:30 (Foot NAT/INT)'],
+      'Sunday': ['17:00 - 18:30 (Volley-ball NAT/INT)', '18:30 - 21:30 (Foot ET/NAT)', '21:30 - 23:30 (Foot ET/INT)'],
+      'Monday': ['17:00 - 18:30 (Basket-ball NAT/INT)', '18:30 - 20:00 (Volley-ball NAT/INT)', '20:00 - 21:30 (Foot ET/INT)', '21:30 - 23:30 (Foot ET/NAT)'],
+      'Tuesday': ['17:00 - 18:30 (Hand-ball NAT/INT)', '18:30 - 21:30 (Foot ET/NAT)', '21:30 - 23:30 (Foot ET/INT)'],
+      'Wednesday': ['17:00 - 18:30 (Basket-ball NAT/INT)', '18:30 - 20:30 (Foot ET/INT)', '20:30 - 23:30 (Foot ET/NAT)'],
+      'Thursday': ['17:00 - 18:30 (Hand-ball NAT/INT)', '18:30 - 20:30 (Foot ET/INT)', '20:30 - 23:30 (Foot ET/NAT)'],
+      'Friday': ['17:00 - 20:00 (Foot ET/NAT)', '20:30 - 21:30 (Volley-ball)', '21:30 - 23:30 (Foot ET/INT)'],
     };
 
     return Scaffold(
@@ -111,19 +111,47 @@ class GymView extends StatelessWidget {
 
   Widget _buildTeamCard(BuildContext context, String teamName, IconData icon, LanguageProvider lp) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: context.appCard,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.appBorder),
       ),
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.primary),
-        title: Text(teamName, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
-        trailing: ElevatedButton(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
-          child: Text(lp.getText('join_team')),
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: AppColors.primary, size: 24),
+              const SizedBox(width: 16),
+              Text(
+                teamName,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: context.appTextPrimary,
+                ),
+              ),
+            ],
+          ),
+          ElevatedButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(lp.getText('registration_sent_msg')),
+                  backgroundColor: AppColors.primary,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(lp.getText('join_team')),
+          ),
+        ],
       ),
     );
   }

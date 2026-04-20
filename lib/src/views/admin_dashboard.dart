@@ -70,6 +70,7 @@ class AdminDashboard extends StatelessWidget {
               runSpacing: 10,
               children: [
                 _buildKpiCard(
+                  context,
                   title: lp.getText('total_students'),
                   value: students.length.toString(),
                   tag: '+${students.length > 10 ? 12 : 0}',
@@ -78,29 +79,32 @@ class AdminDashboard extends StatelessWidget {
                   onTap: () => context.go('/admin/users'),
                 ),
                 _buildKpiCard(
+                  context,
                   title: lp.getText('complaints_open'),
                   value: openComplaints.toString(),
                   tag: '+3 auj.',
-                  tagColor: const Color(0xFFFEE2E2),
-                  tagTextColor: const Color(0xFF991B1B),
+                  tagColor: context.appAlertBg,
+                  tagTextColor: context.appErrorText,
                   width: cardWidth,
                   onTap: () => context.go('/admin/complaints'),
                 ),
                 _buildKpiCard(
+                  context,
                   title: lp.getText('complaints_resolved_kpi'),
                   value: resolvedComplaintsCount.toString(),
                   tag: '$resolvedPercent%',
-                  tagColor: const Color(0xFFDCFCE7),
-                  tagTextColor: const Color(0xFF166534),
+                  tagColor: context.appSuccessBg,
+                  tagTextColor: context.appSuccessText,
                   width: cardWidth,
                   onTap: () => context.go('/admin/complaints'),
                 ),
                 _buildKpiCard(
+                  context,
                   title: lp.getText('pending_requests_kpi'),
                   value: pendingRequests.toString(),
                   tag: '$urgentRequests urgent',
-                  tagColor: const Color(0xFFFEF3C7),
-                  tagTextColor: const Color(0xFF92400E),
+                  tagColor: context.appWarningBg,
+                  tagTextColor: context.appWarningText,
                   width: cardWidth,
                   onTap: () => context.go('/admin/requests'),
                 ),
@@ -112,7 +116,8 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildKpiCard({
+  Widget _buildKpiCard(
+    BuildContext context, {
     required String title, 
     required String value, 
     required String tag, 
@@ -129,21 +134,21 @@ class AdminDashboard extends StatelessWidget {
         width: width,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0E2318) : Colors.white,
+          color: isDark ? const Color(0xFF0E2318) : context.appCard,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: context.appBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(color: isDark ? Colors.white54 : Colors.grey, fontSize: 11, fontWeight: FontWeight.w500)),
+            Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(color: isDark ? Colors.white54 : context.appTextSecondary, fontSize: 11, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Text(value, style: GoogleFonts.inter(color: isDark ? Colors.white : Colors.black, fontSize: 24, fontWeight: FontWeight.w600)),
+                Text(value, style: GoogleFonts.inter(color: isDark ? Colors.white : context.appTextPrimary, fontSize: 24, fontWeight: FontWeight.w600)),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
@@ -187,6 +192,7 @@ class AdminDashboard extends StatelessWidget {
 
   Widget _buildPriorityActions(BuildContext context, LanguageProvider lp, FirestoreService firestore, String? resId) {
     return _buildCardWrapper(
+      context,
       title: lp.getText('priority_actions'),
       subtitle: lp.getText('manage_residence'),
       child: StreamBuilder<List<Map<String, dynamic>>>(
@@ -225,22 +231,14 @@ class AdminDashboard extends StatelessWidget {
       onTap: () => context.go(route),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6)))),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: context.appBorder))),
         child: Row(
           children: [
-            Container(
-              width: 16,
-              height: 16,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 4),
             Expanded(
-              child: Text(title, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500)),
+              child: Text(title, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: context.appTextPrimary)),
             ),
-            Text(who, style: GoogleFonts.inter(fontSize: 10, color: Colors.grey)),
+            Text(who, style: GoogleFonts.inter(fontSize: 10, color: context.appTextSecondary)),
             const SizedBox(width: 8),
             Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
           ],
@@ -251,6 +249,7 @@ class AdminDashboard extends StatelessWidget {
 
   Widget _buildOccupationCard(BuildContext context, LanguageProvider lp, FirestoreService firestore, String? resId) {
     return _buildCardWrapper(
+      context,
       title: lp.getText('occupation_title'),
       child: StreamBuilder<Map<String, dynamic>>(
         stream: firestore.getResidenceSettings(resId ?? ''),
@@ -273,24 +272,24 @@ class AdminDashboard extends StatelessWidget {
                     child: CircularProgressIndicator(
                       value: occupied / total,
                       strokeWidth: 10,
-                      backgroundColor: const Color(0xFFEAF3DE),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0E2318)),
+                      backgroundColor: context.isDark ? AppColors.primary.withOpacity(0.1) : const Color(0xFFEAF3DE),
+                      valueColor: AlwaysStoppedAnimation<Color>(context.isDark ? AppColors.primary : const Color(0xFF0E2318)),
                       strokeCap: StrokeCap.round,
                     ),
                   ),
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('$percent%', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: const Color(0xFF0E2318))),
-                      Text(lp.getText('occupied_label').toLowerCase(), style: GoogleFonts.inter(fontSize: 8, color: Colors.grey)),
+                      Text('$percent%', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: context.appTextPrimary)),
+                      Text(lp.getText('occupied_label').toLowerCase(), style: GoogleFonts.inter(fontSize: 8, color: context.appTextSecondary)),
                     ],
                   ),
                 ],
               ),
               const SizedBox(height: 20),
-              _buildOccupationRow(lp.getText('occupied_label'), occupied, const Color(0xFF0E2318)),
-              _buildOccupationRow(lp.getText('free_label'), total - occupied, const Color(0xFF97C459)),
-              _buildOccupationRow(lp.getText('maintenance_label'), maintenance, const Color(0xFFF59E0B)),
+              _buildOccupationRow(context, lp.getText('occupied_label'), occupied, context.isDark ? AppColors.primary : const Color(0xFF0E2318)),
+              _buildOccupationRow(context, lp.getText('free_label'), total - occupied, const Color(0xFF97C459)),
+              _buildOccupationRow(context, lp.getText('maintenance_label'), maintenance, const Color(0xFFF59E0B)),
               const SizedBox(height: 10),
               TextButton.icon(
                 onPressed: () => _showOccupationEditDialog(context, firestore, resId, total, occupied, maintenance, lp),
@@ -304,15 +303,15 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildOccupationRow(String label, int value, Color color) {
+  Widget _buildOccupationRow(BuildContext context, String label, int value, Color color) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: 8),
-          Expanded(child: Text(label, style: GoogleFonts.inter(fontSize: 11, color: Colors.grey))),
-          Text(value.toString(), style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+          Expanded(child: Text(label, style: GoogleFonts.inter(fontSize: 11, color: context.appTextSecondary))),
+          Text(value.toString(), style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: context.appTextPrimary)),
         ],
       ),
     );
@@ -345,6 +344,7 @@ class AdminDashboard extends StatelessWidget {
 
   Widget _buildActivityFeed(BuildContext context, LanguageProvider lp, FirestoreService firestore, String? resId) {
     return _buildCardWrapper(
+      context,
       title: lp.getText('recent_activity_title'),
       child: StreamBuilder<List<Map<String, dynamic>>>(
         stream: firestore.getAdminActivityFeed(residenceId: resId),
@@ -382,7 +382,7 @@ class AdminDashboard extends StatelessWidget {
       onTap: () => context.go(route),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6)))),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: context.appBorder))),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -394,10 +394,10 @@ class AdminDashboard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
-                  Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)),
+                  Text(title, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: context.appTextPrimary)),
+                  Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontSize: 11, color: context.appTextSecondary)),
                   const SizedBox(height: 4),
-                  Text(timeStr, style: GoogleFonts.inter(fontSize: 9, color: Colors.grey)),
+                  Text(timeStr, style: GoogleFonts.inter(fontSize: 9, color: context.appTextSecondary)),
                 ],
               ),
             ),
@@ -409,6 +409,7 @@ class AdminDashboard extends StatelessWidget {
 
   Widget _buildRecentRequests(BuildContext context, LanguageProvider lp, FirestoreService firestore, String? resId) {
     return _buildCardWrapper(
+      context,
       title: lp.getText('recent_requests_title'),
       child: StreamBuilder<List<ServiceRequest>>(
         stream: firestore.getAllRequests(residenceId: resId),
@@ -438,9 +439,9 @@ class AdminDashboard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
+          color: context.appCard,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: context.appBorder),
         ),
         child: Row(
           children: [
@@ -455,8 +456,8 @@ class AdminDashboard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(lp.getText('student'), style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500)),
-                  Text('Ch.${req.userId.hashCode % 500}', style: GoogleFonts.inter(fontSize: 10, color: Colors.grey)),
+                  Text(lp.getText('student'), style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: context.appTextPrimary)),
+                  Text('Ch.${req.userId.hashCode % 500}', style: GoogleFonts.inter(fontSize: 10, color: context.appTextSecondary)),
                 ],
               ),
             ),
@@ -477,7 +478,7 @@ class AdminDashboard extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Text(lp.getText('quick_management'), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600)),
+          child: Text(lp.getText('quick_management'), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: context.appTextPrimary)),
         ),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -492,6 +493,7 @@ class AdminDashboard extends StatelessWidget {
                 _buildQuickAction(context, lp.getText('documents'), 'Share forms & guides', Icons.file_copy_rounded, Colors.purple, '/admin/documents', itemWidth),
                 _buildQuickAction(context, lp.getText('restoration'), 'Mise à jour menu', Icons.restaurant_rounded, Colors.orange, '/admin/dining-config', itemWidth),
                 _buildQuickAction(context, lp.getText('users'), 'Gérer les membres', Icons.people_rounded, Colors.green, '/admin/users', itemWidth),
+                _buildQuickAction(context, lp.getText('messaging'), 'Contacter étudiants', Icons.chat_bubble_rounded, Colors.teal, '/admin/chat', itemWidth),
                 _buildQuickAction(context, lp.getText('announcements'), 'Diffuser des infos', Icons.campaign_rounded, Colors.blue, '/admin/announcements', itemWidth),
                 _buildQuickAction(context, lp.getText('maintenance'), 'Gérer les pannes', Icons.handyman_rounded, Colors.indigo, '/admin/maintenance', itemWidth),
               ],
@@ -512,9 +514,9 @@ class AdminDashboard extends StatelessWidget {
           width: width,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.appCard,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            border: Border.all(color: context.appBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -525,8 +527,8 @@ class AdminDashboard extends StatelessWidget {
                 child: Icon(icon, color: color, size: 20),
               ),
               const SizedBox(height: 16),
-              Text(title, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
-              Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontSize: 10, color: Colors.grey)),
+              Text(title, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: context.appTextPrimary)),
+              Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontSize: 10, color: context.appTextSecondary)),
             ],
           ),
         ),
@@ -534,13 +536,13 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildCardWrapper({required String title, String? subtitle, required Widget child}) {
+  Widget _buildCardWrapper(BuildContext context, {required String title, String? subtitle, required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: context.appBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -551,8 +553,8 @@ class AdminDashboard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600)),
-                  if (subtitle != null) Text(subtitle, style: GoogleFonts.inter(fontSize: 10, color: Colors.grey)),
+                  Text(title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: context.appTextPrimary)),
+                  if (subtitle != null) Text(subtitle, style: GoogleFonts.inter(fontSize: 10, color: context.appTextSecondary)),
                 ],
               ),
             ],
@@ -580,7 +582,8 @@ class AdminDashboard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(lp.getText('edit_occupation')),
+        backgroundColor: context.appCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

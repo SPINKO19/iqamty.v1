@@ -156,10 +156,10 @@ class DocumentModel {
     return DocumentModel(
       id: json['id'],
       title: json['title'] ?? '',
-      fileUrl: json['fileUrl'] ?? '',
-      fileType: json['fileType'] ?? '',
-      fileSize: json['fileSize'] ?? '',
-      uploadedAt: (json['uploadedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      fileUrl: json['fileUrl'] ?? json['url'] ?? '',
+      fileType: json['fileType'] ?? json['type'] ?? '',
+      fileSize: json['fileSize'] ?? json['size'] ?? '',
+      uploadedAt: (json['uploadedAt'] as Timestamp?)?.toDate() ?? (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
