@@ -96,6 +96,7 @@ class AuthService extends ChangeNotifier {
     if (_isDevUser) return;
 
     if (user != null) {
+<<<<<<< HEAD
       // Setup listener for the Firebase Auth UID
       _firestore?.collection('users').doc(user.uid).snapshots().listen((doc) {
         if (doc.exists) {
@@ -109,6 +110,20 @@ class AuthService extends ChangeNotifier {
           final matricule = data['matricule']?.toString() ?? data['uid']?.toString();
           if (matricule != null && matricule != user.uid) {
             _setupMatriculeListener(matricule);
+=======
+      // Robust Real-time sync: Watch the correct document
+      // Priority 1: Use the ID from cached _userData if available
+      // Priority 2: Use the Firebase UID
+      final docId = _userData?['uid'] ?? _userData?['matricule'] ?? user.uid;
+      
+      _firestore?.collection('users').doc(docId).snapshots().listen((doc) {
+        if (doc.exists) {
+          final data = doc.data();
+          if (data != null) {
+             _userData = data;
+             _persistUserData(_userData!);
+             notifyListeners();
+>>>>>>> 58ecaf86e10f96527016faf5e573cb6072c3269b
           }
         }
       });
@@ -217,6 +232,13 @@ class AuthService extends ChangeNotifier {
       if (query.docs.isEmpty) return false;
 
       final data = query.docs.first.data();
+      
+      // Security Check: Is the staff member banned?
+      if (data['isBanned'] == true) {
+        if (kDebugMode) print('Login denied: Staff account is banned.');
+        return false;
+      }
+
       _userData = data;
       _userData!['id'] = query.docs.first.id;
       
@@ -283,6 +305,14 @@ class AuthService extends ChangeNotifier {
           'password': password,
         }),
       );
+
+      // SECURITY PRE-CHECK: Even if Progres succeeds, check if the student is localy banned in Firestore
+      if (_firestore != null) {
+         final existingDoc = await _firestore!.collection('users').doc(matricule).get();
+         if (existingDoc.exists && existingDoc.data()?['isBanned'] == true) {
+           throw Exception('ACCOUNT_BANNED'); // Signal to UI that account is suspended
+         }
+      }
 
       if (response.statusCode == 200) {
         String token = '';
@@ -414,7 +444,7 @@ class AuthService extends ChangeNotifier {
     data['uid'] = student.matricule ?? matricule;
     data['role'] = 'student';
     data['displayName'] = '${student.prenomFr ?? ''} ${student.nomFr ?? ''}'.trim();
-    data['isBanned'] = false;
+    // Do NOT default isBanned to false here to avoid overwriting existing bans in Firestore during sync
     if (residenceId != null) {
       data['residenceId'] = residenceId;
     }

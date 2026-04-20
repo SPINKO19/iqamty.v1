@@ -175,6 +175,9 @@ class AuthProvider with ChangeNotifier {
     if (errorStr.contains('network-request-failed')) return 'Erreur réseau. Vérifiez votre connexion.';
     if (errorStr.contains('too-many-requests')) return 'Trop de tentatives échouées. Réessayez plus tard.';
 
+    // Custom Errors
+    if (errorStr.contains('account_banned')) return 'Votre compte a été suspendu par l\'administration.';
+
     // Default fallback
     return 'Une erreur est survenue. Veuillez réessayer.';
   }

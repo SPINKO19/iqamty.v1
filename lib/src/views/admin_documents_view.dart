@@ -26,6 +26,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
   double _uploadProgress = 0;
   String? _selectedFileName;
   PlatformFile? _pickedFile;
+  String _selectedTarget = 'students'; // 'students' or 'workers'
 
   Future<void> _pickFile() async {
     try {
@@ -90,6 +91,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
         type: _pickedFile!.extension?.toLowerCase() ?? 'unknown',
         size: _formatBytes(_pickedFile!.size),
         url: downloadUrl,
+        target: _selectedTarget,
         residenceId: auth.currentResidenceId,
       );
 
@@ -164,6 +166,39 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
                                 _buildPickArea(context, lp)
                               else
                                 _buildSelectedFileArea(context),
+                              
+                              const SizedBox(height: 20),
+                              
+                              // Target Selection
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Destinataires',
+                                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF374151)),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildTargetOption(
+                                          title: 'Étudiants',
+                                          value: 'students',
+                                          icon: Icons.school_rounded,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: _buildTargetOption(
+                                          title: 'Travailleurs',
+                                          value: 'workers',
+                                          icon: Icons.engineering_rounded,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                               
                               if (_isUploading) ...[
                                 const SizedBox(height: 24),
@@ -385,5 +420,40 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
     } catch (e) {
       debugPrint('Delete error: $e');
     }
+  }
+
+  Widget _buildTargetOption({required String title, required String value, required IconData icon}) {
+    bool isSelected = _selectedTarget == value;
+    return InkWell(
+      onTap: () => setState(() => _selectedTarget = value),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0E2318) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF0E2318) : const Color(0xFFE5E7EB),
+            width: 2,
+          ),
+          boxShadow: isSelected ? [BoxShadow(color: const Color(0xFF0E2318).withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 4))] : [],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: isSelected ? Colors.white : const Color(0xFF6B7280), size: 24),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? Colors.white : const Color(0xFF374151),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
