@@ -56,7 +56,7 @@ class AdminComplaintsView extends StatelessWidget {
                       crossAxisCount: cardsPerRow,
                       crossAxisSpacing: 24,
                       mainAxisSpacing: 24,
-                      mainAxisExtent: 250,
+                      mainAxisExtent: 320,
                     ),
                     itemCount: complaints.length,
                     itemBuilder: (context, index) => _AdminComplaintCard(complaint: complaints[index]),

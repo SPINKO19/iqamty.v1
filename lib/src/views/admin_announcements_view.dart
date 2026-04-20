@@ -80,7 +80,7 @@ class AdminAnnouncementsView extends StatelessWidget {
                       crossAxisCount: cardsPerRow,
                       crossAxisSpacing: 24,
                       mainAxisSpacing: 24,
-                      mainAxisExtent: 220,
+                      mainAxisExtent: 280,
                     ),
                     itemCount: announcements.length,
                     itemBuilder: (context, index) {

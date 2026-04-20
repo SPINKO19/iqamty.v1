@@ -245,16 +245,17 @@ class FirestoreService extends ChangeNotifier {
     required String type,
     required String size,
     required String url,
+    required String target,
     String? residenceId,
   }) async {
     if (_db == null) throw Exception("Firestore not initialized");
     final data = {
       'title': title,
-      'type': type,
-      'size': size,
-      'url': url,
-      'createdAt': FieldValue.serverTimestamp(),
-      'target': 'students',
+      'fileType': type,
+      'fileSize': size,
+      'fileUrl': url,
+      'target': target,
+      'uploadedAt': FieldValue.serverTimestamp(),
     };
     if (residenceId != null) data['residenceId'] = residenceId;
     await _db!.collection('documents').add(data);

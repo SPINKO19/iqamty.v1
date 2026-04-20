@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:diacritic/diacritic.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/firestore_service.dart';
 import '../providers/auth_provider.dart';
@@ -16,6 +17,24 @@ class AdminWorkersView extends StatefulWidget {
 class _AdminWorkersViewState extends State<AdminWorkersView> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  String _statusFilter = 'all'; // 'all', 'active', 'blocked'
+  Stream<List<Map<String, dynamic>>>? _workersStream;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initStream();
+    });
+  }
+
+  void _initStream() {
+    final auth = context.read<AuthProvider>();
+    final firestore = context.read<FirestoreService>();
+    setState(() {
+      _workersStream = firestore.getWorkers(residenceId: auth.currentResidenceId);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,16 +47,33 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
       padding: const EdgeInsets.all(24),
       physics: const BouncingScrollPhysics(),
       child: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: firestore.getWorkers(residenceId: resId),
+        stream: _workersStream,
         builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting && _workersStream != null) {
+            return const Center(child: CircularProgressIndicator(color: Color(0xFF1D5C35)));
+          }
           final workers = snapshot.data ?? [];
           final active = workers.where((w) => w['isBanned'] != true).length;
           final blocked = workers.length - active;
 
           final filtered = workers.where((w) {
-            final name = (w['displayName'] ?? '').toString().toLowerCase();
-            final id = (w['customId'] ?? '').toString().toLowerCase();
-            return name.contains(_searchQuery) || id.contains(_searchQuery);
+            // Status Filter
+            final isWorkerBanned = w['isBanned'] == true;
+            if (_statusFilter == 'blocked' && !isWorkerBanned) return false;
+            if (_statusFilter == 'active' && isWorkerBanned) return false;
+
+            // Search Filter
+            if (_searchQuery.isEmpty) return true;
+
+            final terms = removeDiacritics(_searchQuery.toLowerCase()).split(' ').where((t) => t.isNotEmpty);
+            
+            final name = removeDiacritics((w['displayName'] ?? '').toString().toLowerCase());
+            final id = removeDiacritics((w['customId'] ?? '').toString().toLowerCase());
+            final dept = removeDiacritics((w['department'] ?? '').toString().toLowerCase());
+
+            final combined = "$name $id $dept";
+
+            return terms.every((term) => combined.contains(term));
           }).toList();
 
           return Column(
@@ -46,52 +82,99 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
               // Stats Row
               Row(
                 children: [
-                  _buildSmallStat('Total', workers.length.toString(), const Color(0xFF1D5C35)),
+                  _buildSmallStat(
+                    'Total', 
+                    workers.length.toString(), 
+                    const Color(0xFF1D5C35),
+                    isActive: _statusFilter == 'all',
+                    onTap: () => setState(() => _statusFilter = 'all'),
+                  ),
                   const SizedBox(width: 12),
-                  _buildSmallStat('Actifs', active.toString(), const Color(0xFF10B981)),
+                  _buildSmallStat(
+                    'Actifs', 
+                    active.toString(), 
+                    const Color(0xFF10B981),
+                    isActive: _statusFilter == 'active',
+                    onTap: () => setState(() => _statusFilter = 'active'),
+                  ),
                   const SizedBox(width: 12),
-                  _buildSmallStat('Bloqués', blocked.toString(), const Color(0xFFEF4444)),
+                  _buildSmallStat(
+                    'Bloqués', 
+                    blocked.toString(), 
+                    const Color(0xFFEF4444),
+                    isActive: _statusFilter == 'blocked',
+                    onTap: () => setState(() => _statusFilter = 'blocked'),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
 
-              // Header Action Row
+              // Search & Results Row
               Row(
                 children: [
                   Expanded(
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
-                        decoration: InputDecoration(
-                          hintText: 'Rechercher un ouvrier...',
-                          hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
-                          prefixIcon: const Icon(Icons.search, size: 18, color: Colors.grey),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _searchQuery.isNotEmpty ? const Color(0xFF1D5C35).withOpacity(0.5) : const Color(0xFFE5E7EB),
+                          width: 1.5,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.02),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+                              style: GoogleFonts.inter(fontSize: 14),
+                              decoration: InputDecoration(
+                                hintText: 'Rechercher un ouvrier...',
+                                hintStyle: GoogleFonts.inter(color: Colors.grey, fontSize: 13),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                            ),
+                          ),
+                          if (_searchQuery.isNotEmpty)
+                            GestureDetector(
+                              onTap: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                              child: const Icon(Icons.close_rounded, color: Colors.grey, size: 18),
+                            ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    onPressed: () => _showAddWorkerDialog(context, firestore, resId),
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: Text(lp.getText('add_staff') == 'add_staff' ? 'Ajouter' : lp.getText('add_staff'), style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0E2318),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
+                  const SizedBox(width: 16),
+                  _buildHeaderAction(
+                    icon: Icons.person_add_rounded,
+                    onTap: () => _showAddWorkerDialog(context, firestore, resId),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              // Results Count
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  "${filtered.length} travailleurs trouvés",
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
+                ),
               ),
               const SizedBox(height: 24),
               
@@ -170,22 +253,47 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
     );
   }
 
-  Widget _buildSmallStat(String label, String value, Color color) {
-    return Expanded(
+  Widget _buildHeaderAction({required IconData icon, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.grey)),
-            const SizedBox(height: 8),
-            Text(value, style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: color)),
-          ],
+        child: Icon(icon, size: 20, color: const Color(0xFF0E2318)),
+      ),
+    );
+  }
+
+  Widget _buildSmallStat(String label, String value, Color color, {required bool isActive, required VoidCallback onTap}) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isActive ? color : const Color(0xFFE5E7EB),
+              width: isActive ? 2 : 1,
+            ),
+            boxShadow: isActive ? [BoxShadow(color: color.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 4))] : [],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.grey)),
+              const SizedBox(height: 8),
+              Text(value, style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: color)),
+            ],
+          ),
         ),
       ),
     );

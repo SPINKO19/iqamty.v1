@@ -33,6 +33,7 @@ import '../views/admin_dining_config_view.dart';
 import '../views/gym_view.dart';
 import '../views/weightlifting_view.dart';
 import '../views/hamam_view.dart';
+import '../views/banned_screen.dart';
 import '../models/types.dart';
 
 class AppRouter {
@@ -91,7 +92,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/banned',
-          builder: (context, state) => const PlaceholderScreen(title: 'Account Suspended'),
+          builder: (context, state) => const BannedScreen(),
         ),
         ShellRoute(
           builder: (context, state, child) {

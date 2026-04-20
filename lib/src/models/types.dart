@@ -141,6 +141,7 @@ class DocumentModel {
   final String fileUrl;
   final String fileType;
   final String fileSize;
+  final String target;
   final DateTime uploadedAt;
 
   DocumentModel({
@@ -149,6 +150,7 @@ class DocumentModel {
     required this.fileUrl,
     required this.fileType,
     required this.fileSize,
+    required this.target,
     required this.uploadedAt,
   });
 
@@ -156,10 +158,13 @@ class DocumentModel {
     return DocumentModel(
       id: json['id'],
       title: json['title'] ?? '',
-      fileUrl: json['fileUrl'] ?? '',
-      fileType: json['fileType'] ?? '',
-      fileSize: json['fileSize'] ?? '',
-      uploadedAt: (json['uploadedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      fileUrl: json['fileUrl'] ?? json['url'] ?? '',
+      fileType: json['fileType'] ?? json['type'] ?? '',
+      fileSize: json['fileSize'] ?? json['size'] ?? '',
+      target: json['target'] ?? 'students',
+      uploadedAt: (json['uploadedAt'] as Timestamp?)?.toDate() ?? 
+                  (json['createdAt'] as Timestamp?)?.toDate() ?? 
+                  DateTime.now(),
     );
   }
 
@@ -169,6 +174,7 @@ class DocumentModel {
       'fileUrl': fileUrl,
       'fileType': fileType,
       'fileSize': fileSize,
+      'target': target,
       // uploadedAt is added by the server
     };
   }

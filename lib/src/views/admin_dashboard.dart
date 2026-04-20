@@ -228,15 +228,6 @@ class AdminDashboard extends StatelessWidget {
         decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6)))),
         child: Row(
           children: [
-            Container(
-              width: 16,
-              height: 16,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            const SizedBox(width: 12),
             Expanded(
               child: Text(title, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500)),
             ),
