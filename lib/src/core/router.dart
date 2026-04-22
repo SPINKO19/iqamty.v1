@@ -184,6 +184,7 @@ class AppRouter {
             GoRoute(path: '/admin/dining', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Dining Config'))),
             GoRoute(path: '/admin/dining-config', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDiningConfigView())),
             GoRoute(path: '/admin/workers', pageBuilder: (context, state) => const NoTransitionPage(child: AdminWorkersView())),
+            GoRoute(path: '/admin/notifications', pageBuilder: (context, state) => const NoTransitionPage(child: NotificationsView())),
             GoRoute(path: '/admin/chat', pageBuilder: (context, state) => const NoTransitionPage(child: AdminChatListView())),
             GoRoute(
               path: '/admin/chat/:chatId',

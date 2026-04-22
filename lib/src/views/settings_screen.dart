@@ -101,6 +101,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: languageProvider.getText('help_center'),
                   trailingIcon: Icons.open_in_new,
                   textTheme: textTheme,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(languageProvider.getText('help_center') + ' - Bientôt disponible')),
+                    );
+                  },
                 ),
                 Divider(color: context.appBorder, height: 1),
                 _buildActionRow(
@@ -108,6 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: languageProvider.getText('contact_us'),
                   trailingIcon: Icons.chevron_right,
                   textTheme: textTheme,
+                  onTap: () {}, // empty action reserved for email
                 ),
               ],
             ),
@@ -121,6 +127,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: languageProvider.getText('app_version'),
                   trailingText: '2.4.0',
                   textTheme: textTheme,
+                  onTap: () {
+                    showAboutDialog(
+                      context: context,
+                      applicationName: 'IQAMTY',
+                      applicationVersion: '2.4.0',
+                      applicationIcon: const Icon(Icons.school_rounded, size: 40, color: Color(0xFF1D5C35)),
+                    );
+                  },
                 ),
                 Divider(color: context.appBorder, height: 1),
                 _buildActionRow(
@@ -128,6 +142,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: languageProvider.getText('terms_of_use'),
                   trailingIcon: Icons.chevron_right,
                   textTheme: textTheme,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(languageProvider.getText('terms_of_use') + ' - Bientôt disponible')),
+                    );
+                  },
                 ),
               ],
             ),
@@ -253,16 +272,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     IconData? trailingIcon,
     String? trailingText,
     required TextTheme textTheme,
+    VoidCallback? onTap,
   }) {
-    return _buildRowBase(
-      icon: icon,
-      title: title,
-      textTheme: textTheme,
-      trailing: trailingIcon != null
-          ? Icon(trailingIcon, color: context.appTextSecondary, size: 20)
-          : (trailingText != null
-              ? Text(trailingText, style: textTheme.bodyMedium?.copyWith(color: context.appTextPrimary))
-              : const SizedBox.shrink()),
+    return InkWell(
+      onTap: onTap,
+      child: _buildRowBase(
+        icon: icon,
+        title: title,
+        textTheme: textTheme,
+        trailing: trailingIcon != null
+            ? Icon(trailingIcon, color: context.appTextSecondary, size: 20)
+            : (trailingText != null
+                ? Text(trailingText, style: textTheme.bodyMedium?.copyWith(color: context.appTextPrimary))
+                : const SizedBox.shrink()),
+      ),
     );
   }
 

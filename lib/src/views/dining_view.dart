@@ -501,7 +501,9 @@ class _MealCard extends StatelessWidget {
             children: List.generate(5, (index) {
               return GestureDetector(
                 onTap: () {
+                  final rating = index + 1.0;
                   if(meal.id?.startsWith('mock') == false) {
+                    context.read<FirestoreService>().rateMeal(meal.id!, rating);
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Merci pour votre avis!')));
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Avis envoyé avec succès pour ce repas!')));

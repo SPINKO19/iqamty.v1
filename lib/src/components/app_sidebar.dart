@@ -302,8 +302,26 @@ class AppSidebar extends StatelessWidget {
 
   List<dynamic> _workerItems(BuildContext context, LanguageProvider lp) {
     return [
-      _NavHeaderData('PLATFORM'),
-      _NavItemData(Icons.build_outlined, 'Worker Dashboard', '/worker-dashboard'),
+      _NavHeaderData('ESPACE TRAVAILLEUR'),
+      _NavItemData(Icons.build_outlined, 'Tableau de bord', '/worker-dashboard'),
+      _NavItemData(Icons.restaurant_outlined, 'Restauration', '/dining'),
+
+      const SizedBox(height: 8),
+      _NavHeaderData('SERVICES'),
+      _NavItemData(Icons.calendar_month_rounded, 'Programme & Douches', '/planning'),
+      _NavItemData(Icons.directions_bus_outlined, 'Transport', '/transport'),
+
+      const SizedBox(height: 8),
+      _NavHeaderData('RÉSEAU'),
+      _NavItemData(Icons.people_outline, 'Communauté', '/community'),
+      _NavItemData(
+        Icons.chat_bubble_outline_rounded,
+        'Messages',
+        '/chat',
+        badgeCount: 0,
+        badgeColor: const Color(0xFF3B82F6),
+      ),
+      _NavItemData(Icons.person_outline_rounded, 'Profil', '/profile'),
     ];
   }
 

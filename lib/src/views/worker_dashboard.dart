@@ -66,70 +66,97 @@ class WorkerDashboard extends StatelessWidget {
       ),
       body: StreamBuilder<List<ServiceRequest>>(
         stream: firestore.getWorkerTasks(userId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: _kGreen));
-          }
-          final tasks = snapshot.data ?? [];
+        builder: (context, taskSnapshot) {
+          return StreamBuilder<List<Complaint>>(
+            stream: firestore.getAllComplaints(residenceId: auth.currentResidenceId),
+            builder: (context, complaintSnapshot) {
+              if (taskSnapshot.connectionState == ConnectionState.waiting && complaintSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator(color: _kGreen));
+              }
+              final tasks = taskSnapshot.data ?? [];
+              final allComplaints = complaintSnapshot.data ?? [];
+              
+              // Only show active complaints that are not resolved globally
+              final pendingComplaints = allComplaints.where((c) => c.status != Status.resolved).toList();
 
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildQuickActions(context, lp, firestore, userId, auth.currentResidenceId, auth.currentUserData?['displayName'] ?? 'Ouvrier'),
-                const SizedBox(height: 32),
-                Text(
-                  lp.getText('statistics') == 'statistics' ? 'Statistiques' : lp.getText('statistics'),
-                  style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5),
-                ),
-                const SizedBox(height: 16),
-                _buildWorkerStats(context, lp, tasks),
-                const SizedBox(height: 32),
-                Text(
-                  lp.getText('my_assigned_tasks') == 'my_assigned_tasks' ? 'Mes tâches assignées' : lp.getText('my_assigned_tasks'),
-                  style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5),
-                ),
-                const SizedBox(height: 16),
-                if (tasks.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      child: Text(
-                        "Aucune tâche assignée",
-                        style: GoogleFonts.inter(color: context.appTextSecondary),
-                      ),
+              return SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildQuickActions(context, lp, firestore, userId, auth.currentResidenceId, auth.currentUserData?['displayName'] ?? 'Ouvrier'),
+                    const SizedBox(height: 32),
+                    Text(
+                      lp.getText('statistics') == 'statistics' ? 'Statistiques' : lp.getText('statistics'),
+                      style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5),
                     ),
-                  )
-                else
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: tasks.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 16),
-                    itemBuilder: (context, index) {
-                      final task = tasks[index];
-                      Color statusColor = _kGreen;
-                      if (task.priority.toLowerCase() == 'haute' || task.priority.toLowerCase() == 'high') statusColor = Colors.red;
-                      if (task.status.toLowerCase() == 'completed' || task.status.toLowerCase() == 'resolved') statusColor = const Color(0xFF10B981);
-                      if (task.status.toLowerCase() == 'pending') statusColor = const Color(0xFFF4A261);
-                      
-                      return _buildTaskCard(context, task, statusColor, firestore);
-                    },
-                  ),
-                const SizedBox(height: 100),
-              ],
-            ),
+                    const SizedBox(height: 16),
+                    _buildWorkerStats(context, lp, tasks, pendingComplaints),
+                    const SizedBox(height: 32),
+                    Text(
+                      lp.getText('my_assigned_tasks') == 'my_assigned_tasks' ? 'Mes tâches assignées' : lp.getText('my_assigned_tasks'),
+                      style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    if (tasks.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          child: Text(
+                            "Aucune tâche assignée",
+                            style: GoogleFonts.inter(color: context.appTextSecondary),
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: tasks.length,
+                        separatorBuilder: (context, index) => const SizedBox(height: 16),
+                        itemBuilder: (context, index) {
+                          final task = tasks[index];
+                          Color statusColor = _kGreen;
+                          if (task.priority.toLowerCase() == 'haute' || task.priority.toLowerCase() == 'high') statusColor = Colors.red;
+                          if (task.status.toLowerCase() == 'completed' || task.status.toLowerCase() == 'resolved') statusColor = const Color(0xFF10B981);
+                          if (task.status.toLowerCase() == 'pending') statusColor = const Color(0xFFF4A261);
+                          
+                          return _buildTaskCard(context, task, statusColor, firestore);
+                        },
+                      ),
+                    
+                    if (pendingComplaints.isNotEmpty) ...[
+                      const SizedBox(height: 32),
+                      Text(
+                        'Réclamations globales (À gérer)',
+                        style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5),
+                      ),
+                      const SizedBox(height: 16),
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: pendingComplaints.length,
+                        separatorBuilder: (context, index) => const SizedBox(height: 16),
+                        itemBuilder: (context, index) {
+                          return _buildComplaintCard(context, pendingComplaints[index], firestore);
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              );
+            },
           );
         },
       ),
     );
   }
 
-  Widget _buildWorkerStats(BuildContext context, LanguageProvider lp, List<ServiceRequest> tasks) {
+  Widget _buildWorkerStats(BuildContext context, LanguageProvider lp, List<ServiceRequest> tasks, List<Complaint> pendingComplaints) {
     final done = tasks.where((t) => t.status.toLowerCase() == 'completed' || t.status.toLowerCase() == 'resolved').length;
-    final toDo = tasks.length - done;
+    final toDo = tasks.length - done + pendingComplaints.length;
 
     return Row(
       children: [
@@ -230,6 +257,68 @@ class WorkerDashboard extends StatelessWidget {
               ],
             ),
           ]
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComplaintCard(BuildContext context, Complaint complaint, FirestoreService firestore) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: isDark ? null : [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(complaint.title.toUpperCase(), style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: context.appTextPrimary, letterSpacing: -0.3)),
+                    const SizedBox(height: 4),
+                    Text(complaint.description, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: () async {
+                  await firestore.updateComplaintStatus(
+                    complaint.id!,
+                    Status.resolved,
+                    adminComment: 'Problème pris en charge et résolu par l\'équipe technique.',
+                  );
+                },
+                icon: const Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 18),
+                label: Text('Prendre en charge et terminer', style: GoogleFonts.inter(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12)),
+                style: TextButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

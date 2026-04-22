@@ -338,27 +338,30 @@ class _AdminHeader extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          Stack(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  border: Border.all(color: context.appBorder),
-                  shape: BoxShape.circle,
+          GestureDetector(
+            onTap: () => context.push('/admin/notifications'),
+            child: Stack(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: context.appBorder),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.notifications_none_rounded, size: 18, color: context.appTextSecondary),
                 ),
-                child: Icon(Icons.notifications_none_rounded, size: 18, color: context.appTextSecondary),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(color: Color(0xFFF59E0B), shape: BoxShape.circle),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(color: Color(0xFFF59E0B), shape: BoxShape.circle),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

@@ -101,6 +101,28 @@ class FirestoreService extends ChangeNotifier {
     }
   }
 
+  Future<void> rateMeal(String mealId, double rating) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final docRef = _db!.collection('meals').doc(mealId);
+    
+    await _db!.runTransaction((transaction) async {
+      final doc = await transaction.get(docRef);
+      if (!doc.exists) return;
+      
+      final data = doc.data()!;
+      final currentAvg = (data['averageRating'] ?? 0.0).toDouble();
+      final currentCount = data['ratingCount'] ?? 0;
+      
+      final newCount = currentCount + 1;
+      final newAvg = ((currentAvg * currentCount) + rating) / newCount;
+      
+      transaction.update(docRef, {
+        'averageRating': newAvg,
+        'ratingCount': newCount,
+      });
+    });
+  }
+
   Stream<bool> streamRestaurantStatus(String? residenceId) {
     if (_db == null || residenceId == null) return Stream.value(true);
     return _db!.collection('residences').doc(residenceId).snapshots().map((doc) => doc.data()?['isRestaurantOpen'] ?? true);
