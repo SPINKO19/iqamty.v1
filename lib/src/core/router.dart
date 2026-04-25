@@ -21,6 +21,8 @@ import '../views/admin_complaints_view.dart';
 import '../views/admin_requests_view.dart';
 import '../views/admin_users_view.dart';
 import '../views/admin_announcements_view.dart';
+import '../views/admin_rooms_view.dart';
+import '../views/admin_block_detail_view.dart';
 import '../views/admin_documents_view.dart';
 import '../views/admin_workers_view.dart';
 import '../views/announcement_detail_screen.dart';
@@ -179,6 +181,14 @@ class AppRouter {
             ),
             GoRoute(path: '/admin/users', pageBuilder: (context, state) => const NoTransitionPage(child: AdminUsersView())),
             GoRoute(path: '/admin/announcements', pageBuilder: (context, state) => const NoTransitionPage(child: AdminAnnouncementsView())),
+            GoRoute(path: '/admin/rooms', pageBuilder: (context, state) => const NoTransitionPage(child: AdminRoomsView())),
+            GoRoute(
+              path: '/admin/rooms/:blockId',
+              pageBuilder: (context, state) {
+                final blockId = state.pathParameters['blockId']!;
+                return NoTransitionPage(child: AdminBlockDetailView(blockId: blockId));
+              },
+            ),
             GoRoute(path: '/admin/documents', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDocumentsView())),
             GoRoute(path: '/admin/resources', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Resources'))),
             GoRoute(path: '/admin/dining', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Dining Config'))),

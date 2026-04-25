@@ -162,6 +162,7 @@ class _AdminSidebarContent extends StatelessWidget {
                 ),
                 
                 _buildNavItem(context, Icons.people_rounded, lp.getText('users'), '/admin/users', currentRoute),
+                _buildNavItem(context, Icons.meeting_room_rounded, lp.getText('rooms'), '/admin/rooms', currentRoute),
                 _buildNavItemWithBadge(
                   context, 
                   Icons.chat_bubble_rounded, 
@@ -179,7 +180,6 @@ class _AdminSidebarContent extends StatelessWidget {
                   child: Divider(color: Colors.white10, height: 1),
                 ),
                 
-                _buildNavItem(context, Icons.meeting_room_rounded, 'Chambres', '/admin/resources', currentRoute),
                 _buildNavItem(context, Icons.campaign_rounded, lp.getText('announcements'), '/admin/announcements', currentRoute),
                 _buildNavItem(context, Icons.handyman_rounded, lp.getText('maintenance'), '/admin/maintenance', currentRoute),
                 _buildNavItem(context, Icons.settings_rounded, lp.getText('settings'), '/admin/settings', currentRoute),
@@ -376,7 +376,9 @@ class _AdminHeader extends StatelessWidget {
     if (route.startsWith('/admin/users')) return lp.getText('users');
     if (route.startsWith('/admin/chat')) return lp.getText('messaging');
     if (route.startsWith('/admin/workers')) return 'Travailleurs';
-    if (route.startsWith('/admin/resources')) return 'Chambres';
+    if (route.startsWith('/admin/rooms/')) return 'Détails Bloc';
+    if (route.startsWith('/admin/rooms')) return lp.getText('rooms');
+    if (route.startsWith('/admin/resources')) return 'Ressources';
     if (route.startsWith('/admin/announcements')) return lp.getText('announcements');
     if (route.startsWith('/admin/maintenance')) return lp.getText('maintenance');
     if (route.startsWith('/admin/dining')) return lp.getText('restoration');

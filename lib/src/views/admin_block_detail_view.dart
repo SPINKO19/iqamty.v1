@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/language_provider.dart';
+import '../providers/auth_provider.dart';
 import '../services/firestore_service.dart';
 import '../core/theme/colors.dart';
-import '../providers/auth_provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-const _kGreen = Color(0xFF2D6A4F);
-
-class AdminUsersView extends StatefulWidget {
-  const AdminUsersView({super.key});
+class AdminBlockDetailView extends StatefulWidget {
+  final String blockId;
+  const AdminBlockDetailView({super.key, required this.blockId});
 
   @override
-  State<AdminUsersView> createState() => _AdminUsersViewState();
+  State<AdminBlockDetailView> createState() => _AdminBlockDetailViewState();
 }
 
-class _AdminUsersViewState extends State<AdminUsersView> {
+class _AdminBlockDetailViewState extends State<AdminBlockDetailView> {
   final ValueNotifier<String> _searchQueryNotifier = ValueNotifier<String>('');
   final TextEditingController _searchController = TextEditingController();
 
@@ -34,95 +33,79 @@ class _AdminUsersViewState extends State<AdminUsersView> {
     final firestore = context.read<FirestoreService>();
     final residenceId = auth.currentResidenceId;
 
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: firestore.getStudents(residenceId: residenceId),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: _kGreen));
-        }
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            child: _buildHeader(context, lp),
+          ),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: _buildSearchBar(context, lp),
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: firestore.getStudents(residenceId: residenceId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator(color: Color(0xFF1D5C35)));
+                }
 
-        final allStudents = snapshot.data ?? [];
-        final total = allStudents.length;
-        final blocked = allStudents.where((s) => s['isBanned'] == true).length;
-        final active = total - blocked;
+                final allStudents = snapshot.data ?? [];
+                final blockStudents = allStudents.where((s) {
+                  final studentBlock = s['bloc']?.toString().toUpperCase() ?? '';
+                  final targetBlock = widget.blockId.toUpperCase();
+                  return studentBlock == targetBlock || 
+                         studentBlock == 'BLOC $targetBlock' || 
+                         (studentBlock.length > 1 && studentBlock.contains(targetBlock));
+                }).toList();
 
-        return ValueListenableBuilder<String>(
-          valueListenable: _searchQueryNotifier,
-          builder: (context, query, child) {
-            final filteredStudents = _filterStudents(allStudents, query);
+                return ValueListenableBuilder<String>(
+                  valueListenable: _searchQueryNotifier,
+                  builder: (context, query, child) {
+                    final filteredStudents = _filterStudents(blockStudents, query);
 
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _buildSmallStat(context, lp.getText('total'), total.toString(), _kGreen),
-                      const SizedBox(width: 12),
-                      _buildSmallStat(context, lp.getText('active'), active.toString(), const Color(0xFF10B981)),
-                      const SizedBox(width: 12),
-                      _buildSmallStat(context, lp.getText('blocked'), blocked.toString(), const Color(0xFFEF4444)),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
+                    if (filteredStudents.isEmpty) {
+                      return _buildEmptyState(context, query);
+                    }
 
-                  _buildSearchBar(context, lp),
-                  
-                  const SizedBox(height: 24),
-
-                  if (filteredStudents.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(40),
-                        child: Column(
-                          children: [
-                            Icon(Icons.person_search_rounded, size: 48, color: context.appTextSecondary.withValues(alpha: 0.5)),
-                            const SizedBox(height: 16),
-                            Text(
-                              query.isEmpty ? "Aucun étudiant enregistré" : "Aucun résultat trouvé",
-                              style: GoogleFonts.inter(color: context.appTextSecondary),
-                            ),
-                          ],
-                        ),
+                    return GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                      physics: const BouncingScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: MediaQuery.of(context).size.width > 800 ? 2 : 1,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        mainAxisExtent: 110,
                       ),
-                    )
-                  else
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final cardsPerRow = constraints.maxWidth > 800 ? 2 : 1;
-                        return GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: cardsPerRow,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            mainAxisExtent: 110,
-                          ),
-                          itemCount: filteredStudents.length,
-                          itemBuilder: (context, index) => _buildModernUserCard(
-                            context, 
-                            lp, 
-                            filteredStudents[index],
-                            firestore,
-                            residenceId,
-                          ),
-                        );
-                      },
-                    ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+                      itemCount: filteredStudents.length,
+                      itemBuilder: (context, index) => _buildModernUserCard(
+                        context,
+                        lp,
+                        filteredStudents[index],
+                        firestore,
+                        residenceId,
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   List<Map<String, dynamic>> _filterStudents(List<Map<String, dynamic>> students, String query) {
     if (query.isEmpty) return students;
+    
+    // Normalize query: lowercase and trim
     final q = query.toLowerCase().trim();
     
     return students.where((s) {
@@ -130,13 +113,43 @@ class _AdminUsersViewState extends State<AdminUsersView> {
       final matricule = (s['matricule'] ?? s['uid'] ?? '').toString().toLowerCase();
       final room = (s['room'] ?? s['chambre'] ?? '').toString().toLowerCase();
       
+      // Split name into parts (e.g., "Hocine Rekaïk" -> ["hocine", "rekaïk"])
       final nameParts = name.split(RegExp(r'\s+')).where((part) => part.isNotEmpty);
+      
+      // Strict prefix match: the query must match the START of one of the name parts
       bool nameMatch = nameParts.any((part) => part.startsWith(q));
+      
+      // Also check matricule and room strictly from the start
       bool matriculeMatch = matricule.startsWith(q);
       bool roomMatch = room.startsWith(q);
       
       return nameMatch || matriculeMatch || roomMatch;
     }).toList();
+  }
+
+  Widget _buildHeader(BuildContext context, LanguageProvider lp) {
+    // We need to get the total count from a Stream, but for simplicity in header 
+    // we just use a static-looking header and we can pass the count if we want.
+    // However, since we moved StreamBuilder down, we'll just show the title.
+    return Row(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => context.go('/admin/rooms'),
+          color: context.appTextPrimary,
+          iconSize: 20,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '${lp.getText('residence_block')} ${widget.blockId}',
+          style: GoogleFonts.inter(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: context.appTextPrimary,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildSearchBar(BuildContext context, LanguageProvider lp) {
@@ -181,21 +194,19 @@ class _AdminUsersViewState extends State<AdminUsersView> {
     );
   }
 
-  Widget _buildSmallStat(BuildContext context, String label, String value, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: context.appCard,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: context.appBorder),
-        ),
+  Widget _buildEmptyState(BuildContext context, String query) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(label, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w500, color: context.appTextSecondary)),
-            const SizedBox(height: 8),
-            Text(value, style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: color)),
+            Icon(Icons.person_search_rounded, size: 48, color: context.appTextSecondary.withValues(alpha: 0.5)),
+            const SizedBox(height: 16),
+            Text(
+              query.isEmpty ? "Aucun étudiant dans ce bloc" : "Aucun résultat trouvé",
+              style: GoogleFonts.inter(color: context.appTextSecondary),
+            ),
           ],
         ),
       ),
@@ -204,8 +215,6 @@ class _AdminUsersViewState extends State<AdminUsersView> {
 
   Widget _buildModernUserCard(BuildContext context, LanguageProvider lp, Map<String, dynamic> student, FirestoreService firestore, String? residenceId) {
     final name = student['displayName'] ?? 'Étudiant';
-    final residence = student['residence'] ?? '---';
-    final bloc = student['bloc'] ?? '---';
     final room = student['room'] ?? student['chambre'] ?? '---';
     final isBanned = student['isBanned'] == true;
     final userId = student['id'] ?? student['uid'];
@@ -223,13 +232,13 @@ class _AdminUsersViewState extends State<AdminUsersView> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: const Color(0xFF1D5C35).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
               child: Text(
-                name[0].toUpperCase(),
-                style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 16),
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                style: GoogleFonts.inter(color: const Color(0xFF1D5C35), fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
           ),
@@ -237,10 +246,11 @@ class _AdminUsersViewState extends State<AdminUsersView> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(name, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: context.appTextPrimary)),
                 const SizedBox(height: 4),
-                Text('$residence • Bloc $bloc • Ch $room', style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 11)),
+                Text('Chambre $room', style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 11)),
               ],
             ),
           ),
@@ -265,7 +275,7 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                   children: [
                     Icon(Icons.chat_bubble_outline_rounded, size: 18, color: context.appTextSecondary),
                     const SizedBox(width: 10),
-                    Text(lp.getText('messaging'), style: TextStyle(fontSize: 13, color: context.appTextPrimary)),
+                    Text(lp.getText('messaging'), style: const TextStyle(fontSize: 13)),
                   ],
                 ),
               ),

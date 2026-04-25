@@ -56,6 +56,9 @@ class LanguageProvider extends ChangeNotifier {
     'admin_dashboard': 'Admin Dashboard',
     'worker_dashboard': 'Worker Dashboard',
     'workers': 'Workers',
+    'rooms': 'Rooms',
+    'rooms_management': 'Rooms Management',
+    'residence_block': 'Block',
 
     // Settings
     'account': 'ACCOUNT',
@@ -347,6 +350,9 @@ class LanguageProvider extends ChangeNotifier {
     'admin_dashboard': 'Admin Dashboard',
     'worker_dashboard': 'Espace Travailleur',
     'workers': 'Travailleurs',
+    'rooms': 'Chambres',
+    'rooms_management': 'Gestion des Chambres',
+    'residence_block': 'Bloc',
 
     // Settings
     'account': 'COMPTE',
@@ -643,6 +649,9 @@ class LanguageProvider extends ChangeNotifier {
     'users': 'المستخدمين',
     'admin_dashboard': 'لوحة التحكم',
     'worker_dashboard': 'فضاء العامل',
+    'rooms': 'الغرف',
+    'rooms_management': 'إدارة الغرف',
+    'residence_block': 'الجناح',
 
     // Settings
     'account': 'الحساب',
