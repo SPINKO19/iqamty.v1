@@ -44,25 +44,41 @@ class AppSidebar extends StatelessWidget {
     final nav = context.read<NavProvider>();
     final languageProvider = context.watch<LanguageProvider>();
     final auth = context.watch<AuthProvider>();
+    final firestore = context.watch<FirestoreService>();
     final role = auth.currentStudent?.role ?? auth.currentUserData?['role'] ?? 'student';
 
     List<dynamic> items;
     if (role == 'administrator') {
       items = _adminItems(context, languageProvider);
     } else if (role == 'worker') {
-      items = _workerItems(context, languageProvider);
+      items = _workerItems(context, languageProvider, auth, firestore);
     } else {
-      items = _studentItems(context, languageProvider, auth);
+      items = _studentItems(context, languageProvider, auth, firestore);
     }
 
     final currentRoute = GoRouterState.of(context).uri.toString();
 
     // Redesigned Top Header
-    final prenom = auth.currentStudent?.prenomFr ?? '';
-    final nom = auth.currentStudent?.nomFr ?? '';
-    final fullName = '$prenom $nom'.trim().isEmpty ? 'Utilisateur' : '$prenom $nom';
-    final initials = (prenom.isNotEmpty ? prenom[0].toUpperCase() : '') + (nom.isNotEmpty ? nom[0].toUpperCase() : 'U');
-    final chambre = auth.currentStudent?.chambre?.toString() ?? 'N/A';
+    String fullName = 'Utilisateur';
+    String initials = 'U';
+    String? subtitle;
+
+    if (role == 'student' && auth.currentStudent != null) {
+      final prenom = auth.currentStudent?.prenomFr ?? '';
+      final nom = auth.currentStudent?.nomFr ?? '';
+      fullName = '$prenom $nom'.trim().isEmpty ? 'Utilisateur' : '$prenom $nom';
+      initials = (prenom.isNotEmpty ? prenom[0].toUpperCase() : '') + (nom.isNotEmpty ? nom[0].toUpperCase() : 'U');
+      subtitle = 'Chambre ${auth.currentStudent?.chambre?.toString() ?? 'N/A'}';
+    } else {
+      fullName = auth.currentUserData?['displayName']?.toString() ?? auth.currentUserData?['name']?.toString() ?? 'Employé';
+      final parts = fullName.split(' ');
+      if (parts.length > 1) {
+        initials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+      } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
+        initials = parts[0][0].toUpperCase();
+      }
+      subtitle = auth.currentUserData?['department']?.toString() ?? (role == 'administrator' ? 'Administration' : 'Service Technique');
+    }
 
     final header = Container(
       color: _kDarkGreen,
@@ -159,7 +175,7 @@ class AppSidebar extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        'Chambre $chambre',
+                        subtitle,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,
@@ -243,8 +259,7 @@ class AppSidebar extends StatelessWidget {
     return drawer;
   }
 
-  List<dynamic> _studentItems(BuildContext context, LanguageProvider lp, AuthProvider auth) {
-    final firestore = context.watch<FirestoreService>();
+  List<dynamic> _studentItems(BuildContext context, LanguageProvider lp, AuthProvider auth, FirestoreService firestore) {
     final studentId = auth.currentStudent?.id?.toString() ?? '';
 
     return [
@@ -280,7 +295,10 @@ class AppSidebar extends StatelessWidget {
         Icons.chat_bubble_outline_rounded,
         'Messages',
         '/chat',
-        badgeCount: 5, // Fallback/Existing count requirement as requested
+        streamBadge: firestore.getAllChats().map((list) {
+          final userId = auth.currentUserData?['uid'] ?? auth.currentStudent?.matricule ?? '';
+          return list.where((c) => c['studentId'] == userId && c['hasUnreadStudent'] == true).length;
+        }),
         badgeColor: const Color(0xFF3B82F6),
       ),
       _NavItemData(Icons.person_outline_rounded, 'Profil', '/profile'),
@@ -300,25 +318,21 @@ class AppSidebar extends StatelessWidget {
     ];
   }
 
-  List<dynamic> _workerItems(BuildContext context, LanguageProvider lp) {
+  List<dynamic> _workerItems(BuildContext context, LanguageProvider lp, AuthProvider auth, FirestoreService firestore) {
     return [
       _NavHeaderData('ESPACE TRAVAILLEUR'),
       _NavItemData(Icons.build_outlined, 'Tableau de bord', '/worker-dashboard'),
-      _NavItemData(Icons.restaurant_outlined, 'Restauration', '/dining'),
-
+      
       const SizedBox(height: 8),
-      _NavHeaderData('SERVICES'),
-      _NavItemData(Icons.calendar_month_rounded, 'Programme & Douches', '/planning'),
-      _NavItemData(Icons.directions_bus_outlined, 'Transport', '/transport'),
-
-      const SizedBox(height: 8),
-      _NavHeaderData('RÉSEAU'),
-      _NavItemData(Icons.people_outline, 'Communauté', '/community'),
+      _NavHeaderData('COMMUNICATION'),
       _NavItemData(
         Icons.chat_bubble_outline_rounded,
         'Messages',
         '/chat',
-        badgeCount: 0,
+        streamBadge: firestore.getAllChats().map((list) {
+          final userId = auth.currentUserData?['uid'] ?? auth.currentStudent?.matricule ?? '';
+          return list.where((c) => c['studentId'] == userId && c['hasUnreadStudent'] == true).length;
+        }),
         badgeColor: const Color(0xFF3B82F6),
       ),
       _NavItemData(Icons.person_outline_rounded, 'Profil', '/profile'),
@@ -383,23 +397,37 @@ class AppSidebar extends StatelessWidget {
                   ),
                 ),
               ),
-              if (data.badgeCount != null && data.badgeCount! > 0)
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: data.badgeColor ?? const Color(0xFFEF4444),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    data.badgeCount.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      height: 1,
+              if ((data.badgeCount != null && data.badgeCount! > 0) || data.streamBadge != null)
+                data.streamBadge != null 
+                ? StreamBuilder<int>(
+                    stream: data.streamBadge,
+                    builder: (context, snapshot) {
+                      final count = snapshot.data ?? 0;
+                      if (count == 0) return const SizedBox.shrink();
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: data.badgeColor ?? const Color(0xFFEF4444),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          count.toString(),
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      );
+                    }
+                  )
+                : Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: data.badgeColor ?? const Color(0xFFEF4444),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      data.badgeCount.toString(),
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ),
-                ),
             ],
           ),
         ),
@@ -460,7 +488,8 @@ class _NavItemData {
   final String title;
   final String route;
   final int? badgeCount;
+  final Stream<int>? streamBadge;
   final Color? badgeColor;
   
-  _NavItemData(this.icon, this.title, this.route, {this.badgeCount, this.badgeColor});
+  _NavItemData(this.icon, this.title, this.route, {this.badgeCount, this.streamBadge, this.badgeColor});
 }

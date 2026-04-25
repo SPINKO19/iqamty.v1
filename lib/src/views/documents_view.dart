@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -48,7 +47,10 @@ class DocumentsView extends StatelessWidget {
         ),
       ),
       body: StreamBuilder<List<DocumentModel>>(
-        stream: context.read<FirestoreService>().getDocuments(residenceId: context.watch<AuthProvider>().currentResidenceId),
+        stream: context.read<FirestoreService>().getDocuments(
+          residenceId: context.watch<AuthProvider>().currentResidenceId,
+          target: context.watch<AuthProvider>().currentUserData?['role'] == 'worker' ? 'workers' : 'students',
+        ),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: Color(0xFF2D6A4F)));

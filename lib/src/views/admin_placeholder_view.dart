@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/language_provider.dart';
 import 'package:provider/provider.dart';
-import '../components/custom_menu_button.dart';
 import '../core/theme/colors.dart';
 
 class AdminPlaceholderView extends StatelessWidget {
@@ -21,7 +20,7 @@ class AdminPlaceholderView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: kGreen.withOpacity(0.1),
+              color: kGreen.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.construction_rounded, size: 64, color: AppColors.primary),

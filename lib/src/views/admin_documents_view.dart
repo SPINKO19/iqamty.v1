@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../components/custom_menu_button.dart';
 import '../providers/language_provider.dart';
 import '../services/firestore_service.dart';
 import '../providers/auth_provider.dart';
@@ -33,11 +31,14 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
       final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'docx', 'doc', 'png', 'jpg', 'jpeg'],
+        withData: true,
       );
 
       if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        debugPrint('File picked: ${file.name}, size: ${file.size}, bytes: ${file.bytes?.length}');
         setState(() {
-          _pickedFile = result.files.first;
+          _pickedFile = file;
           _selectedFileName = _pickedFile!.name;
         });
       }
@@ -83,9 +84,10 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
 
-      // Save metadata to Firestore using service
+      if (!mounted) return;
       final auth = context.read<AuthProvider>();
       final firestore = context.read<FirestoreService>();
+      final lp = context.read<LanguageProvider>();
       await firestore.addDocument(
         title: _pickedFile!.name,
         type: _pickedFile!.extension?.toLowerCase() ?? 'unknown',
@@ -94,8 +96,6 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
         target: _selectedTarget,
         residenceId: auth.currentResidenceId,
       );
-
-      final lp = context.read<LanguageProvider>();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -147,7 +147,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
                 children: [
                   // Upload Section
                   Expanded(
-                    flex: isWide ? 1 : 0,
+                    flex: 1,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -410,12 +410,14 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> {
   }
 
   Future<void> _deleteDocument(BuildContext context, String docId, String url) async {
+    final lp = context.read<LanguageProvider>();
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final firestore = context.read<FirestoreService>();
       await firestore.deleteDocument(docId);
       await FirebaseStorage.instance.refFromURL(url).delete();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Document deleted')));
+        messenger.showSnackBar(SnackBar(content: Text(lp.getText('upload_success') == 'upload_success' ? 'Document supprimé' : lp.getText('upload_success'))));
       }
     } catch (e) {
       debugPrint('Delete error: $e');

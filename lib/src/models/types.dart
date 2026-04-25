@@ -28,6 +28,7 @@ class Complaint {
   final String? adminComment;
   final String? department;
   final String? assignedWorkerId;
+  final String? residenceId;
 
   Complaint({
     this.id,
@@ -42,6 +43,7 @@ class Complaint {
     this.adminComment,
     this.department,
     this.assignedWorkerId,
+    this.residenceId,
   });
 
   factory Complaint.fromJson(Map<String, dynamic> json) {
@@ -62,6 +64,7 @@ class Complaint {
       adminComment: json['adminComment'],
       department: json['department'],
       assignedWorkerId: json['assignedWorkerId'],
+      residenceId: json['residenceId'],
     );
   }
 
@@ -77,6 +80,7 @@ class Complaint {
       'adminComment': adminComment,
       'department': department,
       'assignedWorkerId': assignedWorkerId,
+      'residenceId': residenceId,
     };
     
     // We don't include timestamp here because it will be added by the server
@@ -92,6 +96,7 @@ class Announcement {
   final String? imageUrl;
   final List<String> imageUrls;
   final String urgency;
+  final String? residenceId;
 
   Announcement({
     this.id,
@@ -101,6 +106,7 @@ class Announcement {
     this.imageUrl,
     this.imageUrls = const [],
     this.urgency = 'normal',
+    this.residenceId,
   });
 
   factory Announcement.fromJson(Map<String, dynamic> json) {
@@ -120,6 +126,7 @@ class Announcement {
       imageUrl: json['imageUrl'],
       imageUrls: parsedUrls,
       urgency: json['urgency'] ?? 'normal',
+      residenceId: json['residenceId'],
     );
   }
 
@@ -130,6 +137,7 @@ class Announcement {
       'imageUrl': imageUrl,
       'imageUrls': imageUrls,
       'urgency': urgency,
+      'residenceId': residenceId,
       // timestamp is added by the server
     };
   }
@@ -142,6 +150,7 @@ class DocumentModel {
   final String fileType;
   final String fileSize;
   final String target;
+  final String? residenceId;
   final DateTime uploadedAt;
 
   DocumentModel({
@@ -151,6 +160,7 @@ class DocumentModel {
     required this.fileType,
     required this.fileSize,
     required this.target,
+    this.residenceId,
     required this.uploadedAt,
   });
 
@@ -162,7 +172,10 @@ class DocumentModel {
       fileType: json['fileType'] ?? json['type'] ?? '',
       fileSize: json['fileSize'] ?? json['size'] ?? '',
       target: json['target'] ?? 'students',
-      uploadedAt: (json['uploadedAt'] as Timestamp?)?.toDate() ?? (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      residenceId: json['residenceId'],
+      uploadedAt: (json['uploadedAt'] as Timestamp?)?.toDate() ??
+          (json['createdAt'] as Timestamp?)?.toDate() ??
+          DateTime.now(),
     );
   }
 
@@ -173,6 +186,7 @@ class DocumentModel {
       'fileType': fileType,
       'fileSize': fileSize,
       'target': target,
+      'residenceId': residenceId,
       // uploadedAt is added by the server
     };
   }
@@ -189,6 +203,8 @@ class Meal {
   final List<String> reservedBy; // List of student matricules/ids
   final double averageRating;
   final int ratingCount;
+  final List<String> ratedBy; // List of user IDs who have already rated
+  final String? residenceId;
 
   Meal({
     this.id,
@@ -201,9 +217,12 @@ class Meal {
     this.reservedBy = const [],
     this.averageRating = 0.0,
     this.ratingCount = 0,
+    this.ratedBy = const [],
+    this.residenceId,
   });
 
   bool isReserved(String userId) => reservedBy.contains(userId);
+  bool hasRated(String userId) => ratedBy.contains(userId);
 
   String get mealType => type.toLowerCase();
 
@@ -234,6 +253,8 @@ class Meal {
       reservedBy: List<String>.from(json['reservedBy'] ?? []),
       averageRating: (json['averageRating'] ?? 0.0).toDouble(),
       ratingCount: json['ratingCount'] ?? 0,
+      ratedBy: List<String>.from(json['ratedBy'] ?? []),
+      residenceId: json['residenceId'] as String?,
     );
   }
 
@@ -249,6 +270,7 @@ class Meal {
       'reservedBy': reservedBy,
       'averageRating': averageRating,
       'ratingCount': ratingCount,
+      'ratedBy': ratedBy,
     };
   }
 }
@@ -334,6 +356,7 @@ class ServiceRequest {
   final String? workerStatus;
   final DateTime? assignedAt;
   final String? workerNotes;
+  final String? residenceId;
 
   ServiceRequest({
     this.id,
@@ -350,6 +373,7 @@ class ServiceRequest {
     this.workerStatus,
     this.assignedAt,
     this.workerNotes,
+    this.residenceId,
   });
 
   factory ServiceRequest.fromJson(Map<String, dynamic> json) {
@@ -368,6 +392,7 @@ class ServiceRequest {
       workerStatus: json['workerStatus'],
       assignedAt: (json['assignedAt'] as Timestamp?)?.toDate(),
       workerNotes: json['workerNotes'],
+      residenceId: json['residenceId'],
     );
   }
 
@@ -385,6 +410,7 @@ class ServiceRequest {
       'workerStatus': workerStatus,
       'assignedAt': assignedAt != null ? Timestamp.fromDate(assignedAt!) : null,
       'workerNotes': workerNotes,
+      'residenceId': residenceId,
       // createdAt is added by the server
     };
   }
@@ -625,6 +651,7 @@ class NotificationModel {
   final bool isRead;
   final bool isDeleted;
   final DateTime createdAt;
+  final String? residenceId;
 
   NotificationModel({
     required this.id,
@@ -635,6 +662,7 @@ class NotificationModel {
     this.isRead = false,
     this.isDeleted = false,
     required this.createdAt,
+    this.residenceId,
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json, String id) {
@@ -647,6 +675,7 @@ class NotificationModel {
       isRead: json['isRead'] ?? false,
       isDeleted: json['isDeleted'] ?? false,
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      residenceId: json['residenceId'],
     );
   }
 
@@ -659,6 +688,7 @@ class NotificationModel {
       'isRead': isRead,
       'isDeleted': isDeleted,
       'createdAt': Timestamp.fromDate(createdAt),
+      'residenceId': residenceId,
     };
   }
 }

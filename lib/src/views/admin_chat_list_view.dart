@@ -34,7 +34,7 @@ class AdminChatListView extends StatelessWidget {
             labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
             tabs: [
               Tab(text: lp.getText('students') == 'students' ? 'Étudiants' : lp.getText('students')),
-              Tab(text: 'Workers'),
+              Tab(text: lp.getText('workers') == 'workers' ? 'Travailleurs' : lp.getText('workers')),
             ],
           ),
         ),
@@ -67,7 +67,7 @@ class AdminChatListView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.chat_bubble_outline_rounded, size: 64, color: context.appTextSecondary.withOpacity(0.5)),
+            Icon(Icons.chat_bubble_outline_rounded, size: 64, color: context.appTextSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
               emptyMsg,

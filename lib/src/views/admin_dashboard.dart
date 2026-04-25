@@ -9,7 +9,6 @@ import '../providers/auth_provider.dart';
 import '../services/firestore_service.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
-import 'dart:math' as math;
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -152,7 +151,7 @@ class AdminDashboard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: tagColor ?? Colors.white.withOpacity(0.1),
+                    color: tagColor ?? Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(tag, style: GoogleFonts.inter(color: tagTextColor ?? (isDark ? Colors.white70 : Colors.black54), fontSize: 10, fontWeight: FontWeight.w600)),
@@ -272,7 +271,7 @@ class AdminDashboard extends StatelessWidget {
                     child: CircularProgressIndicator(
                       value: occupied / total,
                       strokeWidth: 10,
-                      backgroundColor: context.isDark ? AppColors.primary.withOpacity(0.1) : const Color(0xFFEAF3DE),
+                      backgroundColor: context.isDark ? AppColors.primary.withValues(alpha: 0.1) : const Color(0xFFEAF3DE),
                       valueColor: AlwaysStoppedAnimation<Color>(context.isDark ? AppColors.primary : const Color(0xFF0E2318)),
                       strokeCap: StrokeCap.round,
                     ),
@@ -467,70 +466,6 @@ class AdminDashboard extends StatelessWidget {
               child: Text(cat, style: GoogleFonts.inter(color: textColor, fontSize: 9, fontWeight: FontWeight.w600)),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickManagement(BuildContext context, LanguageProvider lp) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Text(lp.getText('quick_management'), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: context.appTextPrimary)),
-        ),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final cardsPerRow = constraints.maxWidth > 800 ? 5 : 2;
-            final spacing = 12.0;
-            final itemWidth = (constraints.maxWidth - (cardsPerRow - 1) * spacing) / cardsPerRow;
-            
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: [
-                _buildQuickAction(context, lp.getText('documents'), 'Share forms & guides', Icons.file_copy_rounded, Colors.purple, '/admin/documents', itemWidth),
-                _buildQuickAction(context, lp.getText('restoration'), 'Mise à jour menu', Icons.restaurant_rounded, Colors.orange, '/admin/dining-config', itemWidth),
-                _buildQuickAction(context, lp.getText('users'), 'Gérer les membres', Icons.people_rounded, Colors.green, '/admin/users', itemWidth),
-                _buildQuickAction(context, lp.getText('messaging'), 'Contacter étudiants', Icons.chat_bubble_rounded, Colors.teal, '/admin/chat', itemWidth),
-                _buildQuickAction(context, lp.getText('announcements'), 'Diffuser des infos', Icons.campaign_rounded, Colors.blue, '/admin/announcements', itemWidth),
-                _buildQuickAction(context, lp.getText('maintenance'), 'Gérer les pannes', Icons.handyman_rounded, Colors.indigo, '/admin/maintenance', itemWidth),
-              ],
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickAction(BuildContext context, String title, String subtitle, IconData icon, Color color, String route, double width) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => context.go(route),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: width,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: context.appCard,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: context.appBorder),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(height: 16),
-              Text(title, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: context.appTextPrimary)),
-              Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontSize: 10, color: context.appTextSecondary)),
-            ],
-          ),
         ),
       ),
     );

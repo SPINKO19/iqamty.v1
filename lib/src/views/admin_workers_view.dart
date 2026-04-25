@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/firestore_service.dart';
 import '../providers/auth_provider.dart';
-import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 
 class AdminWorkersView extends StatefulWidget {
@@ -21,7 +20,6 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
   Widget build(BuildContext context) {
     final firestore = context.watch<FirestoreService>();
     final auth = context.watch<AuthProvider>();
-    final lp = context.watch<LanguageProvider>();
     final resId = auth.currentResidenceId;
 
     return StreamBuilder<List<Map<String, dynamic>>>(
@@ -74,7 +72,7 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
                         border: Border.all(color: context.appBorder),
                         boxShadow: [
                            BoxShadow(
-                             color: Colors.black.withOpacity(0.02),
+                             color: Colors.black.withValues(alpha: 0.02),
                              blurRadius: 10,
                              offset: const Offset(0, 2),
                            )
@@ -152,7 +150,7 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
                             border: Border.all(color: context.appBorder),
                             boxShadow: [
                                BoxShadow(
-                                 color: Colors.black.withOpacity(0.01),
+                                 color: Colors.black.withValues(alpha: 0.01),
                                  blurRadius: 10,
                                  offset: const Offset(0, 4),
                                )
@@ -164,7 +162,7 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
                                 width: 48,
                                 height: 48,
                                   decoration: BoxDecoration(
-                                    color: isBanned ? context.appBorder : (context.isDark ? AppColors.primary.withOpacity(0.2) : const Color(0xFFF1F5F9)),
+                                    color: isBanned ? context.appBorder : (context.isDark ? AppColors.primary.withValues(alpha: 0.2) : const Color(0xFFF1F5F9)),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 child: Icon(Icons.person_3_outlined, color: isBanned ? context.appTextSecondary : const Color(0xFF1D5C35), size: 24),
@@ -215,7 +213,7 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
           border: Border.all(color: isActive ? const Color(0xFF1D5C35) : context.appBorder, width: isActive ? 2 : 1),
           boxShadow: [
              BoxShadow(
-               color: Colors.black.withOpacity(0.02),
+               color: Colors.black.withValues(alpha: 0.02),
                blurRadius: 10,
                offset: const Offset(0, 4),
              )
@@ -360,7 +358,7 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
             const SizedBox(width: 8),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

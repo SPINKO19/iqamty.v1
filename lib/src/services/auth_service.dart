@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:async';
 import 'dart:convert';
 import 'package:diacritic/diacritic.dart';
 import 'package:flutter/foundation.dart';
@@ -220,7 +219,18 @@ class AuthService extends ChangeNotifier {
           .limit(1)
           .get();
 
-      if (query.docs.isEmpty) return false;
+      if (query.docs.isEmpty) {
+        if (kDebugMode) {
+          if (id.startsWith('admin')) {
+            injectDevUser('administrator');
+            return true;
+          } else if (id.startsWith('worker')) {
+            injectDevUser('worker');
+            return true;
+          }
+        }
+        return false;
+      }
 
       final data = query.docs.first.data();
       

@@ -103,7 +103,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   textTheme: textTheme,
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(languageProvider.getText('help_center') + ' - Bientôt disponible')),
+                      SnackBar(content: Text('${languageProvider.getText('help_center')} - Bientôt disponible')),
                     );
                   },
                 ),
@@ -144,7 +144,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   textTheme: textTheme,
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(languageProvider.getText('terms_of_use') + ' - Bientôt disponible')),
+                      SnackBar(content: Text('${languageProvider.getText('terms_of_use')} - Bientôt disponible')),
                     );
                   },
                 ),
@@ -344,6 +344,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _handleSync(BuildContext context, LanguageProvider lp) async {
     final auth = context.read<AuthProvider>();
+    final messenger = ScaffoldMessenger.of(context);
 
     // Check rate-limit before starting
     final remaining = await auth.getTimeUntilNextSync();
@@ -355,7 +356,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             : (lp.currentLocale.languageCode == 'en'
                 ? 'Please wait ~${hours}h before syncing again'
                 : 'Veuillez patienter ~${hours}h avant de resynchroniser');
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text(msg),
             backgroundColor: Colors.orange.shade700,
@@ -379,7 +380,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             : (lp.currentLocale.languageCode == 'ar'
                 ? 'يرجى الانتظار 24 ساعة'
                 : (lp.currentLocale.languageCode == 'en' ? 'Please wait 24h' : 'Veuillez patienter 24h'));
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text(msg),
             backgroundColor: refreshed ? AppColors.primary : Colors.orange.shade700,
@@ -393,7 +394,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final msg = lp.currentLocale.languageCode == 'ar'
             ? 'فشل في التحديث. حاول مرة أخرى'
             : (lp.currentLocale.languageCode == 'en' ? 'Sync failed. Try again later.' : 'Échec de la synchronisation. Réessayez.');
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text(msg),
             backgroundColor: Colors.red,

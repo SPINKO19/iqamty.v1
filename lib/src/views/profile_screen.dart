@@ -211,10 +211,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                const Spacer(),
                IconButton(
                  onPressed: () async {
+                   final messenger = ScaffoldMessenger.of(context);
+                   final firestoreService = context.read<FirestoreService>();
                    if (_isEditingPhone) {
                       // Save
-                      await context.read<FirestoreService>().updateUserProfile(auth.currentUserData?['uid'] ?? '', {'phoneNumber': _phoneController.text.trim()});
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil mis à jour')));
+                      await firestoreService.updateUserProfile(auth.currentUserData?['uid'] ?? '', {'phoneNumber': _phoneController.text.trim()});
+                      if (!mounted) return;
+                      messenger.showSnackBar(const SnackBar(content: Text('Profil mis à jour')));
                    }
                    setState(() => _isEditingPhone = !_isEditingPhone);
                  },
@@ -241,28 +244,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
          ],
        ),
      );
-  }
-
-  Widget _buildTitledCardSection(String title, LanguageProvider lp, dynamic student, String name, String dob, bool isResidence) {
-    return Column(
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 12, bottom: 8),
-            child: Text(
-              title,
-              style: GoogleFonts.notoKufiArabic(
-                fontWeight: FontWeight.w900,
-                fontSize: 12,
-                color: AppColors.primary.withValues(alpha: 0.7),
-              ),
-            ),
-          ),
-        ),
-        _buildOfficialCard(context, student, name, dob, isResidence),
-      ],
-    );
   }
 
   Widget _buildProfessionalIdentityCard(BuildContext context, AuthProvider auth, LanguageProvider lp, bool isDark) {
@@ -299,7 +280,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
             child: Stack(
               children: [
-                Positioned(
+                const Positioned(
                   right: -20,
                   top: -20,
                   child: Opacity(
@@ -433,12 +414,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Future<void> _updatePhoto(BuildContext context, AuthProvider auth) async {
     final ImagePicker picker = ImagePicker();
+    final firestoreService = context.read<FirestoreService>();
+    final messenger = ScaffoldMessenger.of(context);
     final XFile? image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 400, maxHeight: 400);
     if (image != null) {
       final bytes = await image.readAsBytes();
+      if (!mounted) return;
       final base64String = base64Encode(bytes);
-      await context.read<FirestoreService>().updateUserProfile(auth.currentUserData?['uid'] ?? '', {'photoUrl': 'data:image/png;base64,$base64String'});
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo mise à jour')));
+      await firestoreService.updateUserProfile(auth.currentUserData?['uid'] ?? '', {'photoUrl': 'data:image/png;base64,$base64String'});
+      if (mounted) messenger.showSnackBar(const SnackBar(content: Text('Photo mise à jour')));
     }
   }
 
@@ -467,82 +451,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       ],
     );
   }
-  Widget _buildProfileHeader(BuildContext context, dynamic student, String name, bool isDark) {
-    final lp = context.read<LanguageProvider>();
-    final auth = context.read<AuthProvider>();
-    return Column(
-      children: [
-        Stack(
-          alignment: Alignment.bottomRight,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [AppColors.primary, const Color(0xFF065F46)],
-                ),
-              ),
-              child: CircleAvatar(
-                radius: 54,
-                backgroundColor: context.appBackground,
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: isDark ? AppColors.borderColorDark : Colors.grey[200],
-                  backgroundImage: student?.photoBase64 != null 
-                    ? MemoryImage(base64Decode(student!.photoBase64!))
-                    : ( (student?.photo ?? auth.currentUserData?['photoUrl']) != null ? NetworkImage(student?.photo ?? auth.currentUserData!['photoUrl']) : null) as ImageProvider?,
-                  child: student?.photoBase64 == null && student?.photo == null && auth.currentUserData?['photoUrl'] == null
-                    ? Icon(Icons.person_rounded, size: 50, color: Colors.grey[400])
-                    : null,
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () => _updatePhoto(context, auth),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF10B981),
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
-                ),
-                child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 16),
-              ),
-            )
-          ],
-        ),
-        const SizedBox(height: 20),
-        Text(
-          name,
-          style: GoogleFonts.inter(
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            color: context.appTextPrimary,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            (student?.residence ?? auth.currentUserData?['residenceName'] ?? lp.getText('not_assigned')).toUpperCase(),
-            style: GoogleFonts.inter(
-              color: AppColors.primary,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildOfficialCard(BuildContext context, dynamic student, String name, String dob, bool isResidence) {
     final mainGreen = AppColors.primary;
     final isDark = Theme.of(context).brightness == Brightness.dark;

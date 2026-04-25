@@ -8,8 +8,6 @@ import '../services/firestore_service.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
 
-import '../components/custom_menu_button.dart';
-
 class ChatView extends StatefulWidget {
   final String? chatId;
   final String? name;
@@ -52,10 +50,10 @@ class _ChatViewState extends State<ChatView> {
     
     final residenceId = auth.currentResidenceId ?? auth.currentUserData?['residenceId'];
     
-    _chatId = await firestore.startOrGetChat(studentId, studentName, residenceId: residenceId);
+    final role = auth.currentUserData?['role'] ?? 'student';
+    _chatId = await firestore.startOrGetChat(studentId, studentName, residenceId: residenceId, role: role);
     if (mounted) {
       setState(() {});
-      // Mark as read after ID is resolved
       final isAdmin = auth.currentUserData?['role'] == 'administrator' || widget.isAdmin;
       firestore.markChatAsRead(_chatId!, isAdmin);
     }
@@ -89,7 +87,6 @@ class _ChatViewState extends State<ChatView> {
     final firestore = context.read<FirestoreService>();
     final auth = context.read<AuthProvider>();
     final currentUserId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -130,7 +127,9 @@ class _ChatViewState extends State<ChatView> {
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final msg = messages[index];
-                    return _buildMessage(context, msg, msg.senderId != currentUserId);
+                    final isCurrentAdmin = auth.currentUserData?['role'] == 'administrator' || widget.isAdmin;
+                    final isOther = msg.isAdmin != isCurrentAdmin;
+                    return _buildMessage(context, msg, isOther);
                   },
                 );
               },

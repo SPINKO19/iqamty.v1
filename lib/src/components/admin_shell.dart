@@ -118,12 +118,12 @@ class _AdminSidebarContent extends StatelessWidget {
                         children: [
                           Text(
                             lp.getText('administrator'),
-                            style: GoogleFonts.inter(color: Colors.white.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.w500),
+                            style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8), fontSize: 12, fontWeight: FontWeight.w500),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             'Super admin',
-                            style: GoogleFonts.inter(color: Colors.white.withOpacity(0.4), fontSize: 10),
+                            style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.4), fontSize: 10),
                           ),
                         ],
                       ),
@@ -199,7 +199,7 @@ class _AdminSidebarContent extends StatelessWidget {
 
   Widget _buildNavItem(BuildContext context, IconData icon, String title, String route, String currentRoute, {bool isLogout = false, String? subtitle}) {
     final isSelected = currentRoute == route || (route != '/admin' && currentRoute.startsWith(route));
-    final color = isLogout ? const Color(0xFFF87171) : (isSelected ? Colors.white : Colors.white.withOpacity(0.4));
+    final color = isLogout ? const Color(0xFFF87171) : (isSelected ? Colors.white : Colors.white.withValues(alpha: 0.4));
     final bgColor = isSelected ? const Color(0xFF1D5C35) : Colors.transparent;
 
     return Material(
@@ -242,12 +242,12 @@ class _AdminSidebarContent extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     subtitle,
-                    style: GoogleFonts.inter(color: Colors.white.withOpacity(0.5), fontSize: 9),
+                    style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.5), fontSize: 9),
                   ),
                 ),
             ],

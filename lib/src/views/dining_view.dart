@@ -35,9 +35,7 @@ class _DiningViewState extends State<DiningView> {
   }
 
   String _getDayLetter(int index) {
-    // Days labels L M M J V S D
-    final letters = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-    return letters[index];
+    return DateFormat.E('fr').format(_startOfWeek.add(Duration(days: index)))[0].toUpperCase();
   }
 
   @override
@@ -238,7 +236,7 @@ class _DiningViewState extends State<DiningView> {
             child: Column(
               children: [
                 const SizedBox(height: 40),
-                Icon(Icons.do_not_disturb_on_rounded, size: 64, color: Colors.red.withOpacity(0.5)),
+                Icon(Icons.do_not_disturb_on_rounded, size: 64, color: Colors.red.withValues(alpha: 0.5)),
                 const SizedBox(height: 16),
                 Text(
                   'Restaurant Fermé',
@@ -262,26 +260,48 @@ class _DiningViewState extends State<DiningView> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            var meals = snapshot.data ?? [];
+            final meals = snapshot.data ?? [];
+
             if (meals.isEmpty) {
-              // Provide rich mock data matching the UI spec
-              meals = [
-                Meal(id: 'mock1', menu: 'Petit-déjeuner', menuItems: ['Lait chaud', 'Pain beurre', 'Confiture maison', "Jus d'orange"], type: 'breakfast', startTime: '07:00', endTime: '09:00', date: _selectedDate, averageRating: 4.5, ratingCount: 12),
-                Meal(id: 'mock2', menu: 'Déjeuner', menuItems: ['Chorba frik', 'Poulet rôti aux légumes', 'Semoule beida', 'Salade verte', 'Fruit de saison'], type: 'lunch', startTime: '12:00', endTime: '14:00', date: _selectedDate, averageRating: 3.8, ratingCount: 45),
-                Meal(id: 'mock3', menu: 'Dîner', menuItems: ['Soupe de lentilles', 'Tajine de mouton', 'Riz pilaf', 'Yaourt nature'], type: 'dinner', startTime: '18:00', endTime: '20:00', date: _selectedDate, averageRating: 4.8, ratingCount: 32),
-              ];
+              return Center(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 40),
+                    Icon(Icons.restaurant_outlined,
+                        size: 64,
+                        color: context.appTextSecondary.withValues(alpha: 0.4)),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Aucun repas configuré',
+                      style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: context.appTextPrimary),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Le menu de cette journée n\'a pas encore été ajouté par l\'administration.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                          color: context.appTextSecondary, fontSize: 13),
+                    ),
+                  ],
+                ),
+              );
             }
 
             // Fixed Sort order: breakfast (0), lunch (1), dinner (2)
             const order = {'breakfast': 0, 'lunch': 1, 'dinner': 2};
-            meals.sort((a, b) => (order[a.mealType] ?? 3).compareTo(order[b.mealType] ?? 3));
+            final sorted = List<Meal>.from(meals)
+              ..sort((a, b) =>
+                  (order[a.mealType] ?? 3).compareTo(order[b.mealType] ?? 3));
 
             return ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: meals.length,
+              itemCount: sorted.length,
               itemBuilder: (context, index) {
-                return _MealCard(meal: meals[index], userId: userId);
+                return _MealCard(meal: sorted[index], userId: userId);
               },
             );
           },
@@ -291,11 +311,21 @@ class _DiningViewState extends State<DiningView> {
   }
 }
 
-class _MealCard extends StatelessWidget {
+class _MealCard extends StatefulWidget {
   final Meal meal;
   final String userId;
 
   const _MealCard({required this.meal, required this.userId});
+
+  @override
+  State<_MealCard> createState() => _MealCardState();
+}
+
+class _MealCardState extends State<_MealCard> {
+  bool _hasJustRated = false;
+
+  Meal get meal => widget.meal;
+  String get userId => widget.userId;
 
   String _getMealDisplayName(LanguageProvider lp) {
     return lp.getText(meal.mealType);
@@ -479,6 +509,9 @@ class _MealCard extends StatelessWidget {
   }
 
   Widget _buildRatingBar(BuildContext context) {
+    final firestore = context.read<FirestoreService>();
+    final alreadyRated = _hasJustRated || meal.hasRated(userId);
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: BoxDecoration(
@@ -488,38 +521,60 @@ class _MealCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-               Text(meal.averageRating.toStringAsFixed(1), style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: context.appTextPrimary)),
-               const SizedBox(width: 4),
-               const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
-               const SizedBox(width: 4),
-               Text('(${meal.ratingCount} avis)', style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 11)),
-            ]
-          ),
-          Row(
-            children: List.generate(5, (index) {
-              return GestureDetector(
-                onTap: () {
-                  final rating = index + 1.0;
-                  if(meal.id?.startsWith('mock') == false) {
-                    context.read<FirestoreService>().rateMeal(meal.id!, rating);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Merci pour votre avis!')));
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Avis envoyé avec succès pour ce repas!')));
-                  }
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                  child: Icon(
-                    index < meal.averageRating.round() ? Icons.star_rounded : Icons.star_outline_rounded, 
-                    color: index < meal.averageRating.round() ? Colors.amber : Colors.grey.withValues(alpha: 0.4), 
-                    size: 20,
-                  ),
+          Row(children: [
+            Text(meal.averageRating.toStringAsFixed(1),
+                style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: context.appTextPrimary)),
+            const SizedBox(width: 4),
+            const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+            const SizedBox(width: 4),
+            Text('(${meal.ratingCount} avis)',
+                style: GoogleFonts.inter(
+                    color: context.appTextSecondary, fontSize: 11)),
+          ]),
+          alreadyRated
+              ? Row(children: [
+                  const Icon(Icons.check_circle_rounded,
+                      color: Color(0xFF10B981), size: 16),
+                  const SizedBox(width: 4),
+                  Text('Noté',
+                      style: GoogleFonts.inter(
+                          color: const Color(0xFF10B981),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600)),
+                ])
+              : Row(
+                  children: List.generate(5, (index) {
+                    final filled = index < meal.averageRating.round();
+                    return GestureDetector(
+                      onTap: () {
+                        if (meal.id != null) {
+                          final rating = index + 1.0;
+                          firestore.rateMeal(meal.id!, rating, userId);
+                          setState(() => _hasJustRated = true);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Merci pour votre avis !')),
+                          );
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                        child: Icon(
+                          filled
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          color: filled
+                              ? Colors.amber
+                              : Colors.grey.withValues(alpha: 0.4),
+                          size: 20,
+                        ),
+                      ),
+                    );
+                  }),
                 ),
-              );
-            }),
-          ),
         ],
       ),
     );

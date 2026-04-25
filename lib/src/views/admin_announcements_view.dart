@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../components/custom_menu_button.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,7 +20,37 @@ class AdminAnnouncementsView extends StatelessWidget {
     final lp = context.watch<LanguageProvider>();
     final auth = context.watch<AuthProvider>();
     final firestore = context.read<FirestoreService>();
-    final residenceId = auth.currentResidenceId;
+    final residenceId = auth.currentResidenceId ?? auth.currentUserData?['residenceId'] as String?;
+
+    if (residenceId == null || residenceId.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.warning_amber_rounded, size: 64, color: Colors.orange),
+              const SizedBox(height: 16),
+              Text(
+                'Aucune résidence associée à ce compte.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: context.appTextPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Veuillez configurer une résidence pour ce compte administrateur.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(fontSize: 13, color: context.appTextSecondary),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -43,7 +71,7 @@ class AdminAnnouncementsView extends StatelessWidget {
               _buildHeaderAction(
                 context: context,
                 icon: Icons.send_rounded,
-                onTap: () => _showCreateAnnouncementDialog(context, lp),
+                onTap: () => _showCreateAnnouncementDialog(context, lp, residenceId),
                 label: lp.getText('broadcast'),
               ),
             ],
@@ -53,8 +81,13 @@ class AdminAnnouncementsView extends StatelessWidget {
           StreamBuilder<List<Announcement>>(
             stream: firestore.getAnnouncements(residenceId: residenceId),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'Erreur lors du chargement des annonces : ${snapshot.error}',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                );
               }
               
               final announcements = snapshot.data ?? [];
@@ -85,11 +118,17 @@ class AdminAnnouncementsView extends StatelessWidget {
                     itemCount: announcements.length,
                     itemBuilder: (context, index) {
                       final ann = announcements[index];
+                      String time;
+                      try {
+                        time = DateFormat('dd MMM, HH:mm', 'fr').format(ann.timestamp);
+                      } catch (e) {
+                        time = DateFormat('dd MMM, HH:mm').format(ann.timestamp);
+                      }
                       return _buildModernAnnouncementCard(
                         context,
                         lp,
                         ann,
-                        DateFormat('dd MMM, HH:mm', 'fr').format(ann.timestamp),
+                        time,
                         false,
                       );
                     },
@@ -119,7 +158,7 @@ class AdminAnnouncementsView extends StatelessWidget {
     );
   }
 
-  void _showCreateAnnouncementDialog(BuildContext context, LanguageProvider lp) {
+  void _showCreateAnnouncementDialog(BuildContext context, LanguageProvider lp, String residenceId) {
     final titleController = TextEditingController();
     final bodyController = TextEditingController();
     List<XFile> selectedImages = [];
@@ -224,6 +263,8 @@ class AdminAnnouncementsView extends StatelessWidget {
 
                   setState(() => isUploading = true);
                   
+                  final firestore = context.read<FirestoreService>();
+
                   try {
                     List<String> uploadedUrls = [];
                     if (selectedImages.isNotEmpty) {
@@ -231,9 +272,6 @@ class AdminAnnouncementsView extends StatelessWidget {
                        uploadedUrls = (await Future.wait(futures)).whereType<String>().toList();
                     }
 
-                    final auth = context.read<AuthProvider>();
-                    final firestore = context.read<FirestoreService>();
-                    
                     final announcement = Announcement(
                       title: title,
                       content: body,
@@ -241,7 +279,7 @@ class AdminAnnouncementsView extends StatelessWidget {
                       imageUrls: uploadedUrls,
                     );
 
-                    await firestore.addAnnouncement(announcement, residenceId: auth.currentResidenceId);
+                    await firestore.addAnnouncement(announcement, residenceId: residenceId);
 
                     if (context.mounted) {
                       Navigator.pop(context);
@@ -271,49 +309,6 @@ class AdminAnnouncementsView extends StatelessWidget {
     );
   }
 
-  Widget _buildActionCard(BuildContext context, String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [color, color.withValues(alpha: 0.8)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 20, offset: const Offset(0, 10)),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: GoogleFonts.inter(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-                    const SizedBox(height: 8),
-                    Text(subtitle, style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8), fontSize: 13, fontWeight: FontWeight.w500)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), shape: BoxShape.circle),
-                child: Icon(icon, color: Colors.white, size: 32),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildModernAnnouncementCard(BuildContext context, LanguageProvider lp, Announcement ann, String time, bool isUrgent) {
     final isDark = Theme.of(context).brightness == Brightness.dark;

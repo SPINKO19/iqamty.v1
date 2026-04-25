@@ -9,10 +9,6 @@ import '../providers/auth_provider.dart';
 import '../models/types.dart';
 import 'package:go_router/go_router.dart';
 
-import '../services/firestore_service.dart';
-import '../providers/auth_provider.dart';
-import '../models/types.dart';
-
 const _kGreen = Color(0xFF2D6A4F);
 
 class WorkerDashboard extends StatelessWidget {
@@ -23,7 +19,7 @@ class WorkerDashboard extends StatelessWidget {
     final lp = context.watch<LanguageProvider>();
     final auth = context.watch<AuthProvider>();
     final firestore = context.watch<FirestoreService>();
-    final userId = auth.currentUserData?['uid'] ?? '';
+    final userId = auth.currentUserData?['id']?.toString() ?? auth.currentUserData?['uid']?.toString() ?? '';
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -325,13 +321,15 @@ class WorkerDashboard extends StatelessWidget {
   }
 
   Widget _buildQuickActions(BuildContext context, LanguageProvider lp, FirestoreService firestore, String userId, String? residenceId, String userName) {
-    return GridView.count(
+    return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 1.5,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        mainAxisExtent: 130,
+      ),
       children: [
         _buildActionCard(
           context,
@@ -353,12 +351,15 @@ class WorkerDashboard extends StatelessWidget {
                context.push('/chat/$chatId', extra: {'name': 'Administration', 'isAdmin': false});
              }
           },
+          badgeStream: firestore.getAllChats().map((list) {
+            return list.any((c) => c['studentId'] == userId && c['hasUnreadStudent'] == true);
+          }),
         ),
       ],
     );
   }
 
-  Widget _buildActionCard(BuildContext context, String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildActionCard(BuildContext context, String title, String subtitle, IconData icon, Color color, VoidCallback onTap, {Stream<bool>? badgeStream}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
@@ -368,29 +369,55 @@ class WorkerDashboard extends StatelessWidget {
           BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                  child: Icon(icon, color: color, size: 20),
+      child: Stack(
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(24),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                      child: Icon(icon, color: color, size: 20),
+                    ),
+                    const Spacer(),
+                    Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: context.appTextPrimary)),
+                    Text(subtitle, style: GoogleFonts.inter(fontSize: 9, color: context.appTextSecondary)),
+                  ],
                 ),
-                const Spacer(),
-                Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: context.appTextPrimary)),
-                Text(subtitle, style: GoogleFonts.inter(fontSize: 9, color: context.appTextSecondary)),
-              ],
+              ),
             ),
           ),
-        ),
+          if (badgeStream != null)
+            Positioned(
+              top: 12,
+              right: 12,
+              child: StreamBuilder<bool>(
+                stream: badgeStream,
+                initialData: false,
+                builder: (context, snapshot) {
+                  if (snapshot.data == true) {
+                    return Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+        ],
       ),
     );
   }

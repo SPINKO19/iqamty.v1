@@ -55,6 +55,7 @@ class LanguageProvider extends ChangeNotifier {
     'users': 'Students',
     'admin_dashboard': 'Admin Dashboard',
     'worker_dashboard': 'Worker Dashboard',
+    'workers': 'Workers',
 
     // Settings
     'account': 'ACCOUNT',
@@ -345,6 +346,7 @@ class LanguageProvider extends ChangeNotifier {
     'users': 'Étudiants',
     'admin_dashboard': 'Admin Dashboard',
     'worker_dashboard': 'Espace Travailleur',
+    'workers': 'Travailleurs',
 
     // Settings
     'account': 'COMPTE',

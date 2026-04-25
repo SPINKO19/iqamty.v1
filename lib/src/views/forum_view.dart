@@ -215,14 +215,7 @@ class _PostCardState extends State<_PostCard> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     bool isLiked = widget.post.likedBy.contains(widget.userId);
-    
-    Color badgeColor;
-    String badgeText;
-    switch(widget.post.type) {
-      case 'announcement': badgeColor = Colors.red; badgeText = '📢 Announcement'; break;
-      case 'poll': badgeColor = const Color(0xFF2D6A4F); badgeText = '🗳️ Poll'; break;
-      default: badgeColor = Colors.grey; badgeText = '💬 Post'; break;
-    }
+
 
     final isOfficial = widget.post.type == 'announcement';
 
