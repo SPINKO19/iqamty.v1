@@ -305,13 +305,19 @@ class AuthService extends ChangeNotifier {
           'username': matricule,
           'password': password,
         }),
-      );
+      ).timeout(const Duration(seconds: 10));
+
+      Map<String, dynamic>? existingUserData;
 
       // SECURITY PRE-CHECK: Even if Progres succeeds, check if the student is localy banned in Firestore
       if (_firestore != null) {
          final existingDoc = await _firestore!.collection('users').doc(matricule).get();
-         if (existingDoc.exists && existingDoc.data()?['isBanned'] == true) {
-           throw Exception('ACCOUNT_BANNED'); // Signal to UI that account is suspended
+         if (existingDoc.exists) {
+           final data = existingDoc.data();
+           if (data?['isBanned'] == true) {
+             throw Exception('ACCOUNT_BANNED'); // Signal to UI that account is suspended
+           }
+           existingUserData = data;
          }
       }
 
@@ -334,56 +340,72 @@ class AuthService extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', token);
 
-        // Step 2: Check for cached profile (P1.1 — skip Progres fetch)
+        // Step 2: Check Firestore Fast-Track (P1.0)
+        if (existingUserData != null && existingUserData.containsKey('displayName')) {
+          _userData = existingUserData;
+          await _persistUserData(_userData!);
+          notifyListeners();
+          
+          if (kDebugMode) print('P1.0: Loaded profile from Firestore fast-track — logging in instantly');
+          
+          // Background refresh
+          _refreshProfileInBackground(token, matricule);
+          return;
+        }
+
+        // Step 2.1: Check for cached profile (P1.1 — skip Progres fetch)
         final cached = prefs.getString('user_data_cache');
         if (cached != null && cached.isNotEmpty) {
           try {
             final Map<String, dynamic> cachedData = jsonDecode(cached);
-            // Verify the cached data belongs to the same user
-            if (cachedData['uid'] == matricule ||
-                cachedData['matricule'] == matricule) {
+            if (cachedData['uid'] == matricule || cachedData['matricule'] == matricule) {
               _userData = cachedData;
               notifyListeners();
-              // Sync to Firebase in background (non-blocking)
-              _syncToFirebaseInBackground();
-              if (kDebugMode) print('P1.1: Loaded profile from cache — skipped Progres API');
+              
+              if (kDebugMode) print('P1.1: Loaded profile from cache — logging in instantly');
+              
+              _refreshProfileInBackground(token, matricule);
               return;
             }
-          } catch (_) {
-            // Cache corrupted — fall through to full fetch
-          }
+          } catch (_) {}
         }
 
         // Step 3: No valid cache — full fetch from Progres API
-        if (kDebugMode) print('P1.1: No cache found — fetching from Progres API');
-        final student = await _fetchWebEtuProfile(token);
-
-        // Resolve / auto-create the residence document in Firestore
-        String? residenceId;
-        if (student.residence != null && student.residence!.isNotEmpty) {
-          residenceId = await _resolveResidence(student.residence!);
-        }
-
-        _userData = _buildUserData(student, matricule, residenceId);
-
-        // Persist locally for auto-login
-        await _persistUserData(_userData!);
-        if (residenceId != null) {
-          await prefs.setString('residence_id', residenceId);
-        }
-        // Record sync timestamp for rate-limiting
-        await prefs.setInt('last_sync_timestamp', DateTime.now().millisecondsSinceEpoch);
-
-        notifyListeners();
-
-        // Sync to Firebase in background
-        _syncToFirebaseInBackground();
+        if (kDebugMode) print('P1.1: No cache found — fetching from Progres API blockingly');
+        await _fetchAndSaveProfile(token, matricule);
       } else {
         throw Exception('Login failed: ${response.statusCode}');
       }
     } catch (e) {
       if (kDebugMode) print("loginWithWebEtu failed: $e");
       rethrow;
+    }
+  }
+
+  Future<void> _fetchAndSaveProfile(String token, String matricule) async {
+    final student = await _fetchWebEtuProfile(token);
+    String? residenceId;
+    if (student.residence != null && student.residence!.isNotEmpty) {
+      residenceId = await _resolveResidence(student.residence!);
+    }
+    _userData = _buildUserData(student, matricule, residenceId);
+    
+    final prefs = await SharedPreferences.getInstance();
+    await _persistUserData(_userData!);
+    if (residenceId != null) {
+      await prefs.setString('residence_id', residenceId);
+    }
+    await prefs.setInt('last_sync_timestamp', DateTime.now().millisecondsSinceEpoch);
+    
+    notifyListeners();
+    _syncToFirebaseInBackground();
+  }
+
+  Future<void> _refreshProfileInBackground(String token, String matricule) async {
+    try {
+      await _fetchAndSaveProfile(token, matricule);
+    } catch (e) {
+      if (kDebugMode) print("Background profile refresh failed: $e");
     }
   }
 
@@ -604,32 +626,55 @@ class AuthService extends ChangeNotifier {
         residence: residence, bloc: bloc, chambre: chambre);
   }
 
-  /// Tries bac/etudiant endpoints with multiple IDs (sequential fallback).
+  /// Tries bac/etudiant endpoints with multiple IDs (parallel fallback).
   Future<Map<String, dynamic>> _fetchBaseProfile(
       List<String> idTypes, Map<String, String> header) async {
-    Map<String, dynamic> profileJson = {};
-    bool found = false;
+    final completer = Completer<Map<String, dynamic>>();
+    int pending = 0;
+    bool completed = false;
+
     for (var id in idTypes) {
       for (var endpoint in ['bac', 'etudiant']) {
+        pending++;
         final url = '${AppConfig.apiBaseUrl}/infos/$endpoint/$id';
-        try {
-          final response = await http.get(Uri.parse(url), headers: header);
+        http.get(Uri.parse(url), headers: header).timeout(const Duration(seconds: 10)).then((response) {
+          if (completed) return;
           if (response.statusCode == 200) {
-            final dynamic decodedJson = jsonDecode(utf8.decode(response.bodyBytes));
-            if (decodedJson is List && decodedJson.isNotEmpty) {
-              profileJson = decodedJson.first;
-              found = true;
-            } else if (decodedJson is Map<String, dynamic>) {
-              profileJson = decodedJson;
-              found = true;
-            }
-            if (found) break;
+            try {
+              final dynamic decodedJson = jsonDecode(utf8.decode(response.bodyBytes));
+              Map<String, dynamic>? profileJson;
+              if (decodedJson is List && decodedJson.isNotEmpty) {
+                profileJson = decodedJson.first;
+              } else if (decodedJson is Map<String, dynamic>) {
+                profileJson = decodedJson;
+              }
+              if (profileJson != null) {
+                completed = true;
+                completer.complete(profileJson);
+                return;
+              }
+            } catch (_) {}
           }
-        } catch (_) {}
+          pending--;
+          if (pending == 0 && !completed) {
+            completed = true;
+            completer.complete({});
+          }
+        }).catchError((_) {
+          pending--;
+          if (pending == 0 && !completed) {
+            completed = true;
+            completer.complete({});
+          }
+        });
       }
-      if (found) break;
     }
-    return profileJson;
+    
+    if (pending == 0 && !completed) {
+      completer.complete({});
+    }
+
+    return completer.future;
   }
 
   /// Fetches individu data.
@@ -638,7 +683,7 @@ class AuthService extends ChangeNotifier {
     try {
       final response = await http.get(
           Uri.parse('${AppConfig.apiBaseUrl}/infos/bac/$uuid/individu'),
-          headers: header);
+          headers: header).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final decoded = jsonDecode(utf8.decode(response.bodyBytes));
         if (decoded is Map<String, dynamic>) return decoded;
@@ -653,7 +698,7 @@ class AuthService extends ChangeNotifier {
     try {
       final response = await http.get(
           Uri.parse('${AppConfig.apiBaseUrl}/infos/bac/$uuid/demandesHebregement'),
-          headers: header);
+          headers: header).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final List<dynamic> housingList =
             jsonDecode(utf8.decode(response.bodyBytes));
@@ -695,7 +740,7 @@ class AuthService extends ChangeNotifier {
     try {
       final response = await http.get(
           Uri.parse('${AppConfig.apiBaseUrl}/infos/image/$uuid'),
-          headers: header);
+          headers: header).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         return response.body.trim();
       }
@@ -709,7 +754,7 @@ class AuthService extends ChangeNotifier {
     try {
       final response = await http.get(
           Uri.parse('${AppConfig.apiBaseUrl}/infos/bac/$uuid/dias'),
-          headers: header);
+          headers: header).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final List<dynamic> diasJsonList =
             jsonDecode(utf8.decode(response.bodyBytes));
