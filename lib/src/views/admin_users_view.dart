@@ -34,88 +34,139 @@ class _AdminUsersViewState extends State<AdminUsersView> {
     final firestore = context.read<FirestoreService>();
     final residenceId = auth.currentResidenceId;
 
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: firestore.getStudents(residenceId: residenceId),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: _kGreen));
-        }
-
-        final allStudents = snapshot.data ?? [];
-        final total = allStudents.length;
-        final blocked = allStudents.where((s) => s['isBanned'] == true).length;
-        final active = total - blocked;
-
-        return ValueListenableBuilder<String>(
-          valueListenable: _searchQueryNotifier,
-          builder: (context, query, child) {
-            final filteredStudents = _filterStudents(allStudents, query);
-
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _buildSmallStat(context, lp.getText('total'), total.toString(), _kGreen),
-                      const SizedBox(width: 12),
-                      _buildSmallStat(context, lp.getText('active'), active.toString(), const Color(0xFF10B981)),
-                      const SizedBox(width: 12),
-                      _buildSmallStat(context, lp.getText('blocked'), blocked.toString(), const Color(0xFFEF4444)),
+    return DefaultTabController(
+      length: 2,
+      child: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: firestore.getStudents(residenceId: residenceId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: _kGreen));
+          }
+    
+          final allStudents = snapshot.data ?? [];
+          final total = allStudents.length;
+          final blocked = allStudents.where((s) => s['isBanned'] == true).length;
+          final active = total - blocked;
+    
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                child: Row(
+                  children: [
+                    _buildSmallStat(context, lp.getText('total'), total.toString(), _kGreen),
+                    const SizedBox(width: 12),
+                    _buildSmallStat(context, lp.getText('active'), active.toString(), const Color(0xFF10B981)),
+                    const SizedBox(width: 12),
+                    _buildSmallStat(context, lp.getText('blocked'), blocked.toString(), const Color(0xFFEF4444)),
+                  ],
+                ),
+              ),
+              
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark 
+                      ? Colors.white.withValues(alpha: 0.05) 
+                      : Colors.black.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TabBar(
+                  dividerColor: Colors.transparent,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: context.appTextSecondary,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicator: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    gradient: LinearGradient(
+                      colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-
-                  _buildSearchBar(context, lp),
-                  
-                  const SizedBox(height: 24),
-
-                  if (filteredStudents.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(40),
-                        child: Column(
-                          children: [
-                            Icon(Icons.person_search_rounded, size: 48, color: context.appTextSecondary.withValues(alpha: 0.5)),
-                            const SizedBox(height: 16),
-                            Text(
-                              query.isEmpty ? "Aucun étudiant enregistré" : "Aucun résultat trouvé",
-                              style: GoogleFonts.inter(color: context.appTextSecondary),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final cardsPerRow = constraints.maxWidth > 800 ? 2 : 1;
-                        return GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: cardsPerRow,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            mainAxisExtent: 110,
-                          ),
-                          itemCount: filteredStudents.length,
-                          itemBuilder: (context, index) => _buildModernUserCard(
-                            context, 
-                            lp, 
-                            filteredStudents[index],
-                            firestore,
-                            residenceId,
-                          ),
-                        );
-                      },
-                    ),
-                ],
+                  labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                  tabs: [
+                    Tab(text: lp.getText('all')),
+                    Tab(text: lp.getText('blocked')),
+                  ],
+                ),
               ),
-            );
-          },
+    
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildStudentList(allStudents, lp, firestore, residenceId),
+                    _buildStudentList(allStudents.where((s) => s['isBanned'] == true).toList(), lp, firestore, residenceId),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStudentList(List<Map<String, dynamic>> students, LanguageProvider lp, FirestoreService firestore, String? residenceId) {
+    return ValueListenableBuilder<String>(
+      valueListenable: _searchQueryNotifier,
+      builder: (context, query, child) {
+        final filteredStudents = _filterStudents(students, query);
+
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              _buildSearchBar(context, lp),
+              const SizedBox(height: 24),
+              if (filteredStudents.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Column(
+                      children: [
+                        Icon(Icons.person_search_rounded, size: 48, color: context.appTextSecondary.withValues(alpha: 0.5)),
+                        const SizedBox(height: 16),
+                        Text(
+                          query.isEmpty ? "Aucun étudiant trouvé" : "Aucun résultat trouvé",
+                          style: GoogleFonts.inter(color: context.appTextSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cardsPerRow = constraints.maxWidth > 800 ? 2 : 1;
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: cardsPerRow,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        mainAxisExtent: 110,
+                      ),
+                      itemCount: filteredStudents.length,
+                      itemBuilder: (context, index) => _buildModernUserCard(
+                        context, 
+                        lp, 
+                        filteredStudents[index],
+                        firestore,
+                        residenceId,
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
         );
       },
     );
@@ -213,9 +264,14 @@ class _AdminUsersViewState extends State<AdminUsersView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: context.appCard,
+        color: isBanned 
+            ? Colors.red.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.1 : 0.05) 
+            : context.appCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.appBorder),
+        border: Border.all(
+          color: isBanned ? Colors.red.withValues(alpha: 0.5) : context.appBorder,
+          width: isBanned ? 1.5 : 1.0,
+        ),
       ),
       child: Row(
         children: [

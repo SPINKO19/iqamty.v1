@@ -126,6 +126,7 @@ class LanguageProvider extends ChangeNotifier {
     'smart_residence': 'University Residence Platform',
     'forgot_password': 'Forgot password?',
     'biometric_login': 'Biometric Login',
+    'all': 'All',
 
     // Management & Statuses
     'status_received': 'Received',
@@ -627,6 +628,7 @@ class LanguageProvider extends ChangeNotifier {
     'done_tasks': 'Terminés',
     'urgent_status': 'Urgent',
     'new_status': 'Nouveau',
+    'all': 'Tous',
   };
 
   // ─── ARABIC ───
@@ -901,5 +903,6 @@ class LanguageProvider extends ChangeNotifier {
     'gym_schedule': 'البرنامج الزمني للقاعة الرياضية',
     'weightlifting_schedule': 'البرنامج الزمني لقاعة رفع الأثقال',
     'hamam_schedule': 'البرنامج الزمني للدوش',
+    'all': 'الكل',
   };
 }

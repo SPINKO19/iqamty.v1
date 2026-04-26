@@ -32,31 +32,65 @@ class ForumView extends StatelessWidget {
     final lp = context.watch<LanguageProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Make sure 'announcements', 'posts', 'polls' exist in language JSON or fallback
     return DefaultTabController(
       length: 3,
       child: Scaffold(
         backgroundColor: context.appBackground,
         appBar: AppBar(
+          elevation: 0,
+          backgroundColor: context.appBackground,
           leading: Padding(
             padding: const EdgeInsets.all(8.0),
             child: CustomMenuButton(
               backgroundColor: isDark 
-                  ? Colors.white.withValues(alpha: 0.1) 
-                  : AppColors.primary.withValues(alpha: 0.1),
+                  ? Colors.white.withValues(alpha: 0.05) 
+                  : AppColors.primary.withValues(alpha: 0.05),
               iconColor: isDark ? Colors.white : AppColors.primary,
             ),
           ),
-          title: Text(lp.getText('community')),
-          bottom: TabBar(
-            labelColor: AppColors.primary,
-            unselectedLabelColor: context.appTextSecondary,
-            indicatorColor: AppColors.primary,
-            tabs: const [
-              Tab(text: '📢 Announcements'),
-              Tab(text: '💬 Posts'),
-              Tab(text: '🗳️ Polls'),
-            ],
+          title: Text(
+            lp.getText('community'),
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+              color: context.appTextPrimary,
+            ),
+          ),
+          centerTitle: true,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(50),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TabBar(
+                dividerColor: Colors.transparent,
+                labelColor: Colors.white,
+                unselectedLabelColor: context.appTextSecondary,
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicator: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  gradient: LinearGradient(
+                    colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13),
+                tabs: const [
+                  Tab(text: 'Annonces'),
+                  Tab(text: 'Posts'),
+                  Tab(text: 'Polls'),
+                ],
+              ),
+            ),
           ),
         ),
         body: const TabBarView(
@@ -87,26 +121,26 @@ class _FeedTab extends StatelessWidget {
         StreamBuilder(
           stream: postType == 'announcement' 
             ? firestore.getAnnouncements(residenceId: auth.currentResidenceId)
-            : firestore.streamForumPosts(type: postType, limit: 10, residenceId: auth.currentResidenceId),
+            : firestore.streamForumPosts(type: postType, limit: 20, residenceId: auth.currentResidenceId),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: const EdgeInsets.all(32.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.amber, size: 40),
-                      const SizedBox(height: 12),
+                      const Icon(Icons.cloud_off_rounded, color: Colors.grey, size: 48),
+                      const SizedBox(height: 16),
                       Text(
-                        'Impossible de charger le forum',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary),
+                        'Une erreur est survenue',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: context.appTextPrimary),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
                       Text(
                         snapshot.error.toString(),
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 11),
+                        style: GoogleFonts.outfit(color: context.appTextSecondary, fontSize: 12),
                       ),
                     ],
                   ),
@@ -116,6 +150,7 @@ class _FeedTab extends StatelessWidget {
             
             if (snapshot.connectionState == ConnectionState.waiting) {
               return ListView.builder(
+                padding: const EdgeInsets.all(16),
                 itemCount: 4,
                 itemBuilder: (ctx, i) => _buildSkeleton(context, isDark),
               );
@@ -134,6 +169,7 @@ class _FeedTab extends StatelessWidget {
                 createdAt: a.timestamp,
                 attachments: a.imageUrls.isNotEmpty ? a.imageUrls : (a.imageUrl != null ? [a.imageUrl!] : null),
                 isPinned: true,
+                residenceId: a.residenceId,
               )).toList();
             } else {
               posts = snapshot.data as List<ForumPost>? ?? [];
@@ -144,11 +180,18 @@ class _FeedTab extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.withValues(alpha: 0.5)),
-                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.05),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.forum_outlined, size: 48, color: AppColors.primary.withValues(alpha: 0.2)),
+                    ),
+                    const SizedBox(height: 20),
                     Text(
-                      'No ${postType}s yet', 
-                      style: const TextStyle(color: Colors.grey)
+                      'Aucun contenu trouvé', 
+                      style: GoogleFonts.outfit(color: context.appTextSecondary, fontWeight: FontWeight.w500)
                     ),
                   ],
                 ),
@@ -156,12 +199,12 @@ class _FeedTab extends StatelessWidget {
             }
             
             return ListView.builder(
-              padding: const EdgeInsets.only(bottom: 80, top: 16, left: 16, right: 16),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
               itemCount: posts.length,
               itemBuilder: (context, index) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: _PostCard(post: posts[index], userId: userData?['uid'] ?? '').animate().fade(duration: 300.ms).slideY(begin: 0.1, end: 0, duration: 300.ms),
+                  child: _PostCard(post: posts[index], userId: userData?['uid'] ?? '').animate().fade(duration: 400.ms).slideY(begin: 0.05, end: 0, curve: Curves.easeOutQuad),
                 );
               },
             );
@@ -170,18 +213,19 @@ class _FeedTab extends StatelessWidget {
         
         if (postType != 'announcement' || userData?['role'] == 'administrator')
           Positioned(
-            bottom: 16,
-            right: 16,
+            bottom: 24,
+            right: 24,
             child: FloatingActionButton(
               backgroundColor: AppColors.primary,
+              elevation: 4,
               onPressed: () {
                  if (postType == 'announcement' && userData?['role'] != 'administrator') {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Only admins can post announcements')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Accès restreint à l\'administration')));
                     return;
                  }
                  _showCreateSheet(context, postType);
               },
-              child: const Icon(Icons.edit, color: Colors.white),
+              child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
             ),
           ),
       ],
@@ -190,13 +234,40 @@ class _FeedTab extends StatelessWidget {
 
   Widget _buildSkeleton(BuildContext context, bool isDark) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16, top: 16),
-      height: 120,
+      margin: const EdgeInsets.only(bottom: 16),
+      height: 180,
       decoration: BoxDecoration(
-        color: isDark ? Colors.white10 : Colors.black12,
-        borderRadius: BorderRadius.circular(16)
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.5)),
       ),
-    ).animate(onPlay: (controller) => controller.repeat()).shimmer(duration: 1200.ms, color: Colors.white24);
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(radius: 20, backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(width: 100, height: 12, decoration: BoxDecoration(color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(4))),
+                    const SizedBox(height: 6),
+                    Container(width: 60, height: 8, decoration: BoxDecoration(color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(4))),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(width: double.infinity, height: 12, decoration: BoxDecoration(color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(4))),
+            const SizedBox(height: 8),
+            Container(width: 200, height: 12, decoration: BoxDecoration(color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(4))),
+          ],
+        ),
+      ),
+    ).animate(onPlay: (controller) => controller.repeat()).shimmer(duration: 1500.ms, color: Colors.white12);
   }
 }
 
@@ -215,29 +286,71 @@ class _PostCardState extends State<_PostCard> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     bool isLiked = widget.post.likedBy.contains(widget.userId);
-
-
     final isOfficial = widget.post.type == 'announcement';
 
-    Widget card = Container(
-      margin: const EdgeInsets.only(bottom: 16),
+    return Container(
       decoration: BoxDecoration(
         color: context.appCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.appBorder.withValues(alpha: 0.4)),
-        boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isOfficial 
+              ? AppColors.primary.withValues(alpha: 0.2) 
+              : context.appBorder.withValues(alpha: 0.4),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (isOfficial)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.verified_rounded, size: 14, color: AppColors.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Annonce Officielle',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 20, 
-                  backgroundColor: isOfficial ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2), 
-                  child: Icon(isOfficial ? Icons.verified_rounded : Icons.person_rounded, size: 20, color: isOfficial ? AppColors.primary : Colors.grey[600])
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 1.5),
+                  ),
+                  child: CircleAvatar(
+                    radius: 18, 
+                    backgroundColor: isOfficial ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1), 
+                    child: Icon(
+                      isOfficial ? Icons.admin_panel_settings_rounded : Icons.person_rounded, 
+                      size: 20, 
+                      color: isOfficial ? AppColors.primary : Colors.grey[600]
+                    )
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -246,25 +359,32 @@ class _PostCardState extends State<_PostCard> {
                     children: [
                       Row(
                         children: [
-                          Flexible(child: Text(widget.post.authorName, style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 15, color: context.appTextPrimary), overflow: TextOverflow.ellipsis)),
+                          Flexible(
+                            child: Text(
+                              widget.post.authorName, 
+                              style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 15, color: context.appTextPrimary), 
+                              overflow: TextOverflow.ellipsis
+                            )
+                          ),
                           if (isOfficial) ...[
                             const SizedBox(width: 4),
-                            const Icon(Icons.check_circle_rounded, color: Colors.blue, size: 14),
+                            Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 14),
                           ]
                         ],
                       ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Text(_formatTime(widget.post.createdAt), style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary)),
-                          const SizedBox(width: 4),
-                          Icon(Icons.public, size: 12, color: context.appTextSecondary),
-                        ],
+                      Text(
+                        _formatTime(widget.post.createdAt), 
+                        style: GoogleFonts.outfit(fontSize: 11, color: context.appTextSecondary, fontWeight: FontWeight.w500)
                       ),
                     ],
                   ),
                 ),
-                if (widget.post.isPinned) const Icon(Icons.push_pin_rounded, size: 18, color: Colors.red),
+                if (widget.post.isPinned) 
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), shape: BoxShape.circle),
+                    child: const Icon(Icons.push_pin_rounded, size: 14, color: Colors.red),
+                  ),
                 _buildCardMenu(),
               ],
             ),
@@ -275,78 +395,148 @@ class _PostCardState extends State<_PostCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (widget.post.title.isNotEmpty) Text(widget.post.title, style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: context.appTextPrimary, letterSpacing: -0.3)),
-                if (widget.post.title.isNotEmpty) const SizedBox(height: 6),
-                Text(widget.post.content, style: GoogleFonts.inter(fontSize: 14, height: 1.5, color: context.appTextPrimary)),
+                if (widget.post.title.isNotEmpty) 
+                  Text(
+                    widget.post.title, 
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 17, color: context.appTextPrimary, letterSpacing: -0.2)
+                  ),
+                if (widget.post.title.isNotEmpty) const SizedBox(height: 8),
+                Text(
+                  widget.post.content, 
+                  style: GoogleFonts.inter(fontSize: 14, height: 1.6, color: context.appTextPrimary.withValues(alpha: 0.9))
+                ),
               ],
             ),
           ),
           
           if (widget.post.attachments != null && widget.post.attachments!.isNotEmpty)
             Padding(
-               padding: const EdgeInsets.only(top: 12),
-               child: Image.network(widget.post.attachments!.first, width: double.infinity, fit: BoxFit.cover, height: 250),
+               padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
+               child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    widget.post.attachments!.first, 
+                    width: double.infinity, 
+                    fit: BoxFit.cover, 
+                    height: 220,
+                    errorBuilder: (ctx, err, stack) => Container(
+                      height: 150, 
+                      color: Colors.grey.withValues(alpha: 0.1),
+                      child: const Icon(Icons.broken_image_rounded, color: Colors.grey),
+                    ),
+                  ),
+               ),
             ),
           
           if (widget.post.type == 'poll' && widget.post.pollOptions != null)
             Padding(
-               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                child: _buildPollOptions(context),
             ),
             
           const SizedBox(height: 12),
           
-          if (widget.post.likesCount > 0 || widget.post.commentsCount > 0)
-            Padding(
-               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-               child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                     Row(
-                        children: [
-                           if(widget.post.likesCount > 0) ... [
-                             Container(
-                               padding: const EdgeInsets.all(4),
-                               decoration: const BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
-                               child: const Icon(Icons.thumb_up_rounded, color: Colors.white, size: 10),
-                             ),
-                             const SizedBox(width: 6),
-                             Text('${widget.post.likesCount}', style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13)),
-                           ]
-                        ],
-                     ),
-                     if(widget.post.commentsCount > 0)
-                       Text('${widget.post.commentsCount} commentaires', style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13)),
-                  ],
-               ),
-            ),
-
-          const Divider(height: 1, thickness: 0.5),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+             padding: const EdgeInsets.symmetric(horizontal: 16),
+             child: Row(
+                children: [
+                   if (widget.post.likesCount > 0) ...[
+                     _buildStatBadge(Icons.thumb_up_rounded, '${widget.post.likesCount}', Colors.blue),
+                     const SizedBox(width: 8),
+                   ],
+                   if (widget.post.commentsCount > 0)
+                     _buildStatBadge(Icons.chat_bubble_rounded, '${widget.post.commentsCount}', AppColors.primary),
+                   const Spacer(),
+                   if (widget.post.type == 'poll')
+                     Text(
+                       '${widget.post.votersCount} votes', 
+                       style: GoogleFonts.outfit(fontSize: 11, color: context.appTextSecondary, fontWeight: FontWeight.bold)
+                     ),
+                ],
+             ),
+          ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Divider(height: 1, thickness: 0.5),
+          ),
+          
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Expanded(child: _buildActionButton(isLiked ? Icons.thumb_up_rounded : Icons.thumb_up_outlined, 'J\'aime', isLiked ? Colors.blue : context.appTextSecondary, () => _toggleLike(isLiked))),
-                Expanded(child: _buildActionButton(Icons.chat_bubble_outline_rounded, 'Commenter', context.appTextSecondary, () => _showRepliesSheet(context, widget.post, widget.userId))),
-                Expanded(child: _buildActionButton(Icons.share_outlined, 'Partager', context.appTextSecondary, () {})),
+                _buildInteractionBtn(
+                  isLiked ? Icons.thumb_up_rounded : Icons.thumb_up_outlined, 
+                  'Like', 
+                  isLiked ? Colors.blue : context.appTextSecondary, 
+                  () => _toggleLike(isLiked)
+                ),
+                _buildInteractionBtn(
+                  Icons.chat_bubble_outline_rounded, 
+                  'Comment', 
+                  context.appTextSecondary, 
+                  () => _showRepliesSheet(context, widget.post, widget.userId)
+                ),
+                _buildInteractionBtn(
+                  Icons.share_outlined, 
+                  'Share', 
+                  context.appTextSecondary, 
+                  () {}
+                ),
               ],
             ),
           ),
         ],
       ),
     );
+  }
 
-    if (widget.post.type == 'announcement') {
-      return card.animate(onPlay: (controller) => controller.repeat(reverse: true))
-          .tint(color: Colors.red.withValues(alpha: 0.05), duration: 2.seconds);
-    }
-    return card;
+  Widget _buildStatBadge(IconData icon, String count, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(count, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInteractionBtn(IconData icon, String label, Color color, VoidCallback onTap) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 20),
+                const SizedBox(width: 6),
+                Text(label, style: GoogleFonts.outfit(color: color, fontWeight: FontWeight.w600, fontSize: 13)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildPollOptions(BuildContext context) {
     final opts = widget.post.pollOptions!;
     final totalVotes = widget.post.votersCount > 0 ? widget.post.votersCount : 1; 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Column(
       children: List.generate(opts.length, (index) {
@@ -357,35 +547,65 @@ class _PostCardState extends State<_PostCard> {
         return GestureDetector(
           onTap: () => context.read<FirestoreService>().voteInPoll(widget.post.id!, index, widget.userId),
           child: Container(
-            margin: const EdgeInsets.only(top: 8),
-            height: 36,
+            margin: const EdgeInsets.only(bottom: 10),
+            height: 44,
             child: Stack(
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(8),
+                    color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 FractionallySizedBox(
                   widthFactor: pct,
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 500),
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeOutCubic,
                     decoration: BoxDecoration(
-                      color: hasVoted ? AppColors.primary.withValues(alpha: 0.2) : const Color(0xFF2D6A4F).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      gradient: LinearGradient(
+                        colors: [
+                          hasVoted ? AppColors.primary : const Color(0xFF2D6A4F).withValues(alpha: 0.4),
+                          hasVoted ? AppColors.primary.withValues(alpha: 0.7) : const Color(0xFF2D6A4F).withValues(alpha: 0.2),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(opt.text, style: TextStyle(fontWeight: hasVoted ? FontWeight.bold : FontWeight.normal)),
-                        Text('${(pct * 100).toInt()}%', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        Expanded(
+                          child: Text(
+                            opt.text, 
+                            style: GoogleFonts.outfit(
+                              fontWeight: hasVoted ? FontWeight.bold : FontWeight.w500,
+                              fontSize: 14,
+                              color: hasVoted ? Colors.white : context.appTextPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            if (hasVoted) const Icon(Icons.check_circle_rounded, size: 14, color: Colors.white),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${(pct * 100).toInt()}%', 
+                              style: GoogleFonts.outfit(
+                                fontSize: 12, 
+                                fontWeight: FontWeight.bold,
+                                color: hasVoted ? Colors.white : context.appTextSecondary
+                              )
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -412,28 +632,8 @@ class _PostCardState extends State<_PostCard> {
       splashRadius: 20,
     );
   }
-
-  Widget _buildActionButton(IconData icon, String label, Color color, VoidCallback onTap) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-         onTap: onTap,
-         borderRadius: BorderRadius.circular(8),
-         child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-               mainAxisAlignment: MainAxisAlignment.center,
-               children: [
-                  Icon(icon, color: color, size: 22),
-                  const SizedBox(width: 6),
-                  Text(label, style: GoogleFonts.inter(color: color, fontWeight: FontWeight.w600, fontSize: 13)),
-               ],
-            ),
-         ),
-      ),
-    );
-  }
 }
+
 
 void _showRepliesSheet(BuildContext context, ForumPost post, String currentUserId) {
   showModalBottomSheet(
@@ -527,12 +727,12 @@ class _RepliesSheetState extends State<_RepliesSheet> {
                           })),
                           if (children.isNotEmpty)
                             Padding(
-                              padding: const EdgeInsets.only(left: 40),
+                              padding: const EdgeInsets.only(left: 44),
                               child: Column(
                                 children: children.map((c) => _ReplyTile(reply: c, isChild: true)).toList(),
                               ),
                             ),
-                          const Divider(height: 16),
+                          const Divider(height: 24, thickness: 0.5),
                         ],
                       );
                     },
@@ -543,48 +743,70 @@ class _RepliesSheetState extends State<_RepliesSheet> {
             
             Container(
               padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).viewInsets.bottom + 16),
-              decoration: BoxDecoration(color: context.appCard, boxShadow: isDark ? null : const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0,-2))]),
+              decoration: BoxDecoration(
+                color: context.appCard, 
+                boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0,-2))]
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   if (_replyingToId != null) ...[
-                     Row(
-                       children: [
-                         Text('Replying to $_replyingToName', style: TextStyle(fontSize: 12, color: AppColors.primary)),
-                         const Spacer(),
-                         IconButton(icon: const Icon(Icons.close, size: 16), onPressed: () => setState(() => _replyingToId = null)),
-                       ],
-                     ),
-                   ].animate().fade().slideY(begin: 0.5),
-                   Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _replyController,
-                          decoration: InputDecoration(
-                            hintText: 'Write a comment...',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-                            filled: true,
-                            fillColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          ),
-                          maxLines: null,
+                    if (_replyingToId != null)
+                      ...[
+                        Row(
+                          children: [
+                            Text(
+                              'En réponse à $_replyingToName',
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            IconButton(
+                              icon: const Icon(Icons.close_rounded, size: 16),
+                              onPressed: () => setState(() => _replyingToId = null),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      _isLoading
-                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                          : IconButton(onPressed: _submitReply, icon: Icon(Icons.send, color: AppColors.primary)),
-                    ],
-                  ),
-                ],
+                      ].animate().fade().slideY(begin: 0.5),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _replyController,
+                            style: GoogleFonts.outfit(fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: 'Ajouter un commentaire...',
+                              hintStyle: TextStyle(color: context.appTextSecondary.withValues(alpha: 0.5)),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                              filled: true,
+                              fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            ),
+                            maxLines: null,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _isLoading
+                            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                            : Container(
+                                decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                                child: IconButton(
+                                  onPressed: _submitReply,
+                                  icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                                ),
+                              ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    ).animate().slideY(begin: 1, end: 0, duration: 300.ms, curve: Curves.easeOut);
+      ).animate().slideY(begin: 1, end: 0, duration: 400.ms, curve: Curves.easeOutQuart);
   }
 }
 
@@ -598,31 +820,47 @@ class _ReplyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(radius: isChild ? 12 : 16, backgroundColor: Colors.grey[300], child: Icon(Icons.person, size: isChild ? 12 : 16, color: Colors.black54)),
-          const SizedBox(width: 8),
+          CircleAvatar(
+            radius: isChild ? 14 : 18, 
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1), 
+            child: Icon(Icons.person_rounded, size: isChild ? 14 : 18, color: AppColors.primary)
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text(reply.authorName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text(
+                      reply.authorName, 
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13, color: context.appTextPrimary)
+                    ),
                     const SizedBox(width: 8),
-                    Text(_formatTime(reply.createdAt), style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text(
+                      _formatTime(reply.createdAt), 
+                      style: GoogleFonts.outfit(fontSize: 10, color: context.appTextSecondary)
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(reply.content, style: const TextStyle(fontSize: 14)),
+                Text(
+                  reply.content, 
+                  style: GoogleFonts.inter(fontSize: 14, color: context.appTextPrimary, height: 1.4)
+                ),
                 if (!isChild && onReply != null)
-                  InkWell(
+                  GestureDetector(
                     onTap: onReply,
-                    child: const Padding(
-                      padding: EdgeInsets.only(top: 4, bottom: 4),
-                      child: Text('Reply', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold)),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Répondre', 
+                        style: GoogleFonts.outfit(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.bold)
+                      ),
                     ),
                   ),
               ],
@@ -638,7 +876,14 @@ void _showCreateSheet(BuildContext context, String postType) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    builder: (context) => _CreatePostSheet(postType: postType),
+    backgroundColor: Colors.transparent,
+    builder: (context) => Container(
+      decoration: BoxDecoration(
+        color: context.appCard,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: _CreatePostSheet(postType: postType),
+    ),
   );
 }
 
@@ -657,7 +902,7 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
 
   void _submit() async {
     final content = _contentController.text.trim();
-    if (content.isEmpty) return;
+    if (content.isEmpty && widget.postType != 'poll') return;
     
     setState(() => _isLoading = true);
     final authData = context.read<AuthProvider>().currentUserData;
@@ -666,7 +911,7 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
     if (widget.postType == 'poll') {
       opts = _pollOptControllers.map((c) => c.text.trim()).where((t) => t.isNotEmpty).map((t) => PollOption(text: t, votedBy: [])).toList();
       if (opts.length < 2) {
-         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('At least 2 poll options required')));
+         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Au moins 2 options requises')));
          setState(() => _isLoading = false);
          return;
       }
@@ -677,9 +922,10 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
       title: widget.postType == 'announcement' ? _titleController.text.trim() : '',
       content: content,
       authorId: authData?['uid'] ?? 'unknown',
-      authorName: authData?['displayName'] ?? 'User',
+      authorName: authData?['displayName'] ?? 'Utilisateur',
       createdAt: DateTime.now(),
       pollOptions: opts,
+      residenceId: context.read<AuthProvider>().currentResidenceId,
     );
 
     await context.read<FirestoreService>().addForumPost(post, residenceId: context.read<AuthProvider>().currentResidenceId);
@@ -691,38 +937,87 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Create ${widget.postType.capitalize()}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              Text(
+                'Créer un ${widget.postType}', 
+                style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)
+              ),
+              const Spacer(),
+              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
+            ],
+          ),
           const SizedBox(height: 16),
           if (widget.postType == 'announcement') ...[
-            TextField(controller: _titleController, decoration: const InputDecoration(hintText: 'Title')),
+            _buildInput(_titleController, 'Titre', Icons.title_rounded, isDark),
             const SizedBox(height: 12),
           ],
-          TextField(controller: _contentController, maxLines: 4, decoration: const InputDecoration(hintText: 'What\'s on your mind?', border: OutlineInputBorder())),
+          _buildInput(_contentController, 'Quoi de neuf ?', Icons.chat_bubble_outline_rounded, isDark, maxLines: 4),
           if (widget.postType == 'poll') ...[
+            const SizedBox(height: 20),
+            Text('Options du sondage', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13, color: context.appTextSecondary)),
             const SizedBox(height: 12),
             ...List.generate(_pollOptControllers.length, (index) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: 10),
               child: Row(
                 children: [
-                  Expanded(child: TextField(controller: _pollOptControllers[index], decoration: InputDecoration(hintText: 'Option ${index + 1}'))),
-                  if (index > 1) IconButton(icon: const Icon(Icons.remove_circle, color: Colors.red), onPressed: () => setState(() => _pollOptControllers.removeAt(index))),
+                  Expanded(child: _buildInput(_pollOptControllers[index], 'Option ${index + 1}', Icons.list_rounded, isDark)),
+                  if (index > 1) 
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline_rounded, color: Colors.red), 
+                      onPressed: () => setState(() => _pollOptControllers.removeAt(index))
+                    ),
                 ],
               ),
             )),
-            TextButton.icon(onPressed: () => setState(() => _pollOptControllers.add(TextEditingController())), icon: const Icon(Icons.add), label: const Text('Add Option')),
+            TextButton.icon(
+              onPressed: () => setState(() => _pollOptControllers.add(TextEditingController())), 
+              icon: const Icon(Icons.add_rounded), 
+              label: const Text('Ajouter une option')
+            ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(onPressed: _isLoading ? null : _submit, child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Post')),
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _submit, 
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+              child: _isLoading 
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
+                : Text('Publier', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInput(TextEditingController controller, String hint, IconData icon, bool isDark, {int maxLines = 1}) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      style: GoogleFonts.outfit(fontSize: 14),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: context.appTextSecondary.withValues(alpha: 0.6)),
+        prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
+        filled: true,
+        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        contentPadding: const EdgeInsets.all(16),
       ),
     );
   }

@@ -172,6 +172,33 @@ class FirestoreService extends ChangeNotifier {
     await _db!.collection('residences').doc(residenceId).update({
       'isRestaurantOpen': isOpen,
     });
+    
+    // Also update the new collection if it exists
+    await _db!.collection('restaurant').doc(residenceId).set({
+      'isOpen': isOpen,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  // New Restaurant Collection Methods
+  Stream<RestaurantInfo?> streamRestaurantInfo(String? residenceId) {
+    if (_db == null || residenceId == null || residenceId.isEmpty) return Stream.value(null);
+    return _db!
+        .collection('restaurant')
+        .doc(residenceId)
+        .snapshots()
+        .map((doc) {
+          if (!doc.exists) return null;
+          return RestaurantInfo.fromJson(doc.data()!..['id'] = doc.id);
+        });
+  }
+
+  Future<void> updateRestaurantInfo(RestaurantInfo info) async {
+    if (_db == null || info.residenceId == null) throw Exception("Firestore not initialized or missing residenceId");
+    await _db!.collection('restaurant').doc(info.residenceId).set(
+      info.toJson(),
+      SetOptions(merge: true),
+    );
   }
 
   Future<void> toggleMealReservation(
@@ -723,21 +750,26 @@ class FirestoreService extends ChangeNotifier {
   // Forum
   Stream<List<ForumPost>> streamForumPosts(
       {String? type, int limit = 50, String? residenceId}) {
-    if (_db == null || residenceId == null || residenceId.isEmpty) {
-      return Stream.value([]);
-    }
-    Query query = _db!
+    if (_db == null) return Stream.value([]);
+    
+    return _db!
         .collection('forum')
-        .where('residenceId', isEqualTo: residenceId)
-        .orderBy('createdAt', descending: true);
-
-    return query.limit(limit).snapshots().map((snapshot) {
-      var docs = snapshot.docs.map((doc) => ForumPost.fromJson(
-          doc.data() as Map<String, dynamic>..['id'] = doc.id));
-      if (type != null) {
-        docs = docs.where((post) => post.type == type);
-      }
-      return docs.toList();
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) => ForumPost.fromJson(doc.data()..['id'] = doc.id))
+          .where((post) {
+            final matchesType = type == null || post.type == type;
+            final matchesResidence = residenceId == null ||
+                residenceId.isEmpty ||
+                post.residenceId == residenceId ||
+                post.residenceId == null ||
+                post.residenceId == '';
+            return matchesType && matchesResidence;
+          })
+          .toList();
     });
   }
 
@@ -749,6 +781,11 @@ class FirestoreService extends ChangeNotifier {
       data['residenceId'] = residenceId;
     }
     await _db!.collection('forum').add(data);
+  }
+
+  Future<void> deleteForumPost(String postId) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    await _db!.collection('forum').doc(postId).delete();
   }
 
   Future<void> toggleLike(String postId, String userId) async {

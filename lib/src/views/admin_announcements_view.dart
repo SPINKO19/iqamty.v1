@@ -19,8 +19,8 @@ class AdminAnnouncementsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
     final auth = context.watch<AuthProvider>();
-    final firestore = context.read<FirestoreService>();
     final residenceId = auth.currentResidenceId ?? auth.currentUserData?['residenceId'] as String?;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (residenceId == null || residenceId.isEmpty) {
       return Center(
@@ -29,22 +29,18 @@ class AdminAnnouncementsView extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.warning_amber_rounded, size: 64, color: Colors.orange),
+              const Icon(Icons.location_off_rounded, size: 64, color: Colors.grey),
               const SizedBox(height: 16),
               Text(
-                'Aucune résidence associée à ce compte.',
+                'Aucune résidence configurée',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: context.appTextPrimary,
-                ),
+                style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: context.appTextPrimary),
               ),
               const SizedBox(height: 8),
               Text(
-                'Veuillez configurer une résidence pour ce compte administrateur.',
+                'Veuillez associer une résidence à votre compte administrateur.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(fontSize: 13, color: context.appTextSecondary),
+                style: GoogleFonts.outfit(fontSize: 14, color: context.appTextSecondary),
               ),
             ],
           ),
@@ -52,362 +48,576 @@ class AdminAnnouncementsView extends StatelessWidget {
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      physics: const BouncingScrollPhysics(),
+    return DefaultTabController(
+      length: 3,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Action Row
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  lp.getText('message_history'),
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 18, color: context.appTextPrimary, letterSpacing: -0.5),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Gestion Communauté',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 24, color: context.appTextPrimary, letterSpacing: -0.5),
+                      ),
+                      Text(
+                        'Gérez les annonces et le forum de votre résidence',
+                        style: GoogleFonts.outfit(fontSize: 13, color: context.appTextSecondary),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              _buildHeaderAction(
-                context: context,
-                icon: Icons.send_rounded,
-                onTap: () => _showCreateAnnouncementDialog(context, lp, residenceId),
-                label: lp.getText('broadcast'),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 24),
-          
-          StreamBuilder<List<Announcement>>(
-            stream: firestore.getAnnouncements(residenceId: residenceId),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text(
-                    'Erreur lors du chargement des annonces : ${snapshot.error}',
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                );
-              }
-              
-              final announcements = snapshot.data ?? [];
-              if (announcements.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 60),
-                    child: Text(
-                      "Aucune communication trouvée",
-                      style: GoogleFonts.inter(color: context.appTextSecondary),
-                    ),
-                  ),
-                );
-              }
-
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  final cardsPerRow = constraints.maxWidth > 800 ? 2 : 1;
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: cardsPerRow,
-                      crossAxisSpacing: 24,
-                      mainAxisSpacing: 24,
-                      mainAxisExtent: 280,
-                    ),
-                    itemCount: announcements.length,
-                    itemBuilder: (context, index) {
-                      final ann = announcements[index];
-                      String time;
-                      try {
-                        time = DateFormat('dd MMM, HH:mm', 'fr').format(ann.timestamp);
-                      } catch (e) {
-                        time = DateFormat('dd MMM, HH:mm').format(ann.timestamp);
-                      }
-                      return _buildModernAnnouncementCard(
-                        context,
-                        lp,
-                        ann,
-                        time,
-                        false,
-                      );
-                    },
-                  );
-                },
-              );
-            },
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TabBar(
+              dividerColor: Colors.transparent,
+              labelColor: Colors.white,
+              unselectedLabelColor: context.appTextSecondary,
+              indicatorSize: TabBarIndicatorSize.tab,
+              indicator: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: LinearGradient(colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)]),
+                boxShadow: [
+                  BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                ],
+              ),
+              labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13),
+              tabs: const [
+                Tab(text: 'Annonces'),
+                Tab(text: 'Posts'),
+                Tab(text: 'Polls'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _AdminFeedTab(postType: 'announcement', residenceId: residenceId),
+                _AdminFeedTab(postType: 'post', residenceId: residenceId),
+                _AdminFeedTab(postType: 'poll', residenceId: residenceId),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildHeaderAction({required BuildContext context, required IconData icon, required VoidCallback onTap, required String label}) {
+class _AdminFeedTab extends StatelessWidget {
+  final String postType;
+  final String residenceId;
+  const _AdminFeedTab({required this.postType, required this.residenceId});
+
+  @override
+  Widget build(BuildContext context) {
+    final firestore = context.watch<FirestoreService>();
+    final lp = context.watch<LanguageProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 18),
-      label: Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isDark ? AppColors.primary : const Color(0xFF0E2318),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+
+    return Stack(
+      children: [
+        StreamBuilder(
+          stream: postType == 'announcement'
+              ? firestore.getAnnouncements(residenceId: residenceId)
+              : firestore.streamForumPosts(type: postType, residenceId: residenceId),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Erreur de chargement', style: GoogleFonts.outfit(color: Colors.red)));
+            }
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final List<dynamic> items = snapshot.data ?? [];
+            if (items.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.auto_awesome_motion_outlined, size: 48, color: Colors.grey.withValues(alpha: 0.3)),
+                    const SizedBox(height: 16),
+                    Text('Aucun contenu publié', style: GoogleFonts.outfit(color: Colors.grey, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              );
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                if (postType == 'announcement') {
+                  return _AdminAnnouncementCard(ann: items[index] as Announcement, lp: lp);
+                } else {
+                  return _AdminForumCard(post: items[index] as ForumPost, lp: lp);
+                }
+              },
+            );
+          },
+        ),
+        Positioned(
+          bottom: 24,
+          right: 24,
+          child: FloatingActionButton.extended(
+            onPressed: () => _showCreateDialog(context, postType, residenceId),
+            backgroundColor: AppColors.primary,
+            elevation: 4,
+            icon: const Icon(Icons.add_rounded, color: Colors.white),
+            label: Text(
+              postType == 'announcement' ? 'Diffuser' : (postType == 'poll' ? 'Sondage' : 'Poster'), 
+              style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  void _showCreateAnnouncementDialog(BuildContext context, LanguageProvider lp, String residenceId) {
+  void _showCreateDialog(BuildContext context, String type, String residenceId) {
+    if (type == 'announcement') {
+      _showCreateAnnouncementDialog(context, residenceId);
+    } else {
+      _showCreateForumPostDialog(context, type, residenceId);
+    }
+  }
+
+  void _showCreateAnnouncementDialog(BuildContext context, String residenceId) {
     final titleController = TextEditingController();
-    final bodyController = TextEditingController();
+    final contentController = TextEditingController();
     List<XFile> selectedImages = [];
     bool isUploading = false;
 
     showDialog(
       context: context,
-      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return AlertDialog(
             backgroundColor: context.appCard,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Text(lp.getText('create_announcement'), style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text('Nouvelle Annonce', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Rédigez une annonce pour tous les résidents.", style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13)),
-                  const SizedBox(height: 24),
-                  _buildModernInput(
-                    context: context,
-                    controller: titleController,
-                    label: lp.getText('title') == 'title' ? 'Titre' : lp.getText('title'),
-                    icon: Icons.title_rounded,
-                    isDark: isDark,
-                  ),
+                  _buildInput(context, titleController, 'Titre de l\'annonce', Icons.title_rounded, isDark),
                   const SizedBox(height: 16),
-                  _buildModernInput(
-                    context: context,
-                    controller: bodyController,
-                    label: lp.getText('description') == 'description' ? 'Message' : lp.getText('description'),
-                    icon: Icons.message_rounded,
-                    isDark: isDark,
-                    maxLines: 4,
-                  ),
+                  _buildInput(context, contentController, 'Message à diffuser...', Icons.message_rounded, isDark, maxLines: 4),
                   const SizedBox(height: 16),
                   if (selectedImages.isNotEmpty)
-                    SizedBox(
-                      height: 80,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: selectedImages.length,
-                        itemBuilder: (context, index) => Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          width: 80,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200],
-                            image: DecorationImage(
-                              image: NetworkImage(selectedImages[index].path),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          child: Align(
-                            alignment: Alignment.topRight,
-                            child: InkWell(
-                              onTap: () => setState(() => selectedImages.removeAt(index)),
-                              child: Container(
-                                margin: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                child: const Icon(Icons.close, color: Colors.white, size: 16),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 12),
+                     SizedBox(
+                       height: 80,
+                       child: ListView.builder(
+                         scrollDirection: Axis.horizontal,
+                         itemCount: selectedImages.length,
+                         itemBuilder: (context, index) => Container(
+                           margin: const EdgeInsets.only(right: 8),
+                           width: 80,
+                           decoration: BoxDecoration(
+                             borderRadius: BorderRadius.circular(12),
+                             image: DecorationImage(image: NetworkImage(selectedImages[index].path), fit: BoxFit.cover),
+                           ),
+                           child: Align(
+                             alignment: Alignment.topRight,
+                             child: GestureDetector(
+                               onTap: () => setState(() => selectedImages.removeAt(index)),
+                               child: Container(
+                                 margin: const EdgeInsets.all(4),
+                                 padding: const EdgeInsets.all(2),
+                                 decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                 child: const Icon(Icons.close, color: Colors.white, size: 12),
+                               ),
+                             ),
+                           ),
+                         ),
+                       ),
+                     ),
                   OutlinedButton.icon(
                     onPressed: () async {
-                      final ImagePicker picker = ImagePicker();
-                      final List<XFile> images = await picker.pickMultiImage();
-                      setState(() {
-                         selectedImages.addAll(images);
-                      });
+                      final images = await ImagePicker().pickMultiImage();
+                      setState(() => selectedImages.addAll(images));
                     },
-                    icon: const Icon(Icons.add_photo_alternate_rounded),
-                    label: const Text('Ajouter des photos'),
+                    icon: const Icon(Icons.add_photo_alternate_outlined),
+                    label: const Text('Ajouter des images'),
                     style: OutlinedButton.styleFrom(
-                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                       side: BorderSide(color: AppColors.primary),
-                       foregroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ],
               ),
             ),
             actions: [
-              if (!isUploading)
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(lp.getText('cancel')),
-                ),
+              TextButton(onPressed: () => Navigator.pop(context), child: Text('Annuler', style: TextStyle(color: context.appTextSecondary))),
               ElevatedButton(
                 onPressed: isUploading ? null : () async {
-                  final title = titleController.text.trim();
-                  final body = bodyController.text.trim();
-                  if (title.isEmpty || body.isEmpty) return;
-
+                  if (titleController.text.isEmpty || contentController.text.isEmpty) return;
                   setState(() => isUploading = true);
                   
-                  final firestore = context.read<FirestoreService>();
-
-                  try {
-                    List<String> uploadedUrls = [];
-                    if (selectedImages.isNotEmpty) {
-                       final futures = selectedImages.map((img) => CloudinaryService.uploadImage(img));
-                       uploadedUrls = (await Future.wait(futures)).whereType<String>().toList();
-                    }
-
-                    final announcement = Announcement(
-                      title: title,
-                      content: body,
-                      timestamp: DateTime.now(),
-                      imageUrls: uploadedUrls,
-                    );
-
-                    await firestore.addAnnouncement(announcement, residenceId: residenceId);
-
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(lp.getText('announcement_created') == 'announcement_created' ? 'Annonce diffusée avec succès !' : lp.getText('announcement_created')),
-                          backgroundColor: _kGreen,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    setState(() => isUploading = false);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Erreur lors de la diffusion'), backgroundColor: Colors.red),
-                      );
+                  List<String> urls = [];
+                  if (selectedImages.isNotEmpty) {
+                    for (var img in selectedImages) {
+                      final url = await CloudinaryService.uploadImage(img);
+                      if (url != null) urls.add(url);
                     }
                   }
+
+                  await context.read<FirestoreService>().addAnnouncement(
+                    Announcement(
+                      title: titleController.text.trim(),
+                      content: contentController.text.trim(),
+                      timestamp: DateTime.now(),
+                      imageUrls: urls,
+                      residenceId: residenceId,
+                    ),
+                    residenceId: residenceId,
+                  );
+                  if (context.mounted) Navigator.pop(context);
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: _kGreen, foregroundColor: Colors.white),
-                child: isUploading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Diffuser'),
-              )
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary, 
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: isUploading 
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
+                  : const Text('Diffuser'),
+              ),
             ],
           );
-        }
+        },
       ),
     );
   }
 
+  void _showCreateForumPostDialog(BuildContext context, String type, String residenceId) {
+    final contentController = TextEditingController();
+    final titleController = TextEditingController();
+    final List<TextEditingController> pollOptControllers = [TextEditingController(), TextEditingController()];
+    bool isUploading = false;
 
-  Widget _buildModernAnnouncementCard(BuildContext context, LanguageProvider lp, Announcement ann, String time, bool isUrgent) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: context.appCard,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: isDark ? null : [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-        border: Border.all(color: context.appBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isUrgent ? Colors.red.withValues(alpha: 0.1) : _kGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  isUrgent ? lp.getText('urgent') : lp.getText('info'),
-                  style: GoogleFonts.inter(
-                    color: isUrgent ? Colors.red : _kGreen,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
-              Row(
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return AlertDialog(
+            backgroundColor: context.appCard,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(type == 'poll' ? 'Nouveau Sondage' : 'Nouveau Post', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(time, style: GoogleFonts.inter(color: context.appTextSecondary.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.w600)),
-                  const SizedBox(width: 12),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () {
-                      if (ann.id != null) {
-                        showDialog(context: context, builder: (ctx) => AlertDialog(
-                          title: const Text('Supprimer l\'annonce ?'),
-                          content: const Text('Cette action est irréversible.'),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-                            ElevatedButton(
-                              onPressed: () async {
-                                Navigator.pop(ctx);
-                                await context.read<FirestoreService>().deleteAnnouncement(ann.id!);
-                              },
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                              child: const Text('Supprimer', style: TextStyle(color: Colors.white)),
-                            )
-                          ]
-                        ));
-                      }
-                    },
-                    child: Icon(Icons.delete_outline, size: 20, color: AppColors.error),
-                  ),
+                  if (type == 'poll') ...[
+                    _buildInput(context, titleController, 'Question du sondage', Icons.help_outline_rounded, isDark),
+                    const SizedBox(height: 16),
+                  ],
+                  _buildInput(context, contentController, type == 'poll' ? 'Description (optionnel)' : 'Quoi de neuf ?', Icons.chat_bubble_outline_rounded, isDark, maxLines: 4),
+                  if (type == 'poll') ...[
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Text('Options de réponse', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13, color: context.appTextSecondary)),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => setState(() => pollOptControllers.add(TextEditingController())),
+                          icon: Icon(Icons.add_circle_outline_rounded, color: AppColors.primary, size: 20),
+                        ),
+                      ],
+                    ),
+                    ...List.generate(pollOptControllers.length, (index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        children: [
+                          Expanded(child: _buildInput(context, pollOptControllers[index], 'Option ${index + 1}', Icons.list_rounded, isDark)),
+                          if (index > 1) 
+                            IconButton(
+                              icon: const Icon(Icons.remove_circle_outline_rounded, color: Colors.red, size: 20), 
+                              onPressed: () => setState(() => pollOptControllers.removeAt(index))
+                            ),
+                        ],
+                      ),
+                    )),
+                  ],
                 ],
               ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: Text('Annuler', style: TextStyle(color: context.appTextSecondary))),
+              ElevatedButton(
+                onPressed: isUploading ? null : () async {
+                  if (contentController.text.isEmpty && type != 'poll') return;
+                  if (type == 'poll' && (titleController.text.isEmpty || pollOptControllers.any((c) => c.text.isEmpty))) return;
+                  
+                  setState(() => isUploading = true);
+                  final auth = context.read<AuthProvider>();
+                  
+                  List<PollOption>? opts;
+                  if (type == 'poll') {
+                    opts = pollOptControllers.map((c) => PollOption(text: c.text.trim(), votedBy: [])).toList();
+                  }
+
+                  await context.read<FirestoreService>().addForumPost(
+                    ForumPost(
+                      type: type,
+                      title: type == 'poll' ? titleController.text.trim() : '',
+                      content: contentController.text.trim(),
+                      authorId: auth.currentUserData?['uid'] ?? 'admin',
+                      authorName: 'Administration',
+                      createdAt: DateTime.now(),
+                      pollOptions: opts,
+                      isPinned: true,
+                      residenceId: residenceId,
+                    ),
+                    residenceId: residenceId,
+                  );
+                  if (context.mounted) Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary, 
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: isUploading 
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
+                  : const Text('Publier'),
+              ),
             ],
-          ),
-          const SizedBox(height: 16),
-          Text(ann.title, style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 17, color: context.appTextPrimary, letterSpacing: -0.3)),
-          const SizedBox(height: 8),
-          Text(ann.content, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 14, height: 1.5, fontWeight: FontWeight.w400)),
-        ],
+          );
+        },
       ),
     );
   }
-  Widget _buildModernInput({
-    required BuildContext context,
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    required bool isDark,
-    String? hint,
-    int maxLines = 1,
-  }) {
+
+  Widget _buildInput(BuildContext context, TextEditingController controller, String label, IconData icon, bool isDark, {int maxLines = 1}) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      style: GoogleFonts.inter(color: context.appTextPrimary, fontSize: 15),
+      style: GoogleFonts.outfit(fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
-        hintText: hint,
-        labelStyle: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 14),
+        labelStyle: TextStyle(color: context.appTextSecondary),
         prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
         filled: true,
-        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        contentPadding: const EdgeInsets.all(16),
       ),
     );
   }
 }
+
+class _AdminAnnouncementCard extends StatelessWidget {
+  final Announcement ann;
+  final LanguageProvider lp;
+  const _AdminAnnouncementCard({required this.ann, required this.lp});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                CircleAvatar(backgroundColor: AppColors.primary.withValues(alpha: 0.1), child: Icon(Icons.campaign_rounded, color: AppColors.primary)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(ann.title, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16, color: context.appTextPrimary)),
+                      Text(DateFormat('dd MMM, HH:mm').format(ann.timestamp), style: GoogleFonts.outfit(color: context.appTextSecondary, fontSize: 11)),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 22),
+                  onPressed: () => _confirmDelete(context, () => context.read<FirestoreService>().deleteAnnouncement(ann.id!)),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Text(ann.content, style: GoogleFonts.inter(color: context.appTextPrimary.withValues(alpha: 0.8), height: 1.5)),
+          ),
+          if (ann.imageUrls.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(ann.imageUrls.first, width: double.infinity, height: 180, fit: BoxFit.cover),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, VoidCallback onConfirm) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer ?'),
+        content: const Text('Voulez-vous vraiment supprimer cette annonce ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () { Navigator.pop(context); onConfirm(); },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminForumCard extends StatelessWidget {
+  final ForumPost post;
+  final LanguageProvider lp;
+  const _AdminForumCard({required this.post, required this.lp});
+
+  @override
+  Widget build(BuildContext context) {
+    final totalVotes = post.pollOptions?.fold<int>(0, (prev, opt) => prev! + opt.voteCount) ?? 0;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                CircleAvatar(backgroundColor: Colors.grey.withValues(alpha: 0.1), child: Icon(post.type == 'poll' ? Icons.poll_rounded : Icons.forum_rounded, color: context.appTextSecondary, size: 20)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(post.title.isNotEmpty ? post.title : 'Discussion', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(DateFormat('dd MMM, HH:mm').format(post.createdAt), style: GoogleFonts.outfit(color: context.appTextSecondary, fontSize: 11)),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 22),
+                  onPressed: () => _confirmDelete(context, () => context.read<FirestoreService>().deleteForumPost(post.id!)),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Text(post.content, style: GoogleFonts.inter(color: context.appTextPrimary.withValues(alpha: 0.8), height: 1.5)),
+          ),
+          if (post.type == 'poll' && post.pollOptions != null) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Divider(color: context.appBorder.withValues(alpha: 0.5)),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.analytics_outlined, size: 14, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      Text('Résultats ($totalVotes votes)', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.primary)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ...post.pollOptions!.map((opt) {
+                    final percent = totalVotes == 0 ? 0.0 : opt.voteCount / totalVotes;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(opt.text, style: GoogleFonts.outfit(fontSize: 13, color: context.appTextPrimary)),
+                              Text('${opt.voteCount} (${(percent * 100).toInt()}%)', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: LinearProgressIndicator(
+                              value: percent,
+                              backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                              minHeight: 8,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, VoidCallback onConfirm) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer ?'),
+        content: const Text('Voulez-vous vraiment supprimer ce contenu ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () { Navigator.pop(context); onConfirm(); },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

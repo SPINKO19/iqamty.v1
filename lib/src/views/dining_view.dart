@@ -1,7 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../core/theme/colors.dart';
 import '../services/firestore_service.dart';
 import '../providers/auth_provider.dart';
@@ -9,572 +10,303 @@ import '../providers/language_provider.dart';
 import '../models/types.dart';
 import '../components/custom_menu_button.dart';
 
-class DiningView extends StatefulWidget {
+class DiningView extends StatelessWidget {
   const DiningView({super.key});
 
   @override
-  State<DiningView> createState() => _DiningViewState();
-}
-
-class _DiningViewState extends State<DiningView> {
-  DateTime _selectedDate = DateTime.now();
-  late DateTime _startOfWeek;
-
-  @override
-  void initState() {
-    super.initState();
-    // Monday as start of week
-    _startOfWeek = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
-  }
-
-  String _getWeekRangeString() {
-    final endOfWeek = _startOfWeek.add(const Duration(days: 6));
-    final DateFormat formatter = DateFormat('d');
-    final DateFormat fullFormatter = DateFormat('d MMMM yyyy', 'fr');
-    return 'Semaine du ${formatter.format(_startOfWeek)} au ${fullFormatter.format(endOfWeek)}';
-  }
-
-  String _getDayLetter(int index) {
-    return DateFormat.E('fr').format(_startOfWeek.add(Duration(days: index)))[0].toUpperCase();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    const kDarkGreen = Color(0xFF2D6A4F);
+    final firestore = context.watch<FirestoreService>();
+    final auth = context.watch<AuthProvider>();
+    final residenceId = auth.currentResidenceId ?? auth.currentUserData?['residenceId'] as String?;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: context.appBackground,
-      body: Column(
-        children: [
-          // Header Section
-          Container(
-            color: kDarkGreen,
-            padding: const EdgeInsets.only(top: 60, bottom: 24),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      const CustomMenuButton(),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Restauration',
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _getWeekRangeString(),
-                            style: GoogleFonts.inter(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Day Selector
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: List.generate(7, (index) {
-                      final date = _startOfWeek.add(Duration(days: index));
-                      final isSelected = DateUtils.isSameDay(date, _selectedDate);
-                      
-                      return GestureDetector(
-                        onTap: () => setState(() => _selectedDate = date),
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: isSelected ? Colors.white : Colors.transparent,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              _getDayLetter(index),
-                              style: GoogleFonts.inter(
-                                color: isSelected ? kDarkGreen : Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-              ],
-            ),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: context.appBackground,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomMenuButton(
+            backgroundColor: isDark 
+                ? Colors.white.withValues(alpha: 0.05) 
+                : AppColors.primary.withValues(alpha: 0.05),
+            iconColor: isDark ? Colors.white : AppColors.primary,
           ),
-
-          // Main Content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-              child: Column(
-                children: [
-                  _buildWeeklySummaryCard(),
-                  const SizedBox(height: 24),
-                  _buildMealsList(),
-                ],
-              ),
-            ),
+        ),
+        title: Text(
+          'Restaurant',
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: context.appTextPrimary,
           ),
-        ],
+        ),
+        centerTitle: true,
       ),
-    );
-  }
-
-  Widget _buildWeeklySummaryCard() {
-    final firestore = context.watch<FirestoreService>();
-    final auth = context.read<AuthProvider>();
-    final userId = auth.currentUserData?['uid'] ?? '';
-    final residenceId = auth.currentResidenceId ?? '';
-
-    return StreamBuilder<List<Meal>>(
-      stream: firestore.getMealsForWeek(_startOfWeek, residenceId: residenceId),
-      builder: (context, snapshot) {
-        final meals = snapshot.data ?? [];
-        final reservedDayIndices = <int>{};
-        for (var meal in meals) {
-          if (meal.isReserved(userId)) {
-            final diff = meal.date.difference(_startOfWeek).inDays;
-            if (diff >= 0 && diff < 7) {
-              reservedDayIndices.add(diff);
-            }
+      body: StreamBuilder<RestaurantInfo?>(
+        stream: firestore.streamRestaurantInfo(residenceId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
-        }
-        
-        final reservedCount = reservedDayIndices.length;
 
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: context.appCard,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 15,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Cette semaine',
-                    style: GoogleFonts.inter(
-                      color: context.appTextSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '$reservedCount / 7 repas réservés',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: context.appTextPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: List.generate(7, (index) {
-                  final isReserved = reservedDayIndices.contains(index);
-                  return Container(
-                    margin: const EdgeInsets.only(left: 6),
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: isReserved ? const Color(0xFF10B981) : const Color(0xFFE5E7EB),
-                      shape: BoxShape.circle,
-                    ),
-                  );
-                }),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+          final info = snapshot.data;
+          if (info == null) {
+            return _buildEmptyState(context);
+          }
 
-  Widget _buildMealsList() {
-    final firestore = context.watch<FirestoreService>();
-    final auth = context.read<AuthProvider>();
-    final userId = auth.currentUserData?['uid'] ?? '';
-    final residenceId = auth.currentResidenceId ?? '';
-
-    return StreamBuilder<bool>(
-      stream: firestore.streamRestaurantStatus(residenceId),
-      builder: (context, statusSnapshot) {
-        final isOpen = statusSnapshot.data ?? true;
-
-        if (!isOpen) {
-          return Center(
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
-                Icon(Icons.do_not_disturb_on_rounded, size: 64, color: Colors.red.withValues(alpha: 0.5)),
-                const SizedBox(height: 16),
-                Text(
-                  'Restaurant Fermé',
-                  style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: context.appTextPrimary),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Le restaurant universitaire est actuellement fermé.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(color: context.appTextSecondary),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return StreamBuilder<List<Meal>>(
-          stream: firestore.getMealsForDate(_selectedDate, residenceId: residenceId),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            final meals = snapshot.data ?? [];
-
-            if (meals.isEmpty) {
-              return Center(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 40),
-                    Icon(Icons.restaurant_outlined,
-                        size: 64,
-                        color: context.appTextSecondary.withValues(alpha: 0.4)),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Aucun repas configuré',
-                      style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: context.appTextPrimary),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Le menu de cette journée n\'a pas encore été ajouté par l\'administration.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
-                          color: context.appTextSecondary, fontSize: 13),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            // Fixed Sort order: breakfast (0), lunch (1), dinner (2)
-            const order = {'breakfast': 0, 'lunch': 1, 'dinner': 2};
-            final sorted = List<Meal>.from(meals)
-              ..sort((a, b) =>
-                  (order[a.mealType] ?? 3).compareTo(order[b.mealType] ?? 3));
-
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: sorted.length,
-              itemBuilder: (context, index) {
-                return _MealCard(meal: sorted[index], userId: userId);
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _MealCard extends StatefulWidget {
-  final Meal meal;
-  final String userId;
-
-  const _MealCard({required this.meal, required this.userId});
-
-  @override
-  State<_MealCard> createState() => _MealCardState();
-}
-
-class _MealCardState extends State<_MealCard> {
-  bool _hasJustRated = false;
-
-  Meal get meal => widget.meal;
-  String get userId => widget.userId;
-
-  String _getMealDisplayName(LanguageProvider lp) {
-    return lp.getText(meal.mealType);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const kDarkGreen = Color(0xFF2D6A4F);
-    final isReserved = meal.isReserved(userId);
-    final firestore = context.read<FirestoreService>();
-    final lp = context.watch<LanguageProvider>();
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: context.appCard,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildIconBox(),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _getMealDisplayName(lp),
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: context.appTextPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${meal.startTime} — ${meal.endTime}',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: context.appTextSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                _buildStatusBanner(context, info.isOpen),
+                const SizedBox(height: 24),
+                
+                if (info.isOpen) ...[
+                  _buildMealCard(context, 'Petit-déjeuner', info.breakfast, Icons.coffee_rounded, const Color(0xFFF4A261), isDark)
+                      .animate().fade().slideY(begin: 0.2, duration: 400.ms),
+                  const SizedBox(height: 20),
+                  _buildMealCard(context, 'Déjeuner', info.lunch, Icons.wb_sunny_rounded, const Color(0xFF2A9D8F), isDark)
+                      .animate().fade().slideY(begin: 0.2, delay: 100.ms, duration: 400.ms),
+                  const SizedBox(height: 20),
+                  _buildMealCard(context, 'Dîner', info.dinner, Icons.nightlight_round, const Color(0xFF264653), isDark)
+                      .animate().fade().slideY(begin: 0.2, delay: 200.ms, duration: 400.ms),
+                ] else
+                  _buildClosedState(context),
+                  
+                const SizedBox(height: 40),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStatusBanner(BuildContext context, bool isOpen) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isOpen 
+            ? [const Color(0xFF2D6A4F), const Color(0xFF40916C)]
+            : [const Color(0xFF9B2226), const Color(0xFFBB3E03)],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: (isOpen ? const Color(0xFF2D6A4F) : const Color(0xFF9B2226)).withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isOpen ? Icons.restaurant_rounded : Icons.no_food_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isOpen ? 'Le Restaurant est Ouvert' : 'Restaurant Fermé',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: meal.menuItems.map((item) => _buildMenuChip(item)).toList(),
-                ),
-                const SizedBox(height: 16),
-                _buildRatingBar(context),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: isReserved
-                      ? OutlinedButton(
-                          onPressed: () => firestore.toggleMealReservation(meal.id!, userId, false),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF10B981)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            backgroundColor: const Color(0xFFD8F3DC).withValues(alpha: 0.3),
-                          ),
-                          child: Text(
-                            'Annuler la réservation',
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF2D6A4F),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        )
-                      : ElevatedButton(
-                          onPressed: () => firestore.toggleMealReservation(meal.id!, userId, true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kDarkGreen,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          ),
-                          child: Text(
-                            'Réserver ce repas',
-                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                        ),
+                Text(
+                  isOpen ? 'Bon appétit à tous les étudiants !' : 'Revenez plus tard pour le prochain repas.',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
           ),
-          if (isReserved)
-            Positioned(
-              top: 20,
-              right: 20,
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF10B981),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
+          if (isOpen)
+            Container(
+              width: 12,
+              height: 12,
+              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            ).animate(onPlay: (c) => c.repeat()).scale(duration: 1.seconds, begin: const Offset(1,1), end: const Offset(1.5, 1.5)).fade(begin: 1, end: 0),
         ],
       ),
     );
   }
 
-  Widget _buildIconBox() {
-    IconData icon;
-    Color color;
-    Color bgColor;
-
-    switch (meal.mealType) {
-      case 'breakfast':
-        icon = Icons.free_breakfast;
-        color = const Color(0xFFF4A261);
-        bgColor = const Color(0xFFFFF3E0);
-        break;
-      case 'lunch':
-        icon = Icons.wb_sunny;
-        color = const Color(0xFF42A5F5);
-        bgColor = const Color(0xFFE3F2FD);
-        break;
-      case 'dinner':
-        icon = Icons.nightlight_round;
-        color = const Color(0xFF7E57C2);
-        bgColor = const Color(0xFFEDE7F6);
-        break;
-      default:
-        icon = Icons.restaurant_rounded;
-        color = Colors.grey;
-        bgColor = Colors.grey.withValues(alpha: 0.1);
-    }
-
+  Widget _buildMealCard(BuildContext context, String title, RestaurantMeal meal, IconData icon, Color accentColor, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(16),
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
-      child: Icon(icon, color: color, size: 24),
-    );
-  }
-
-  Widget _buildMenuChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFD8F3DC).withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.inter(
-          color: const Color(0xFF2D6A4F),
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (meal.imageUrl != null && meal.imageUrl!.isNotEmpty)
+              Stack(
+                children: [
+                  Image.network(
+                    meal.imageUrl!,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 200,
+                      color: accentColor.withValues(alpha: 0.1),
+                      child: Icon(Icons.broken_image_rounded, color: accentColor),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 80,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Colors.black.withValues(alpha: 0.6)],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(icon, color: accentColor, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            title,
+                            style: GoogleFonts.outfit(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: context.appTextPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${meal.startTime} - ${meal.endTime}',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: accentColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    meal.menu.isNotEmpty ? meal.menu : 'Menu non disponible pour le moment.',
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      height: 1.6,
+                      color: context.appTextPrimary.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildRatingBar(BuildContext context) {
-    final firestore = context.read<FirestoreService>();
-    final alreadyRated = _hasJustRated || meal.hasRated(userId);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        color: context.appBackground,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(children: [
-            Text(meal.averageRating.toStringAsFixed(1),
-                style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: context.appTextPrimary)),
-            const SizedBox(width: 4),
-            const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
-            const SizedBox(width: 4),
-            Text('(${meal.ratingCount} avis)',
-                style: GoogleFonts.inter(
-                    color: context.appTextSecondary, fontSize: 11)),
-          ]),
-          alreadyRated
-              ? Row(children: [
-                  const Icon(Icons.check_circle_rounded,
-                      color: Color(0xFF10B981), size: 16),
-                  const SizedBox(width: 4),
-                  Text('Noté',
-                      style: GoogleFonts.inter(
-                          color: const Color(0xFF10B981),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600)),
-                ])
-              : Row(
-                  children: List.generate(5, (index) {
-                    final filled = index < meal.averageRating.round();
-                    return GestureDetector(
-                      onTap: () {
-                        if (meal.id != null) {
-                          final rating = index + 1.0;
-                          firestore.rateMeal(meal.id!, rating, userId);
-                          setState(() => _hasJustRated = true);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Merci pour votre avis !')),
-                          );
-                        }
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                        child: Icon(
-                          filled
-                              ? Icons.star_rounded
-                              : Icons.star_outline_rounded,
-                          color: filled
-                              ? Colors.amber
-                              : Colors.grey.withValues(alpha: 0.4),
-                          size: 20,
-                        ),
-                      ),
-                    );
-                  }),
-                ),
+          Icon(Icons.restaurant_menu_rounded, size: 80, color: Colors.grey.withValues(alpha: 0.2)),
+          const SizedBox(height: 20),
+          Text(
+            'Aucun menu publié',
+            style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: context.appTextPrimary),
+          ),
+          Text(
+            'L\'administration n\'a pas encore configuré le menu.',
+            style: GoogleFonts.outfit(color: context.appTextSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClosedState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 40),
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.no_food_rounded, size: 80, color: Colors.red.withValues(alpha: 0.3)),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Période de Fermeture',
+            style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: context.appTextPrimary),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              'Le restaurant est actuellement fermé. Veuillez consulter les horaires d\'ouverture habituels.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.outfit(color: context.appTextSecondary, fontSize: 14),
+            ),
+          ),
         ],
       ),
     );

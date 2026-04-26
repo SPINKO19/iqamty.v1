@@ -431,6 +431,7 @@ class ForumPost {
   final List<PollOption>? pollOptions;
   final int votersCount;
   final List<String> likedBy; // kept for robust local toggling
+  final String? residenceId;
 
   ForumPost({
     this.id,
@@ -447,6 +448,7 @@ class ForumPost {
     this.pollOptions,
     this.votersCount = 0,
     this.likedBy = const [],
+    this.residenceId,
   });
 
   factory ForumPost.fromJson(Map<String, dynamic> json) {
@@ -465,6 +467,7 @@ class ForumPost {
       pollOptions: (json['pollOptions'] as List?)?.map((e) => PollOption.fromJson(e)).toList(),
       votersCount: json['votersCount'] ?? 0,
       likedBy: List<String>.from(json['likedBy'] ?? []),
+      residenceId: json['residenceId'],
     );
   }
 
@@ -482,6 +485,7 @@ class ForumPost {
       'pollOptions': pollOptions?.map((e) => e.toJson()).toList(),
       'votersCount': votersCount,
       'likedBy': likedBy,
+      'residenceId': residenceId,
       // createdAt is added by the server
     };
   }
@@ -689,6 +693,81 @@ class NotificationModel {
       'isDeleted': isDeleted,
       'createdAt': Timestamp.fromDate(createdAt),
       'residenceId': residenceId,
+    };
+  }
+}
+
+class RestaurantMeal {
+  final String menu;
+  final String? imageUrl;
+  final String startTime;
+  final String endTime;
+
+  RestaurantMeal({
+    required this.menu,
+    this.imageUrl,
+    required this.startTime,
+    required this.endTime,
+  });
+
+  factory RestaurantMeal.fromJson(Map<String, dynamic> json) {
+    return RestaurantMeal(
+      menu: json['menu'] ?? '',
+      imageUrl: json['imageUrl'],
+      startTime: json['startTime'] ?? '',
+      endTime: json['endTime'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'menu': menu,
+      'imageUrl': imageUrl,
+      'startTime': startTime,
+      'endTime': endTime,
+    };
+  }
+}
+
+class RestaurantInfo {
+  final String? id;
+  final bool isOpen;
+  final RestaurantMeal breakfast;
+  final RestaurantMeal lunch;
+  final RestaurantMeal dinner;
+  final String? residenceId;
+  final DateTime lastUpdated;
+
+  RestaurantInfo({
+    this.id,
+    this.isOpen = true,
+    required this.breakfast,
+    required this.lunch,
+    required this.dinner,
+    this.residenceId,
+    required this.lastUpdated,
+  });
+
+  factory RestaurantInfo.fromJson(Map<String, dynamic> json) {
+    return RestaurantInfo(
+      id: json['id'],
+      isOpen: json['isOpen'] ?? true,
+      breakfast: RestaurantMeal.fromJson(json['breakfast'] ?? {}),
+      lunch: RestaurantMeal.fromJson(json['lunch'] ?? {}),
+      dinner: RestaurantMeal.fromJson(json['dinner'] ?? {}),
+      residenceId: json['residenceId'],
+      lastUpdated: (json['lastUpdated'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'isOpen': isOpen,
+      'breakfast': breakfast.toJson(),
+      'lunch': lunch.toJson(),
+      'dinner': dinner.toJson(),
+      'residenceId': residenceId,
+      'lastUpdated': FieldValue.serverTimestamp(),
     };
   }
 }

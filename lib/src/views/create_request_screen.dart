@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../models/types.dart';
 import '../services/firestore_service.dart';
 import '../services/cloudinary_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
-
 import '../components/custom_menu_button.dart';
 
 class CreateRequestScreen extends StatefulWidget {
@@ -52,12 +52,11 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
+          SnackBar(content: Text('Erreur lors du choix de l\'image: $e')),
         );
       }
     }
   }
-
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate() || _selectedCategory == null) {
@@ -77,7 +76,6 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
       final messenger = ScaffoldMessenger.of(context);
       final navigator = Navigator.of(context);
 
-      // Use the UID for consistency across all login methods
       final userId = authProvider.currentStudent?.matricule ?? authProvider.currentUserData?['uid'] ?? '';
       
       if (userId.isEmpty) {
@@ -85,9 +83,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
       }
 
       String? imageUrl;
-
       if (_imageFile != null) {
-        // We use XFile for Cloudinary (cross-platform handle)
         final xFile = XFile(_imageFile!.path);
         imageUrl = await CloudinaryService.uploadImage(xFile);
       }
@@ -102,7 +98,6 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
       );
 
       final residenceId = authProvider.currentResidenceId;
-
       await firestoreService.submitServiceRequest(request, residenceId: residenceId);
 
       if (mounted) {
@@ -114,7 +109,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text('Erreur: $e')),
         );
       }
     } finally {
@@ -125,188 +120,245 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final categories = [
-      {'id': 'repair', 'title': lp.getText('repair')},
-      {'id': 'cleaning', 'title': lp.getText('cleaning')},
-      {'id': 'housing', 'title': lp.getText('housing')},
+      {'id': 'repair', 'title': lp.getText('repair'), 'icon': Icons.build_rounded},
+      {'id': 'cleaning', 'title': lp.getText('cleaning'), 'icon': Icons.cleaning_services_rounded},
+      {'id': 'housing', 'title': lp.getText('housing'), 'icon': Icons.home_repair_service_rounded},
     ];
 
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: context.appBackground,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: CustomMenuButton(
-            backgroundColor: context.appTextPrimary.withValues(alpha: 0.1),
-            iconColor: context.appTextPrimary,
+            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.primary.withValues(alpha: 0.05),
+            iconColor: isDark ? Colors.white : AppColors.primary,
           ),
         ),
-        title: Text(lp.getText('new_request'), style: TextStyle(color: context.appTextPrimary)),
-        backgroundColor: context.appCard,
-        iconTheme: IconThemeData(color: context.appTextPrimary),
-        elevation: 0,
+        title: Text(
+          lp.getText('new_request'), 
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 20, color: context.appTextPrimary)
+        ),
+        centerTitle: true,
       ),
       body: _isSubmitting
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text('Envoi en cours...', style: GoogleFonts.outfit(color: context.appTextSecondary)),
+                ],
+              ),
+            )
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      lp.getText('category'),
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        color: context.appTextPrimary,
-                      ),
-                    ),
+                    _buildSectionTitle(lp.getText('category')),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedCategory,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: context.appCard,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: context.appBorder),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: context.appBorder),
-                        ),
-                      ),
-                      items: categories.map((cat) {
-                        return DropdownMenuItem<String>(
-                          value: cat['id'],
-                          child: Text(cat['title']!),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() => _selectedCategory = value),
-                    ),
+                    _buildCategorySelector(categories, isDark),
                     const SizedBox(height: 24),
-                    Text(
-                      lp.getText('description'),
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        color: context.appTextPrimary,
-                      ),
-                    ),
+                    _buildSectionTitle(lp.getText('description')),
                     const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _descriptionController,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: lp.getText('describe_problem'),
-                        filled: true,
-                        fillColor: context.appCard,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: context.appBorder),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: context.appBorder),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Veuillez entrer une description';
-                        }
-                        return null;
-                      },
-                    ),
+                    _buildDescriptionField(lp, isDark),
                     const SizedBox(height: 24),
-                    Text(
-                      lp.getText('photo'),
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        color: context.appTextPrimary,
-                      ),
-                    ),
+                    _buildSectionTitle(lp.getText('photo')),
                     const SizedBox(height: 12),
-                    if (_imageFile != null)
-                      Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: kIsWeb 
-                              ? Image.network(_imageFile!.path, height: 200, width: double.infinity, fit: BoxFit.cover)
-                              : Image.file(_imageFile!, height: 200, width: double.infinity, fit: BoxFit.cover),
-                          ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: CircleAvatar(
-                              backgroundColor: Colors.black54,
-                              child: IconButton(
-                                icon: const Icon(Icons.close, color: Colors.white),
-                                onPressed: () => setState(() => _imageFile = null),
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    else
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildImageSourceButton(
-                              icon: Icons.camera_alt_outlined,
-                              label: lp.getText('camera'),
-                              onTap: () => _pickImage(ImageSource.camera),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildImageSourceButton(
-                              icon: Icons.photo_library_outlined,
-                              label: lp.getText('gallery'),
-                              onTap: () => _pickImage(ImageSource.gallery),
-                            ),
-                          ),
-                        ],
-                      ),
+                    _buildImageUploader(lp, isDark),
                     const SizedBox(height: 48),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        child: Text(
-                          lp.getText('submit'),
-                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
+                    _buildSubmitButton(lp),
+                    const SizedBox(height: 20),
+                  ].animate(interval: 50.ms).fade(duration: 300.ms).slideY(begin: 0.1, end: 0),
                 ),
               ),
             ),
     );
   }
 
-  Widget _buildImageSourceButton({required IconData icon, required String label, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        decoration: BoxDecoration(
-          color: context.appCard,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: context.appBorder),
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.outfit(
+        fontWeight: FontWeight.bold,
+        fontSize: 16,
+        color: context.appTextPrimary,
+        letterSpacing: 0.2,
+      ),
+    );
+  }
+
+  Widget _buildCategorySelector(List<Map<String, dynamic>> categories, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButtonFormField<String>(
+          value: _selectedCategory,
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
+          decoration: const InputDecoration(border: InputBorder.none),
+          hint: Text('Choisir une catégorie', style: GoogleFonts.outfit(color: context.appTextSecondary, fontSize: 14)),
+          items: categories.map((cat) {
+            return DropdownMenuItem<String>(
+              value: cat['id'],
+              child: Row(
+                children: [
+                  Icon(cat['icon'] as IconData, size: 20, color: AppColors.primary),
+                  const SizedBox(width: 12),
+                  Text(cat['title'] as String, style: GoogleFonts.outfit(fontSize: 14)),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (value) => setState(() => _selectedCategory = value),
         ),
-        child: Column(
-          children: [
-            Icon(icon, color: AppColors.primary),
-            const SizedBox(height: 8),
-            Text(label, style: TextStyle(color: context.appTextSecondary)),
-          ],
+      ),
+    );
+  }
+
+  Widget _buildDescriptionField(LanguageProvider lp, bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: TextFormField(
+        controller: _descriptionController,
+        maxLines: 5,
+        style: GoogleFonts.inter(fontSize: 14, color: context.appTextPrimary),
+        decoration: InputDecoration(
+          hintText: lp.getText('describe_problem'),
+          hintStyle: GoogleFonts.inter(color: context.appTextSecondary.withValues(alpha: 0.5), fontSize: 14),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.all(16),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) return 'Veuillez entrer une description';
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildImageUploader(LanguageProvider lp, bool isDark) {
+    if (_imageFile != null) {
+      return Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: kIsWeb 
+              ? Image.network(_imageFile!.path, height: 220, width: double.infinity, fit: BoxFit.cover)
+              : Image.file(_imageFile!, height: 220, width: double.infinity, fit: BoxFit.cover),
+          ),
+          Positioned(
+            top: 12,
+            right: 12,
+            child: GestureDetector(
+              onTap: () => setState(() => _imageFile = null),
+                child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+              ),
+            ),
+          ),
+        ],
+      ).animate().scale(duration: 300.ms, curve: Curves.easeOutBack);
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: _buildImageSourceButton(
+            icon: Icons.camera_enhance_rounded,
+            label: lp.getText('camera'),
+            onTap: () => _pickImage(ImageSource.camera),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildImageSourceButton(
+            icon: Icons.photo_library_rounded,
+            label: lp.getText('gallery'),
+            onTap: () => _pickImage(ImageSource.gallery),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageSourceButton({required IconData icon, required String label, required VoidCallback onTap}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          decoration: BoxDecoration(
+            color: context.appCard,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: context.appBorder.withValues(alpha: 0.5)),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: Icon(icon, color: AppColors.primary, size: 24),
+              ),
+              const SizedBox(height: 12),
+              Text(label, style: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: context.appTextSecondary, fontSize: 13)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton(LanguageProvider lp) {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)]),
+        boxShadow: [
+          BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6)),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _submit,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        child: Text(
+          lp.getText('submit'),
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
         ),
       ),
     );
