@@ -12,6 +12,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'firebase_options.dart';
+import 'package:flutter/services.dart';
 import 'src/services/auth_service.dart';
 import 'src/services/firestore_service.dart';
 import 'src/providers/theme_provider.dart';
@@ -21,6 +22,9 @@ import 'src/services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Hide system navigation bar for a "phone down" immersive experience
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   
   // Try to initialize Firebase, if it fails gracefully continue (for dev before google-services.json)
  
