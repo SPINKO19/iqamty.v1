@@ -8,6 +8,7 @@ import '../services/firestore_service.dart';
 import '../providers/auth_provider.dart';
 import '../models/types.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 const _kGreen = Color(0xFF2D6A4F);
 
@@ -236,20 +237,33 @@ class WorkerDashboard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton.icon(
-                  onPressed: () async {
-                    await firestore.updateWorkerTaskStatus(
-                      requestId: task.id!,
-                      workerStatus: 'done',
-                    );
-                  },
-                  icon: const Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 18),
-                  label: Text('Marquer comme terminé', style: GoogleFonts.inter(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12)),
+                  onPressed: () => _showTaskDetails(context, task, firestore),
+                  icon: const Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
+                  label: Text('Détails', style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12)),
                   style: TextButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
+                if (!isCompleted && task.id != null) ...[
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: () async {
+                      await firestore.updateWorkerTaskStatus(
+                        requestId: task.id!,
+                        workerStatus: 'done',
+                      );
+                    },
+                    icon: const Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 18),
+                    label: Text('Terminer', style: GoogleFonts.inter(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12)),
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ],
               ],
             ),
           ]
@@ -294,27 +308,38 @@ class WorkerDashboard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Divider(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton.icon(
-                onPressed: () async {
-                  await firestore.updateComplaintStatus(
-                    complaint.id!,
-                    Status.resolved,
-                    adminComment: 'Problème pris en charge et résolu par l\'équipe technique.',
-                  );
-                },
-                icon: const Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 18),
-                label: Text('Prendre en charge et terminer', style: GoogleFonts.inter(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12)),
-                style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () => _showComplaintDetails(context, complaint, firestore),
+                  icon: const Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
+                  label: Text('Détails', style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: () async {
+                    await firestore.updateComplaintStatus(
+                      complaint.id!,
+                      Status.resolved,
+                      adminComment: 'Problème pris en charge et résolu par l\'équipe technique.',
+                    );
+                  },
+                  icon: const Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 18),
+                  label: Text('Terminer', style: GoogleFonts.inter(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -422,46 +447,154 @@ class WorkerDashboard extends StatelessWidget {
     );
   }
 
-  void _showReclamationDialog(BuildContext context, LanguageProvider lp, FirestoreService firestore, String userId, String? residenceId) {
-    final titleController = TextEditingController();
-    final descController = TextEditingController();
-    final deptController = TextEditingController();
-
-    showDialog(
+  void _showTaskDetails(BuildContext context, ServiceRequest task, FirestoreService firestore) {
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Déposer une réclamation'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: titleController, decoration: const InputDecoration(labelText: 'Sujet')),
-              TextField(controller: deptController, decoration: const InputDecoration(labelText: 'Département concerné')),
-              TextField(controller: descController, decoration: const InputDecoration(labelText: 'Description'), maxLines: 3),
-            ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _WorkerDetailSheet(
+        title: task.category,
+        description: task.description,
+        timestamp: task.createdAt,
+        userId: task.userId,
+        imageUrl: task.imageUrl,
+        firestore: firestore,
+      ),
+    );
+  }
+
+  void _showComplaintDetails(BuildContext context, Complaint complaint, FirestoreService firestore) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _WorkerDetailSheet(
+        title: complaint.title,
+        description: complaint.description,
+        timestamp: complaint.timestamp,
+        userId: complaint.userId,
+        imageUrl: complaint.imageUrl,
+        firestore: firestore,
+      ),
+    );
+  }
+}
+
+class _WorkerDetailSheet extends StatelessWidget {
+  final String title;
+  final String description;
+  final DateTime timestamp;
+  final String userId;
+  final String? imageUrl;
+  final FirestoreService firestore;
+
+  const _WorkerDetailSheet({
+    required this.title,
+    required this.description,
+    required this.timestamp,
+    required this.userId,
+    this.imageUrl,
+    required this.firestore,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: BoxDecoration(
+        color: context.appCard,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-          ElevatedButton(
-            onPressed: () async {
-              final complaint = Complaint(
-                userId: userId,
-                title: titleController.text.trim(),
-                description: descController.text.trim(),
-                category: 'Personnel',
-                priority: Priority.medium,
-                status: Status.received,
-                timestamp: DateTime.now(),
-                department: deptController.text.trim(),
-              );
-              await firestore.submitComplaint(complaint, residenceId: residenceId);
-              if (context.mounted) Navigator.pop(ctx);
-            },
-            child: const Text('Envoyer'),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("DÉTAILS", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1)),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Text(title, style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w900, color: context.appTextPrimary, letterSpacing: -0.5)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.access_time_rounded, size: 14, color: context.appTextSecondary),
+                    const SizedBox(width: 6),
+                    Text(DateFormat('dd MMMM yyyy HH:mm').format(timestamp), style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13)),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                _buildSectionHeader("SOUMIS PAR"),
+                const SizedBox(height: 12),
+                FutureBuilder<Map<String, dynamic>?>(
+                  future: firestore.getUserById(userId),
+                  builder: (context, snapshot) {
+                    final userData = snapshot.data;
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isDark ? context.appBackground : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                            child: Text(userData?['displayName']?[0] ?? 'U', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(userData?['displayName'] ?? 'Utilisateur ID: $userId', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+                                if (userData != null) ...[
+                                  Text("Matricule: ${userData['matricule'] ?? userData['uid'] ?? 'N/A'}", style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary, fontWeight: FontWeight.bold)),
+                                  Text("Bloc: ${userData['bloc'] ?? 'N/A'} • Chambre: ${userData['room'] ?? userData['chambre'] ?? 'N/A'}", style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary)),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 32),
+                _buildSectionHeader("DESCRIPTION"),
+                const SizedBox(height: 12),
+                Text(description, style: GoogleFonts.inter(fontSize: 16, color: context.appTextPrimary, height: 1.6)),
+                if (imageUrl != null) ...[
+                  const SizedBox(height: 32),
+                  _buildSectionHeader("IMAGE"),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.network(imageUrl!, fit: BoxFit.cover),
+                  ),
+                ],
+                const SizedBox(height: 60),
+              ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(title.toUpperCase(), style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.2));
   }
 }

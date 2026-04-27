@@ -475,11 +475,16 @@ class _AdminComplaintDetailsSheet extends StatelessWidget {
                                   userData?['displayName'] ?? 'Utilisateur ID: ${complaint.userId}',
                                   style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary),
                                 ),
-                                if (userData != null)
+                                if (userData != null) ...[
                                   Text(
-                                    "${userData['role'] ?? 'Étudiant'} • ${userData['residenceId'] ?? ''}",
+                                    "Matricule: ${userData['matricule'] ?? userData['uid'] ?? 'N/A'}",
+                                    style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary, fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    "Bloc: ${userData['bloc'] ?? 'N/A'} • Chambre: ${userData['room'] ?? userData['chambre'] ?? 'N/A'}",
                                     style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary),
                                   ),
+                                ],
                               ],
                             ),
                           ),

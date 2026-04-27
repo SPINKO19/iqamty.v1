@@ -40,6 +40,8 @@ class AuthService extends ChangeNotifier {
     _restoreSessionFromCache();
   }
 
+  StreamSubscription<DocumentSnapshot>? _userDocSub;
+
   // ---------------------------------------------------------------------------
   // Session Persistence: restore on cold launch
   // ---------------------------------------------------------------------------
@@ -54,6 +56,12 @@ class AuthService extends ChangeNotifier {
         if (_userData == null) {
           _userData = data;
           notifyListeners();
+          
+          // Start listening to this user's doc to enforce bans in real-time
+          final docId = data['uid']?.toString() ?? data['matricule']?.toString();
+          if (docId != null) {
+            _startUserListener(docId);
+          }
         }
       }
     } catch (e) {
@@ -98,25 +106,8 @@ class AuthService extends ChangeNotifier {
       // Robust Real-time sync: Watch the correct document
       // Priority 1: Use the ID from cached _userData if available
       // Priority 2: Use the Firebase UID
-      final docId = _userData?['uid'] ?? _userData?['matricule'] ?? user.uid;
-      
-      _firestore?.collection('users').doc(docId).snapshots().listen((doc) {
-        if (doc.exists) {
-          final data = doc.data();
-          if (data != null) {
-            _userData = data;
-            _persistUserData(_userData!);
-            notifyListeners();
-            
-            // If this is a student and we have a matricule that's different from the listener doc,
-            // we should ALSO optionally listen to it.
-            final matricule = data['matricule']?.toString() ?? data['uid']?.toString();
-            if (matricule != null && matricule != docId) {
-              _setupMatriculeListener(matricule);
-            }
-          }
-        }
-      });
+      final docId = _userData?['uid']?.toString() ?? _userData?['matricule']?.toString() ?? user.uid;
+      _startUserListener(docId);
     } else {
       // Only clear if this is not a WebEtu (anonymous) session
       final prefs = await SharedPreferences.getInstance();
@@ -126,18 +117,21 @@ class AuthService extends ChangeNotifier {
         return;
       }
       _userData = null;
+      _userDocSub?.cancel();
       notifyListeners();
     }
   }
 
-  StreamSubscription<DocumentSnapshot>? _matriculeSub;
-  void _setupMatriculeListener(String matricule) {
-    _matriculeSub?.cancel();
-    _matriculeSub = _firestore?.collection('users').doc(matricule).snapshots().listen((doc) {
+  void _startUserListener(String docId) {
+    _userDocSub?.cancel(); // Cancel any existing listener
+    _userDocSub = _firestore?.collection('users').doc(docId).snapshots().listen((doc) {
       if (doc.exists) {
-        _userData = doc.data();
-        _persistUserData(_userData!);
-        notifyListeners();
+        final data = doc.data();
+        if (data != null) {
+          _userData = data;
+          _persistUserData(_userData!);
+          notifyListeners(); // This will trigger the router redirect if isBanned is true
+        }
       }
     });
   }
