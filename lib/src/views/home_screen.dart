@@ -137,7 +137,7 @@ class HomeScreen extends StatelessWidget {
                           },
                         ),
                         _QuickActionCard(
-                          title: lp.getText('documents'),
+                          title: lp.getText('documents_and_programs'),
                           subtitle: lp.getText('docs_and_certs'),
                           icon: Icons.description_rounded,
                           color: const Color(0xFF8B5CF6),

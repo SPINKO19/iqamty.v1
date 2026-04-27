@@ -416,6 +416,9 @@ class FirestoreService extends ChangeNotifier {
     required String url,
     required String target,
     String? residenceId,
+    String contentType = 'document',
+    String? description,
+    String? schedule,
   }) async {
     if (_db == null) throw Exception("Firestore not initialized");
     final Map<String, dynamic> data = {
@@ -424,18 +427,46 @@ class FirestoreService extends ChangeNotifier {
       'fileSize': size,
       'fileUrl': url,
       'target': target,
+      'contentType': contentType,
+      'description': description,
+      'schedule': schedule,
       'uploadedAt': FieldValue.serverTimestamp(),
     };
     if (residenceId != null) data['residenceId'] = residenceId;
     await _db!.collection('documents').add(data);
   }
 
+  Future<void> updateDocument({
+    required String docId,
+    required String title,
+    required String target,
+    String? description,
+    String? schedule,
+    String? fileUrl,
+    String? fileType,
+    String? fileSize,
+  }) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final Map<String, dynamic> data = {
+      'title': title,
+      'target': target,
+      'description': description,
+      'schedule': schedule,
+    };
+    if (fileUrl != null) data['fileUrl'] = fileUrl;
+    if (fileType != null) data['fileType'] = fileType;
+    if (fileSize != null) data['fileSize'] = fileSize;
+    
+    await _db!.collection('documents').doc(docId).update(data);
+  }
+
+
   Future<void> deleteDocument(String docId) async {
     if (_db == null) throw Exception("Firestore not initialized");
     await _db!.collection('documents').doc(docId).delete();
   }
 
-  Stream<List<DocumentModel>> getDocuments({String? residenceId, String? target}) {
+  Stream<List<DocumentModel>> getDocuments({String? residenceId, String? target, String? contentType}) {
     if (_db == null) return Stream.value([]);
 
     // Fetch all documents from the collection.
@@ -462,7 +493,13 @@ class FirestoreService extends ChangeNotifier {
           matchesTarget = doc.target == target;
         }
 
-        return matchesResidence && matchesTarget;
+        // Filter by contentType
+        bool matchesType = true;
+        if (contentType != null && contentType.isNotEmpty) {
+          matchesType = doc.contentType == contentType;
+        }
+
+        return matchesResidence && matchesTarget && matchesType;
       }).toList();
 
       // Sort by date (descending)
@@ -471,6 +508,7 @@ class FirestoreService extends ChangeNotifier {
       return filtered;
     });
   }
+
 
   // Transport
   Stream<List<TransportSchedule>> getTransportSchedules() {
@@ -1040,6 +1078,15 @@ class FirestoreService extends ChangeNotifier {
       debugPrint("Error in combined activity feed: $e");
       return [];
     });
+  }
+
+  Future<Map<String, dynamic>?> getUserById(String userId) async {
+    if (_db == null) return null;
+    final doc = await _db!.collection('users').doc(userId).get();
+    if (doc.exists) return docToMap(doc);
+    final query = await _db!.collection('users').where('customId', isEqualTo: userId).limit(1).get();
+    if (query.docs.isNotEmpty) return docToMap(query.docs.first);
+    return null;
   }
 }
 

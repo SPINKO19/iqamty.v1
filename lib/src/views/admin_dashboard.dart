@@ -256,7 +256,6 @@ class AdminDashboard extends StatelessWidget {
           final settings = snapshot.data ?? {};
           final total = settings['totalCapacity'] ?? 250;
           final occupied = settings['occupiedCount'] ?? 198;
-          final maintenance = settings['maintenanceCount'] ?? 3;
           final percent = total == 0 ? 0 : (occupied / total * 100).toInt();
 
           return Column(
@@ -288,10 +287,9 @@ class AdminDashboard extends StatelessWidget {
               const SizedBox(height: 20),
               _buildOccupationRow(context, lp.getText('occupied_label'), occupied, context.isDark ? AppColors.primary : const Color(0xFF0E2318)),
               _buildOccupationRow(context, lp.getText('free_label'), total - occupied, const Color(0xFF97C459)),
-              _buildOccupationRow(context, lp.getText('maintenance_label'), maintenance, const Color(0xFFF59E0B)),
               const SizedBox(height: 10),
               TextButton.icon(
-                onPressed: () => _showOccupationEditDialog(context, firestore, resId, total, occupied, maintenance, lp),
+                onPressed: () => _showOccupationEditDialog(context, firestore, resId, total, occupied, lp),
                 icon: const Icon(Icons.edit_rounded, size: 14),
                 label: Text(lp.getText('edit'), style: const TextStyle(fontSize: 11)),
               ),
@@ -508,11 +506,10 @@ class AdminDashboard extends StatelessWidget {
     return DateFormat('dd/MM HH:mm').format(dateTime);
   }
 
-  void _showOccupationEditDialog(BuildContext context, FirestoreService firestore, String? resId, int total, int occupied, int maintenance, LanguageProvider lp) {
+  void _showOccupationEditDialog(BuildContext context, FirestoreService firestore, String? resId, int total, int occupied, LanguageProvider lp) {
     if (resId == null) return;
     final totalController = TextEditingController(text: total.toString());
     final occupiedController = TextEditingController(text: occupied.toString());
-    final maintenanceController = TextEditingController(text: maintenance.toString());
 
     showDialog(
       context: context,
@@ -524,7 +521,6 @@ class AdminDashboard extends StatelessWidget {
           children: [
             TextField(controller: totalController, decoration: InputDecoration(labelText: lp.getText('total')), keyboardType: TextInputType.number),
             TextField(controller: occupiedController, decoration: InputDecoration(labelText: lp.getText('occupied_label')), keyboardType: TextInputType.number),
-            TextField(controller: maintenanceController, decoration: InputDecoration(labelText: lp.getText('maintenance_label')), keyboardType: TextInputType.number),
           ],
         ),
         actions: [
@@ -534,7 +530,6 @@ class AdminDashboard extends StatelessWidget {
               firestore.updateResidenceSettings(resId, {
                 'totalCapacity': int.tryParse(totalController.text) ?? total,
                 'occupiedCount': int.tryParse(occupiedController.text) ?? occupied,
-                'maintenanceCount': int.tryParse(maintenanceController.text) ?? maintenance,
               });
               Navigator.pop(context);
             },

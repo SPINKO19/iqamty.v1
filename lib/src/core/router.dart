@@ -208,7 +208,7 @@ class AppRouter {
                 );
               }
             ),
-            GoRoute(path: '/admin/maintenance', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Maintenance'))),
+
             GoRoute(path: '/admin/settings', pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen())),
           ],
         ),

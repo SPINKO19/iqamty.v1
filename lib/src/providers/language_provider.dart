@@ -91,6 +91,17 @@ class LanguageProvider extends ChangeNotifier {
     'today_menu_available': "On Today's Menu",
     'lunch_available': 'LUNCH AVAILABLE',
     'documents': 'Documents',
+    'documents_and_programs': 'Documents & Programs',
+    'programs': 'Programs',
+    'new_program': 'New Program',
+    'edit_program': 'Edit Program',
+    'program_title': 'Program Title',
+    'program_description': 'Description',
+    'program_schedule': 'Schedule/Date',
+    'program_file_optional': 'Attachment (Optional)',
+    'send_program': 'Send Program',
+    'delete_program_confirm': 'Are you sure you want to delete this program?',
+
     'menu_today': "Today's Menu",
     'lunch': 'Lunch',
     'general': 'General',
@@ -328,6 +339,8 @@ class LanguageProvider extends ChangeNotifier {
     'gym_schedule': 'Timetable of the sport hall',
     'weightlifting_schedule': 'Timetable of the weightlifting room',
     'hamam_schedule': 'Timetable of the douche',
+    'submitted_by': 'Submitted by',
+    'assigned_to': 'Assigned to',
   };
 
   // ─── FRENCH ───
@@ -386,6 +399,17 @@ class LanguageProvider extends ChangeNotifier {
     'today_menu_available': "Au Menu Aujourd'hui",
     'lunch_available': 'DÉJEUNER DISPONIBLE',
     'documents': 'Documents',
+    'documents_and_programs': 'Documents & Programmes',
+    'programs': 'Programmes',
+    'new_program': 'Nouveau Programme',
+    'edit_program': 'Modifier le Programme',
+    'program_title': 'Titre du Programme',
+    'program_description': 'Description',
+    'program_schedule': 'Emploi du temps / Date',
+    'program_file_optional': 'Pièce jointe (Optionnel)',
+    'send_program': 'Envoyer le Programme',
+    'delete_program_confirm': 'Voulez-vous vraiment supprimer ce programme ?',
+
     'menu_today': "Menu d'aujourd'hui",
     'lunch': 'Déjeuner',
     'general': 'Général',
@@ -620,8 +644,8 @@ class LanguageProvider extends ChangeNotifier {
     'gym_schedule': 'Emploi du temps de la salle de sport',
     'weightlifting_schedule': 'Emploi du temps de la salle de musculation',
     'hamam_schedule': 'Emploi du temps des douches',
-
-    // Worker Dashboard
+    'submitted_by': 'Soumis par',
+    'assigned_to': 'Assigné à',
     'worker_space': 'Espace Travailleur',
     'my_assigned_tasks': 'Mes Tâches Assignées',
     'to_do': 'À faire',
@@ -686,6 +710,17 @@ class LanguageProvider extends ChangeNotifier {
     'today_menu_available': 'قائمة اليوم متوفرة',
     'lunch_available': 'الغداء متوفر',
     'documents': 'الوثائق',
+    'documents_and_programs': 'الوثائق والبرامج',
+    'programs': 'البرامج',
+    'new_program': 'برنامج جديد',
+    'edit_program': 'تعديل البرنامج',
+    'program_title': 'عنوان البرنامج',
+    'program_description': 'الوصف',
+    'program_schedule': 'الجدول الزمني / التاريخ',
+    'program_file_optional': 'مرفق (اختياري)',
+    'send_program': 'إرسال البرنامج',
+    'delete_program_confirm': 'هل أنت متأكد من حذف هذا البرنامج؟',
+
     'menu_today': 'قائمة اليوم',
     'lunch': 'الغداء',
     'general': 'عام',
@@ -903,6 +938,8 @@ class LanguageProvider extends ChangeNotifier {
     'gym_schedule': 'البرنامج الزمني للقاعة الرياضية',
     'weightlifting_schedule': 'البرنامج الزمني لقاعة رفع الأثقال',
     'hamam_schedule': 'البرنامج الزمني للدوش',
+    'submitted_by': 'مقدم من طرف',
+    'assigned_to': 'معين لـ',
     'all': 'الكل',
   };
 }

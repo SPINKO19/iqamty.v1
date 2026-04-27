@@ -172,7 +172,7 @@ class _AdminSidebarContent extends StatelessWidget {
                   stream: firestore.getAllChats(residenceId: resId).map((list) => list.where((c) => c['hasUnreadAdmin'] == true).length),
                 ),
                 _buildNavItem(context, Icons.engineering_rounded, 'Travailleurs', '/admin/workers', currentRoute),
-                _buildNavItem(context, Icons.file_copy_rounded, lp.getText('documents'), '/admin/documents', currentRoute),
+                _buildNavItem(context, Icons.file_copy_rounded, lp.getText('documents_and_programs'), '/admin/documents', currentRoute),
                 _buildNavItem(context, Icons.restaurant_rounded, lp.getText('restoration'), '/admin/dining-config', currentRoute),
                 
                 const Padding(
@@ -181,7 +181,6 @@ class _AdminSidebarContent extends StatelessWidget {
                 ),
                 
                 _buildNavItem(context, Icons.campaign_rounded, lp.getText('announcements'), '/admin/announcements', currentRoute),
-                _buildNavItem(context, Icons.handyman_rounded, lp.getText('maintenance'), '/admin/maintenance', currentRoute),
                 _buildNavItem(context, Icons.settings_rounded, lp.getText('settings'), '/admin/settings', currentRoute),
               ],
             ),
@@ -380,9 +379,8 @@ class _AdminHeader extends StatelessWidget {
     if (route.startsWith('/admin/rooms')) return lp.getText('rooms');
     if (route.startsWith('/admin/resources')) return 'Ressources';
     if (route.startsWith('/admin/announcements')) return lp.getText('announcements');
-    if (route.startsWith('/admin/maintenance')) return lp.getText('maintenance');
     if (route.startsWith('/admin/dining')) return lp.getText('restoration');
-    if (route.startsWith('/admin/documents')) return lp.getText('documents');
+    if (route.startsWith('/admin/documents')) return lp.getText('documents_and_programs');
     if (route.startsWith('/admin/settings')) return lp.getText('settings');
     return 'Admin';
   }

@@ -152,16 +152,22 @@ class DocumentModel {
   final String target;
   final String? residenceId;
   final DateTime uploadedAt;
+  final String contentType; // 'document' or 'program'
+  final String? description;
+  final String? schedule;
 
   DocumentModel({
     this.id,
     required this.title,
-    required this.fileUrl,
-    required this.fileType,
-    required this.fileSize,
+    this.fileUrl = '',
+    this.fileType = '',
+    this.fileSize = '',
     required this.target,
     this.residenceId,
     required this.uploadedAt,
+    this.contentType = 'document',
+    this.description,
+    this.schedule,
   });
 
   factory DocumentModel.fromJson(Map<String, dynamic> json) {
@@ -176,6 +182,9 @@ class DocumentModel {
       uploadedAt: (json['uploadedAt'] as Timestamp?)?.toDate() ??
           (json['createdAt'] as Timestamp?)?.toDate() ??
           DateTime.now(),
+      contentType: json['contentType'] ?? 'document',
+      description: json['description'],
+      schedule: json['schedule'],
     );
   }
 
@@ -187,10 +196,14 @@ class DocumentModel {
       'fileSize': fileSize,
       'target': target,
       'residenceId': residenceId,
-      // uploadedAt is added by the server
+      'contentType': contentType,
+      'description': description,
+      'schedule': schedule,
+      // uploadedAt is added by the server usually, but keeping it here for consistency if needed
     };
   }
 }
+
 
 class Meal {
   final String? id;
