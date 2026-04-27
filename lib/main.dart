@@ -1,6 +1,3 @@
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -23,8 +20,10 @@ import 'src/services/storage_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Hide system navigation bar for a "phone down" immersive experience
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  // Hide system navigation bar for a "phone down" immersive experience (Mobile only)
+  if (!kIsWeb) {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
   
   // Try to initialize Firebase, if it fails gracefully continue (for dev before google-services.json)
  
