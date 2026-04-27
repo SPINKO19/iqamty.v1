@@ -216,6 +216,122 @@ class AdminRequestsView extends StatelessWidget {
       builder: (context) => _AdminRequestDetailsSheet(request: request),
     );
   }
+
+  void _showWorkerSelection(BuildContext context, ServiceRequest request, FirestoreService firestore) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: context.appCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Choisir un travailleur',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: context.appTextPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: firestore.getWorkers(residenceId: context.read<AuthProvider>().currentResidenceId),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator(color: _kGreen));
+                    }
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Erreur de récupération : ${snapshot.error}',
+                          style: TextStyle(color: context.appTextPrimary),
+                        ),
+                      );
+                    }
+
+                    final workers = snapshot.data ?? [];
+                    if (workers.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'Aucun travailleur trouvé',
+                          style: TextStyle(color: context.appTextSecondary),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: workers.length,
+                      itemBuilder: (context, index) {
+                        final worker = workers[index];
+                        final workerId = worker['id'] ?? worker['uid'] ?? '';
+                        final displayName = worker['displayName'] ?? worker['name'] ?? 'Inconnu';
+                        final department = worker['department'] ?? 'Général';
+                        final initial = displayName.toString().isNotEmpty 
+                            ? displayName.toString()[0].toUpperCase() 
+                            : 'W';
+
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: _kGreen.withValues(alpha: 0.2),
+                            child: Text(initial, style: const TextStyle(color: _kGreen, fontWeight: FontWeight.bold)),
+                          ),
+                          title: Text(
+                            displayName,
+                            style: TextStyle(color: context.appTextPrimary, fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Text(
+                            department,
+                            style: TextStyle(color: context.appTextSecondary),
+                          ),
+                          onTap: () async {
+                            if (request.id != null && workerId.isNotEmpty) {
+                              try {
+                                await firestore.assignRequestToWorker(
+                                  requestId: request.id!,
+                                  workerId: workerId,
+                                );
+                                if (bottomSheetContext.mounted) {
+                                  Navigator.pop(bottomSheetContext);
+                                }
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Demande assignée avec succès'),
+                                      backgroundColor: _kGreen,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Erreur: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _AdminRequestDetailsSheet extends StatelessWidget {
@@ -549,6 +665,17 @@ class _AdminRequestDetailsSheet extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title.toUpperCase(),
+      style: GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w900,
+        color: Colors.grey,
+        letterSpacing: 1.2,
+      ),
     );
   }
 }

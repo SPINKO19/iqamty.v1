@@ -73,7 +73,6 @@ class WorkerDashboard extends StatelessWidget {
               final tasks = taskSnapshot.data ?? [];
               final allComplaints = complaintSnapshot.data ?? [];
               
-              // Only show active complaints that are not resolved globally
               final pendingComplaints = allComplaints.where((c) => c.status != Status.resolved).toList();
 
               return SingleChildScrollView(
@@ -238,7 +237,7 @@ class WorkerDashboard extends StatelessWidget {
               children: [
                 TextButton.icon(
                   onPressed: () => _showTaskDetails(context, task, firestore),
-                  icon: const Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
+                  icon: Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
                   label: Text('Détails', style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12)),
                   style: TextButton.styleFrom(
                     backgroundColor: AppColors.primary.withValues(alpha: 0.1),
@@ -246,24 +245,22 @@ class WorkerDashboard extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-                if (!isCompleted && task.id != null) ...[
-                  const SizedBox(width: 8),
-                  TextButton.icon(
-                    onPressed: () async {
-                      await firestore.updateWorkerTaskStatus(
-                        requestId: task.id!,
-                        workerStatus: 'done',
-                      );
-                    },
-                    icon: const Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 18),
-                    label: Text('Terminer', style: GoogleFonts.inter(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12)),
-                    style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: () async {
+                    await firestore.updateWorkerTaskStatus(
+                      requestId: task.id!,
+                      workerStatus: 'done',
+                    );
+                  },
+                  icon: const Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 18),
+                  label: Text('Terminer', style: GoogleFonts.inter(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                ],
+                ),
               ],
             ),
           ]
@@ -308,38 +305,38 @@ class WorkerDashboard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Divider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: () => _showComplaintDetails(context, complaint, firestore),
-                  icon: const Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
-                  label: Text('Détails', style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12)),
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: () => _showComplaintDetails(context, complaint, firestore),
+                icon: Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
+                label: Text('Détails', style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12)),
+                style: TextButton.styleFrom(
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: () async {
-                    await firestore.updateComplaintStatus(
-                      complaint.id!,
-                      Status.resolved,
-                      adminComment: 'Problème pris en charge et résolu par l\'équipe technique.',
-                    );
-                  },
-                  icon: const Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 18),
-                  label: Text('Terminer', style: GoogleFonts.inter(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12)),
-                  style: TextButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: () async {
+                  await firestore.updateComplaintStatus(
+                    complaint.id!,
+                    Status.resolved,
+                    adminComment: 'Problème pris en charge et résolu par l\'équipe technique.',
+                  );
+                },
+                icon: const Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 18),
+                label: Text('Terminer', style: GoogleFonts.inter(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12)),
+                style: TextButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -428,17 +425,9 @@ class WorkerDashboard extends StatelessWidget {
                 stream: badgeStream,
                 initialData: false,
                 builder: (context, snapshot) {
-                  if (snapshot.data == true) {
-                    return Container(
-                      width: 10,
-                      height: 10,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
+                  return snapshot.data == true
+                      ? Container(width: 10, height: 10, decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle))
+                      : const SizedBox.shrink();
                 },
               ),
             ),
@@ -477,6 +466,53 @@ class WorkerDashboard extends StatelessWidget {
         firestore: firestore,
       ),
     );
+  }
+
+  void _showReclamationDialog(BuildContext context, LanguageProvider lp, FirestoreService firestore, String userId, String? residenceId) {
+    final titleController = TextEditingController();
+    final descController = TextEditingController();
+    final deptController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Déposer une réclamation'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: titleController, decoration: const InputDecoration(labelText: 'Sujet')),
+              TextField(controller: deptController, decoration: const InputDecoration(labelText: 'Département concerné')),
+              TextField(controller: descController, decoration: const InputDecoration(labelText: 'Description'), maxLines: 3),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () async {
+              final complaint = Complaint(
+                userId: userId,
+                title: titleController.text.trim(),
+                description: descController.text.trim(),
+                category: 'Personnel',
+                priority: Priority.medium,
+                status: Status.received,
+                timestamp: DateTime.now(),
+                department: deptController.text.trim(),
+              );
+              await firestore.submitComplaint(complaint, residenceId: residenceId);
+              if (context.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Envoyer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(title.toUpperCase(), style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.2));
   }
 }
 
