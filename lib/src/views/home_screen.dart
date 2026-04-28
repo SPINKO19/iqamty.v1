@@ -199,6 +199,7 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }  Widget _buildHeaderSection(BuildContext context, dynamic student, LanguageProvider lp, bool isDark, AuthProvider auth) {
+    final firestore = context.watch<FirestoreService>();
     final String prenom = student?.prenomFr ?? '';
     final String nom = student?.nomFr ?? '';
     final String fullName = '$prenom $nom'.trim().isEmpty ? lp.getText('student') : '$prenom $nom';
