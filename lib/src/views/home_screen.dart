@@ -51,7 +51,7 @@ class HomeScreen extends StatelessWidget {
                 _buildSectionHeader(context, lp.getText('recent_announcements'), lp, onPressed: () => context.go('/community')),
                 const SizedBox(height: 16),
                 SizedBox(
-                  height: 250,
+                  height: 280,
                   child: StreamBuilder<List<Announcement>>(
                     stream: firestore.getAnnouncements(residenceId: residenceId),
                     builder: (context, snapshot) {
@@ -229,6 +229,36 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              // Notification Bell
+              StreamBuilder<int>(
+                stream: firestore.getUnreadNotificationsCount(auth.currentStudent?.id?.toString() ?? auth.currentUserData?['id']?.toString() ?? ''),
+                builder: (context, snapshot) {
+                  final count = snapshot.data ?? 0;
+                  return Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 26),
+                        onPressed: () => context.go('/notifications'),
+                      ),
+                      if (count > 0)
+                        Positioned(
+                          right: 12,
+                          top: 12,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: _kHeaderGreen, width: 2),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                }
+              ),
+              const SizedBox(width: 8),
               // Avatar with initials
               GestureDetector(
                 onTap: () => context.go('/profile'),
@@ -541,15 +571,33 @@ class _AnnouncementCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(Icons.access_time_filled_rounded, size: 12, color: isDark ? Colors.white30 : const Color(0xFF9CA3AF)),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Text(
                       _formatTimeAgo(announcement.timestamp),
                       style: GoogleFonts.inter(
-                        fontSize: 11,
+                        fontSize: 10,
                         color: context.appTextSecondary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                    const Spacer(),
+                    if (announcement.likesCount > 0) ...[
+                      Icon(Icons.thumb_up_rounded, size: 10, color: Colors.blue.withValues(alpha: 0.7)),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${announcement.likesCount}',
+                        style: GoogleFonts.inter(fontSize: 10, color: context.appTextSecondary, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    if (announcement.commentsCount > 0) ...[
+                      Icon(Icons.chat_bubble_rounded, size: 10, color: AppColors.primary.withValues(alpha: 0.7)),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${announcement.commentsCount}',
+                        style: GoogleFonts.inter(fontSize: 10, color: context.appTextSecondary, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ],
                 ),
               ],

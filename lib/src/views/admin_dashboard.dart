@@ -47,11 +47,13 @@ class AdminDashboard extends StatelessWidget {
         firestore.getStudents(residenceId: resId),
         firestore.getAllComplaints(residenceId: resId),
         firestore.getAllRequests(residenceId: resId),
+        firestore.streamRestaurantInfo(resId),
       ],
       builder: (context, snapshots) {
         final students = (snapshots[0].data as List?) ?? [];
         final complaints = (snapshots[1].data as List<Complaint>?) ?? [];
         final requests = (snapshots[2].data as List<ServiceRequest>?) ?? [];
+        final restaurant = snapshots[3].data as RestaurantInfo?;
 
         final openComplaints = complaints.where((c) => c.status != Status.resolved).length;
         final resolvedComplaintsCount = complaints.where((c) => c.status == Status.resolved).length;
@@ -59,6 +61,13 @@ class AdminDashboard extends StatelessWidget {
         final urgentRequests = requests.where((r) => r.priority == 'Haute' && r.status == 'pending').length;
 
         final resolvedPercent = complaints.isEmpty ? 0 : (resolvedComplaintsCount / complaints.length * 100).toInt();
+
+        int totalReservations = 0;
+        if (restaurant != null) {
+          totalReservations = restaurant.breakfast.reservedBy.length + 
+                             restaurant.lunch.reservedBy.length + 
+                             restaurant.dinner.reservedBy.length;
+        }
 
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -106,6 +115,16 @@ class AdminDashboard extends StatelessWidget {
                   tagTextColor: context.appWarningText,
                   width: cardWidth,
                   onTap: () => context.go('/admin/requests'),
+                ),
+                _buildKpiCard(
+                  context,
+                  title: 'Réservations Repas',
+                  value: totalReservations.toString(),
+                  tag: 'Aujourd\'hui',
+                  tagColor: context.appSuccessBg,
+                  tagTextColor: context.appSuccessText,
+                  width: cardWidth,
+                  onTap: () => context.go('/admin/restaurant'), // Redirect to restaurant config/stats
                 ),
               ],
             );

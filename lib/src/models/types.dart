@@ -97,6 +97,9 @@ class Announcement {
   final List<String> imageUrls;
   final String urgency;
   final String? residenceId;
+  final int likesCount;
+  final int commentsCount;
+  final List<String> likedBy;
 
   Announcement({
     this.id,
@@ -107,6 +110,9 @@ class Announcement {
     this.imageUrls = const [],
     this.urgency = 'normal',
     this.residenceId,
+    this.likesCount = 0,
+    this.commentsCount = 0,
+    this.likedBy = const [],
   });
 
   factory Announcement.fromJson(Map<String, dynamic> json) {
@@ -127,6 +133,9 @@ class Announcement {
       imageUrls: parsedUrls,
       urgency: json['urgency'] ?? 'normal',
       residenceId: json['residenceId'],
+      likesCount: json['likesCount'] ?? (json['likedBy'] as List?)?.length ?? 0,
+      commentsCount: json['commentsCount'] ?? json['replyCount'] ?? 0,
+      likedBy: List<String>.from(json['likedBy'] ?? []),
     );
   }
 
@@ -138,6 +147,9 @@ class Announcement {
       'imageUrls': imageUrls,
       'urgency': urgency,
       'residenceId': residenceId,
+      'likesCount': likesCount,
+      'commentsCount': commentsCount,
+      'likedBy': likedBy,
       // timestamp is added by the server
     };
   }
@@ -716,12 +728,24 @@ class RestaurantMeal {
   final String startTime;
   final String endTime;
 
+  final List<String> reservedBy;
+  final List<String> ratedBy;
+  final double averageRating;
+  final int ratingCount;
+
   RestaurantMeal({
     required this.menu,
     this.imageUrl,
     required this.startTime,
     required this.endTime,
+    this.reservedBy = const [],
+    this.ratedBy = const [],
+    this.averageRating = 0.0,
+    this.ratingCount = 0,
   });
+
+  bool isReserved(String userId) => reservedBy.contains(userId);
+  bool hasRated(String userId) => ratedBy.contains(userId);
 
   factory RestaurantMeal.fromJson(Map<String, dynamic> json) {
     return RestaurantMeal(
@@ -729,6 +753,10 @@ class RestaurantMeal {
       imageUrl: json['imageUrl'],
       startTime: json['startTime'] ?? '',
       endTime: json['endTime'] ?? '',
+      reservedBy: List<String>.from(json['reservedBy'] ?? []),
+      ratedBy: List<String>.from(json['ratedBy'] ?? []),
+      averageRating: (json['averageRating'] ?? 0.0).toDouble(),
+      ratingCount: json['ratingCount'] ?? 0,
     );
   }
 
@@ -738,36 +766,78 @@ class RestaurantMeal {
       'imageUrl': imageUrl,
       'startTime': startTime,
       'endTime': endTime,
+      'reservedBy': reservedBy,
+      'ratedBy': ratedBy,
+      'averageRating': averageRating,
+      'ratingCount': ratingCount,
+    };
+  }
+}
+
+class RestaurantDay {
+  final DateTime date;
+  final RestaurantMeal breakfast;
+  final RestaurantMeal lunch;
+  final RestaurantMeal dinner;
+
+  RestaurantDay({
+    required this.date,
+    required this.breakfast,
+    required this.lunch,
+    required this.dinner,
+  });
+
+  factory RestaurantDay.fromJson(Map<String, dynamic> json) {
+    return RestaurantDay(
+      date: (json['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      breakfast: RestaurantMeal.fromJson(json['breakfast'] ?? {}),
+      lunch: RestaurantMeal.fromJson(json['lunch'] ?? {}),
+      dinner: RestaurantMeal.fromJson(json['dinner'] ?? {}),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'date': Timestamp.fromDate(date),
+      'breakfast': breakfast.toJson(),
+      'lunch': lunch.toJson(),
+      'dinner': dinner.toJson(),
     };
   }
 }
 
 class RestaurantInfo {
   final String? id;
-  final bool isOpen;
-  final RestaurantMeal breakfast;
-  final RestaurantMeal lunch;
-  final RestaurantMeal dinner;
+  final List<RestaurantDay> days;
   final String? residenceId;
   final DateTime lastUpdated;
 
   RestaurantInfo({
     this.id,
-    this.isOpen = true,
-    required this.breakfast,
-    required this.lunch,
-    required this.dinner,
+    required this.days,
     this.residenceId,
     required this.lastUpdated,
   });
 
   factory RestaurantInfo.fromJson(Map<String, dynamic> json) {
+    List<RestaurantDay> days = [];
+    if (json['days'] != null) {
+      days = (json['days'] as List).map((d) => RestaurantDay.fromJson(d)).toList();
+    } else {
+      // Legacy data support: map root meals to day 0
+      days = [
+        RestaurantDay(
+          date: DateTime.now(),
+          breakfast: RestaurantMeal.fromJson(json['breakfast'] ?? {}),
+          lunch: RestaurantMeal.fromJson(json['lunch'] ?? {}),
+          dinner: RestaurantMeal.fromJson(json['dinner'] ?? {}),
+        )
+      ];
+    }
+
     return RestaurantInfo(
       id: json['id'],
-      isOpen: json['isOpen'] ?? true,
-      breakfast: RestaurantMeal.fromJson(json['breakfast'] ?? {}),
-      lunch: RestaurantMeal.fromJson(json['lunch'] ?? {}),
-      dinner: RestaurantMeal.fromJson(json['dinner'] ?? {}),
+      days: days,
       residenceId: json['residenceId'],
       lastUpdated: (json['lastUpdated'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -775,10 +845,7 @@ class RestaurantInfo {
 
   Map<String, dynamic> toJson() {
     return {
-      'isOpen': isOpen,
-      'breakfast': breakfast.toJson(),
-      'lunch': lunch.toJson(),
-      'dinner': dinner.toJson(),
+      'days': days.map((d) => d.toJson()).toList(),
       'residenceId': residenceId,
       'lastUpdated': FieldValue.serverTimestamp(),
     };

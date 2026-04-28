@@ -123,16 +123,20 @@ class AuthService extends ChangeNotifier {
   }
 
   void _startUserListener(String docId) {
-    _userDocSub?.cancel(); // Cancel any existing listener
+    if (kDebugMode) print('Starting real-time listener for user doc: $docId');
+    _userDocSub?.cancel(); 
     _userDocSub = _firestore?.collection('users').doc(docId).snapshots().listen((doc) {
       if (doc.exists) {
         final data = doc.data();
         if (data != null) {
+          if (kDebugMode) print('Real-time update for $docId: isBanned=${data['isBanned']}');
           _userData = data;
           _persistUserData(_userData!);
-          notifyListeners(); // This will trigger the router redirect if isBanned is true
+          notifyListeners(); 
         }
       }
+    }, onError: (e) {
+      if (kDebugMode) print('User listener error for $docId: $e');
     });
   }
 
@@ -237,6 +241,9 @@ class AuthService extends ChangeNotifier {
       _userData = data;
       _userData!['id'] = query.docs.first.id;
       
+      // Start listening to this user's doc to enforce bans in real-time
+      _startUserListener(_userData!['id']);
+      
       // Persist locally
       await _persistUserData(_userData!);
       
@@ -337,6 +344,7 @@ class AuthService extends ChangeNotifier {
         // Step 2: Check Firestore Fast-Track (P1.0)
         if (existingUserData != null && existingUserData.containsKey('displayName')) {
           _userData = existingUserData;
+          _startUserListener(matricule); // Start listening for real-time ban updates
           await _persistUserData(_userData!);
           notifyListeners();
           
@@ -383,6 +391,7 @@ class AuthService extends ChangeNotifier {
       residenceId = await _resolveResidence(student.residence!);
     }
     _userData = _buildUserData(student, matricule, residenceId);
+    _startUserListener(matricule); // Start listening for real-time ban updates
     
     final prefs = await SharedPreferences.getInstance();
     await _persistUserData(_userData!);
@@ -461,7 +470,12 @@ class AuthService extends ChangeNotifier {
     data['uid'] = student.matricule ?? matricule;
     data['role'] = 'student';
     data['displayName'] = '${student.prenomFr ?? ''} ${student.nomFr ?? ''}'.trim();
-    // Do NOT default isBanned to false here to avoid overwriting existing bans in Firestore during sync
+    // Preserve existing ban/warning status if already in _userData
+    if (_userData != null) {
+      if (_userData!['isBanned'] == true) data['isBanned'] = true;
+      if (_userData!['warnings'] != null) data['warnings'] = _userData!['warnings'];
+    }
+    
     if (residenceId != null) {
       data['residenceId'] = residenceId;
     }
@@ -484,18 +498,10 @@ class AuthService extends ChangeNotifier {
       }
       
       if (_userData != null && _firestore != null) {
-        final matriculeUid = _userData!['uid']?.toString() ?? _userData!['matricule']?.toString();
+        final docId = _userData!['uid']?.toString() ?? _userData!['matricule']?.toString();
         
-        // 1. Save student data under their matricule ID (primary record)
-        if (matriculeUid != null) {
-          await _firestore!.collection('users').doc(matriculeUid).set(
-            _userData!, SetOptions(merge: true),
-          );
-        }
-
-        // 2. Also save a reference under the anonymous UID so security rules work (request.auth.uid)
-        if (anonUid != null && anonUid != matriculeUid) {
-          await _firestore!.collection('users').doc(anonUid).set(
+        if (docId != null) {
+          await _firestore!.collection('users').doc(docId).set(
             _userData!, SetOptions(merge: true),
           );
         }

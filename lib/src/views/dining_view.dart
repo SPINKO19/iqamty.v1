@@ -10,8 +10,15 @@ import '../providers/language_provider.dart';
 import '../models/types.dart';
 import '../components/custom_menu_button.dart';
 
-class DiningView extends StatelessWidget {
+class DiningView extends StatefulWidget {
   const DiningView({super.key});
+
+  @override
+  State<DiningView> createState() => _DiningViewState();
+}
+
+class _DiningViewState extends State<DiningView> {
+  int _selectedDayIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +26,7 @@ class DiningView extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final residenceId = auth.currentResidenceId ?? auth.currentUserData?['residenceId'] as String?;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final userId = auth.currentUserData?['uid'] ?? '';
 
     return Scaffold(
       backgroundColor: context.appBackground,
@@ -52,29 +60,28 @@ class DiningView extends StatelessWidget {
           }
 
           final info = snapshot.data;
-          if (info == null) {
+          if (info == null || info.days.isEmpty) {
             return _buildEmptyState(context);
           }
+
+          final currentDay = info.days[_selectedDayIndex < info.days.length ? _selectedDayIndex : 0];
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildStatusBanner(context, info.isOpen),
+                _buildDateSelector(info.days),
                 const SizedBox(height: 24),
                 
-                if (info.isOpen) ...[
-                  _buildMealCard(context, 'Petit-déjeuner', info.breakfast, Icons.coffee_rounded, const Color(0xFFF4A261), isDark)
-                      .animate().fade().slideY(begin: 0.2, duration: 400.ms),
-                  const SizedBox(height: 20),
-                  _buildMealCard(context, 'Déjeuner', info.lunch, Icons.wb_sunny_rounded, const Color(0xFF2A9D8F), isDark)
-                      .animate().fade().slideY(begin: 0.2, delay: 100.ms, duration: 400.ms),
-                  const SizedBox(height: 20),
-                  _buildMealCard(context, 'Dîner', info.dinner, Icons.nightlight_round, const Color(0xFF264653), isDark)
-                      .animate().fade().slideY(begin: 0.2, delay: 200.ms, duration: 400.ms),
-                ] else
-                  _buildClosedState(context),
+                _buildMealCard(context, 'Petit-déjeuner', currentDay.breakfast, Icons.coffee_rounded, const Color(0xFFF4A261), isDark, 'breakfast', residenceId!, userId, _selectedDayIndex)
+                    .animate().fade().slideY(begin: 0.2, duration: 400.ms),
+                const SizedBox(height: 20),
+                _buildMealCard(context, 'Déjeuner', currentDay.lunch, Icons.wb_sunny_rounded, const Color(0xFF2A9D8F), isDark, 'lunch', residenceId, userId, _selectedDayIndex)
+                    .animate().fade().slideY(begin: 0.2, delay: 100.ms, duration: 400.ms),
+                const SizedBox(height: 20),
+                _buildMealCard(context, 'Dîner', currentDay.dinner, Icons.nightlight_round, const Color(0xFF264653), isDark, 'dinner', residenceId, userId, _selectedDayIndex)
+                    .animate().fade().slideY(begin: 0.2, delay: 200.ms, duration: 400.ms),
                   
                 const SizedBox(height: 40),
               ],
@@ -85,74 +92,80 @@ class DiningView extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBanner(BuildContext context, bool isOpen) {
+  Widget _buildDateSelector(List<RestaurantDay> days) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isOpen 
-            ? [const Color(0xFF2D6A4F), const Color(0xFF40916C)]
-            : [const Color(0xFF9B2226), const Color(0xFFBB3E03)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: (isOpen ? const Color(0xFF2D6A4F) : const Color(0xFF9B2226)).withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isOpen ? Icons.restaurant_rounded : Icons.no_food_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isOpen ? 'Le Restaurant est Ouvert' : 'Restaurant Fermé',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
+      height: 90,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: days.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final day = days[index];
+          final isSelected = _selectedDayIndex == index;
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          
+          String dayName = '';
+          final now = DateTime.now();
+          final diff = DateTime(day.date.year, day.date.month, day.date.day).difference(DateTime(now.year, now.month, now.day)).inDays;
+          
+          if (diff == 0) dayName = 'Aujourd\'hui';
+          else if (diff == 1) dayName = 'Demain';
+          else {
+            final daysList = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+            dayName = daysList[day.date.weekday - 1];
+          }
+
+          return GestureDetector(
+            onTap: () => setState(() => _selectedDayIndex = index),
+            child: AnimatedContainer(
+              duration: 300.ms,
+              width: 110,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                gradient: isSelected 
+                  ? LinearGradient(colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)])
+                  : null,
+                color: isSelected ? null : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected ? Colors.transparent : context.appBorder.withValues(alpha: 0.5),
                 ),
-                Text(
-                  isOpen ? 'Bon appétit à tous les étudiants !' : 'Revenez plus tard pour le prochain repas.',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 13,
+                boxShadow: isSelected ? [
+                  BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))
+                ] : null,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    dayName,
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? Colors.white.withValues(alpha: 0.8) : context.appTextSecondary,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    '${day.date.day}/${day.date.month}',
+                    style: GoogleFonts.outfit(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : context.appTextPrimary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          if (isOpen)
-            Container(
-              width: 12,
-              height: 12,
-              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-            ).animate(onPlay: (c) => c.repeat()).scale(duration: 1.seconds, begin: const Offset(1,1), end: const Offset(1.5, 1.5)).fade(begin: 1, end: 0),
-        ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildMealCard(BuildContext context, String title, RestaurantMeal meal, IconData icon, Color accentColor, bool isDark) {
+  Widget _buildMealCard(BuildContext context, String title, RestaurantMeal meal, IconData icon, Color accentColor, bool isDark, String mealKey, String residenceId, String userId, int dayIndex) {
+    final bool isReserved = meal.isReserved(userId);
+    final bool hasRated = meal.hasRated(userId);
     return Container(
       decoration: BoxDecoration(
         color: context.appCard,
@@ -250,8 +263,126 @@ class DiningView extends StatelessWidget {
                       color: context.appTextPrimary.withValues(alpha: 0.8),
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  
+                  // Interaction Row
+                  Row(
+                    children: [
+                      // Reservation Button
+                      Expanded(
+                        child: _buildActionButton(
+                          context,
+                          isReserved ? Icons.check_circle_rounded : Icons.bookmark_add_rounded,
+                          isReserved ? 'Réservé' : 'Réserver',
+                          isReserved ? Colors.green : AppColors.primary,
+                          () => context.read<FirestoreService>().toggleRestaurantMealReservation(
+                            residenceId, 
+                            dayIndex,
+                            mealKey, 
+                            userId
+                          ),
+                          isDark,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Rating Button
+                      Expanded(
+                        child: _buildActionButton(
+                          context,
+                          hasRated ? Icons.star_rounded : Icons.star_outline_rounded,
+                          hasRated ? '${meal.averageRating.toStringAsFixed(1)}' : 'Noter',
+                          const Color(0xFFFFB703),
+                          hasRated ? null : () => _showRatingDialog(context, residenceId, dayIndex, mealKey, userId),
+                          isDark,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context, IconData icon, String label, Color color, VoidCallback? onTap, bool isDark) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showRatingDialog(BuildContext context, String resId, int dayIndex, String mealKey, String userId) {
+    double selectedRating = 5.0;
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Text('Noter le repas', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Comment était le repas ?', style: GoogleFonts.inter(color: Colors.grey)),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      index < selectedRating ? Icons.star_rounded : Icons.star_outline_rounded,
+                      color: const Color(0xFFFFB703),
+                      size: 32,
+                    ),
+                    onPressed: () => setState(() => selectedRating = index + 1.0),
+                  );
+                }),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Annuler', style: GoogleFonts.outfit(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                context.read<FirestoreService>().rateRestaurantMeal(resId, dayIndex, mealKey, selectedRating, userId);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text('Confirmer', style: GoogleFonts.outfit(color: Colors.white)),
             ),
           ],
         ),
@@ -273,39 +404,6 @@ class DiningView extends StatelessWidget {
           Text(
             'L\'administration n\'a pas encore configuré le menu.',
             style: GoogleFonts.outfit(color: context.appTextSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildClosedState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: 40),
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.05),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.no_food_rounded, size: 80, color: Colors.red.withValues(alpha: 0.3)),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Période de Fermeture',
-            style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: context.appTextPrimary),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              'Le restaurant est actuellement fermé. Veuillez consulter les horaires d\'ouverture habituels.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(color: context.appTextSecondary, fontSize: 14),
-            ),
           ),
         ],
       ),

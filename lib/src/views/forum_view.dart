@@ -170,6 +170,9 @@ class _FeedTab extends StatelessWidget {
                 attachments: a.imageUrls.isNotEmpty ? a.imageUrls : (a.imageUrl != null ? [a.imageUrl!] : null),
                 isPinned: true,
                 residenceId: a.residenceId,
+                likesCount: a.likesCount,
+                commentsCount: a.commentsCount,
+                likedBy: a.likedBy,
               )).toList();
             } else {
               posts = snapshot.data as List<ForumPost>? ?? [];
@@ -511,6 +514,8 @@ class _PostCardState extends State<_PostCard> {
   }
 
   Widget _buildInteractionBtn(IconData icon, String label, Color color, VoidCallback onTap) {
+    bool isLikedIcon = icon == Icons.thumb_up_rounded;
+    
     return Expanded(
       child: Material(
         color: Colors.transparent,
@@ -522,7 +527,11 @@ class _PostCardState extends State<_PostCard> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: color, size: 20),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+                  child: Icon(icon, color: color, size: 20, key: ValueKey(icon)),
+                ),
                 const SizedBox(width: 6),
                 Text(label, style: GoogleFonts.outfit(color: color, fontWeight: FontWeight.w600, fontSize: 13)),
               ],
@@ -619,7 +628,8 @@ class _PostCardState extends State<_PostCard> {
   }
   void _toggleLike(bool isLiked) async {
     try {
-      await context.read<FirestoreService>().toggleLike(widget.post.id!, widget.userId);
+      final collection = widget.post.type == 'announcement' ? 'announcements' : 'forum';
+      await context.read<FirestoreService>().toggleLike(widget.post.id!, widget.userId, collection: collection);
     } catch (e) {
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur lors de la mise à jour.')));
     }
@@ -671,7 +681,8 @@ class _RepliesSheetState extends State<_RepliesSheet> {
       createdAt: DateTime.now(),
       parentReplyId: _replyingToId,
     );
-    await context.read<FirestoreService>().addForumReply(widget.post.id!, reply);
+    final collection = widget.post.type == 'announcement' ? 'announcements' : 'forum';
+    await context.read<FirestoreService>().addForumReply(widget.post.id!, reply, collection: collection);
     if (!mounted) return;
     _replyController.clear();
     setState(() {
@@ -703,10 +714,29 @@ class _RepliesSheetState extends State<_RepliesSheet> {
             ),
             Expanded(
               child: StreamBuilder<List<ForumReply>>(
-                stream: context.read<FirestoreService>().streamForumReplies(widget.post.id!),
+                stream: context.read<FirestoreService>().streamForumReplies(
+                  widget.post.id!,
+                  collection: widget.post.type == 'announcement' ? 'announcements' : 'forum'
+                ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
                   final replies = snapshot.data ?? [];
+                  
+                  if (replies.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.chat_bubble_outline_rounded, size: 48, color: context.appTextSecondary.withValues(alpha: 0.2)),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Soyez le premier à commenter !',
+                            style: GoogleFonts.outfit(color: context.appTextSecondary, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                   
                   final mainReplies = replies.where((r) => r.parentReplyId == null).toList();
                   final subReplies = replies.where((r) => r.parentReplyId != null).toList();

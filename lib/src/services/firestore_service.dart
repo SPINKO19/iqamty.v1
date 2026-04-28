@@ -47,6 +47,15 @@ class FirestoreService extends ChangeNotifier {
             .toList());
   }
 
+  Stream<Announcement> streamAnnouncement(String id, {String? residenceId}) {
+    if (_db == null) return const Stream.empty();
+    return _db!
+        .collection('announcements')
+        .doc(id)
+        .snapshots()
+        .map((doc) => Announcement.fromJson(doc.data()!..['id'] = doc.id));
+  }
+
   // Dining
   Stream<List<Meal>> getTodayMeals({String? residenceId}) {
     return getMealsForDate(DateTime.now(), residenceId: residenceId);
@@ -191,6 +200,70 @@ class FirestoreService extends ChangeNotifier {
           if (!doc.exists) return null;
           return RestaurantInfo.fromJson(doc.data()!..['id'] = doc.id);
         });
+  }
+
+  Future<void> toggleRestaurantMealReservation(String residenceId, int dayIndex, String mealType, String userId) async {
+    if (_db == null) return;
+    final docRef = _db!.collection('restaurant').doc(residenceId);
+    
+    await _db!.runTransaction((transaction) async {
+      final doc = await transaction.get(docRef);
+      if (!doc.exists) return;
+      
+      final data = doc.data()!;
+      final days = List<Map<String, dynamic>>.from(data['days'] ?? []);
+      if (dayIndex >= days.length) return;
+
+      final dayData = Map<String, dynamic>.from(days[dayIndex]);
+      final mealData = Map<String, dynamic>.from(dayData[mealType] ?? {});
+      final reservedBy = List<String>.from(mealData['reservedBy'] ?? []);
+      
+      if (reservedBy.contains(userId)) {
+        reservedBy.remove(userId);
+      } else {
+        reservedBy.add(userId);
+      }
+      
+      mealData['reservedBy'] = reservedBy;
+      dayData[mealType] = mealData;
+      days[dayIndex] = dayData;
+      transaction.update(docRef, {'days': days});
+    });
+  }
+
+  Future<void> rateRestaurantMeal(String residenceId, int dayIndex, String mealType, double rating, String userId) async {
+    if (_db == null) return;
+    final docRef = _db!.collection('restaurant').doc(residenceId);
+    
+    await _db!.runTransaction((transaction) async {
+      final doc = await transaction.get(docRef);
+      if (!doc.exists) return;
+      
+      final data = doc.data()!;
+      final days = List<Map<String, dynamic>>.from(data['days'] ?? []);
+      if (dayIndex >= days.length) return;
+
+      final dayData = Map<String, dynamic>.from(days[dayIndex]);
+      final mealData = Map<String, dynamic>.from(dayData[mealType] ?? {});
+      final ratedBy = List<String>.from(mealData['ratedBy'] ?? []);
+      
+      if (ratedBy.contains(userId)) return; // Already rated
+      
+      final currentAvg = (mealData['averageRating'] ?? 0.0).toDouble();
+      final currentCount = (mealData['ratingCount'] ?? 0) as int;
+      
+      final newCount = currentCount + 1;
+      final newAvg = ((currentAvg * currentCount) + rating) / newCount;
+      
+      ratedBy.add(userId);
+      mealData['averageRating'] = newAvg;
+      mealData['ratingCount'] = newCount;
+      mealData['ratedBy'] = ratedBy;
+      
+      dayData[mealType] = mealData;
+      days[dayIndex] = dayData;
+      transaction.update(docRef, {'days': days});
+    });
   }
 
   Future<void> updateRestaurantInfo(RestaurantInfo info) async {
@@ -621,10 +694,10 @@ class FirestoreService extends ChangeNotifier {
     return _db!
         .collection('notifications')
         .where('userId', isEqualTo: userId)
-        .where('isDeleted', isNotEqualTo: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => NotificationModel.fromJson(doc.data(), doc.id))
+            .where((n) => n.isDeleted != true)
             .where((n) => residenceId == null || residenceId.isEmpty || n.residenceId == residenceId || n.residenceId == null || n.residenceId == '')
             .toList()
           ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
@@ -665,10 +738,10 @@ class FirestoreService extends ChangeNotifier {
         .collection('notifications')
         .where('userId', isEqualTo: userId)
         .where('isRead', isEqualTo: false)
-        .where('isDeleted', isNotEqualTo: true)
         .snapshots()
         .map((snap) => snap.docs
             .map((doc) => doc.data())
+            .where((data) => data['isDeleted'] != true)
             .where((data) => residenceId == null || residenceId.isEmpty || data['residenceId'] == residenceId || data['residenceId'] == null || data['residenceId'] == '')
             .length);
   }
@@ -826,9 +899,9 @@ class FirestoreService extends ChangeNotifier {
     await _db!.collection('forum').doc(postId).delete();
   }
 
-  Future<void> toggleLike(String postId, String userId) async {
+  Future<void> toggleLike(String postId, String userId, {String collection = 'forum'}) async {
     if (_db == null) throw Exception("Firestore not initialized");
-    final docRef = _db!.collection('forum').doc(postId);
+    final docRef = _db!.collection(collection).doc(postId);
     final doc = await docRef.get();
     if (!doc.exists) return;
 
@@ -886,10 +959,10 @@ class FirestoreService extends ChangeNotifier {
     await docRef.update(updateData);
   }
 
-  Stream<List<ForumReply>> streamForumReplies(String postId) {
+  Stream<List<ForumReply>> streamForumReplies(String postId, {String collection = 'forum'}) {
     if (_db == null) return Stream.value([]);
     return _db!
-        .collection('forum')
+        .collection(collection)
         .doc(postId)
         .collection('replies')
         .orderBy('createdAt')
@@ -899,17 +972,17 @@ class FirestoreService extends ChangeNotifier {
             .toList());
   }
 
-  Future<void> addForumReply(String postId, ForumReply reply) async {
+  Future<void> addForumReply(String postId, ForumReply reply, {String collection = 'forum'}) async {
     if (_db == null) throw Exception("Firestore not initialized");
     final data = reply.toJson();
     data['createdAt'] = FieldValue.serverTimestamp();
 
     final batch = _db!.batch();
     final replyRef =
-        _db!.collection('forum').doc(postId).collection('replies').doc();
+        _db!.collection(collection).doc(postId).collection('replies').doc();
     batch.set(replyRef, data);
 
-    batch.update(_db!.collection('forum').doc(postId), {
+    batch.update(_db!.collection(collection).doc(postId), {
       'commentsCount': FieldValue.increment(1),
     });
 

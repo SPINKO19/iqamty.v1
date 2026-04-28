@@ -474,8 +474,28 @@ class _AdminAnnouncementCard extends StatelessWidget {
                 child: Image.network(ann.imageUrls.first, width: double.infinity, height: 180, fit: BoxFit.cover),
               ),
             ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+            child: Row(
+              children: [
+                _buildStat(Icons.thumb_up_off_alt_rounded, '${ann.likesCount}', Colors.blue),
+                const SizedBox(width: 16),
+                _buildStat(Icons.chat_bubble_outline_rounded, '${ann.commentsCount}', AppColors.primary),
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStat(IconData icon, String value, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: color.withValues(alpha: 0.7)),
+        const SizedBox(width: 6),
+        Text(value, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: color.withValues(alpha: 0.8))),
+      ],
     );
   }
 
@@ -597,8 +617,28 @@ class _AdminForumCard extends StatelessWidget {
               ),
             ),
           ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+            child: Row(
+              children: [
+                _buildStat(Icons.thumb_up_off_alt_rounded, '${post.likesCount}', Colors.blue),
+                const SizedBox(width: 16),
+                _buildStat(Icons.chat_bubble_outline_rounded, '${post.commentsCount}', AppColors.primary),
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStat(IconData icon, String value, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: color.withValues(alpha: 0.7)),
+        const SizedBox(width: 6),
+        Text(value, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: color.withValues(alpha: 0.8))),
+      ],
     );
   }
 

@@ -42,6 +42,11 @@ class _NotificationsViewState extends State<NotificationsView> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final auth = context.watch<AuthProvider>();
+    final firestore = context.watch<FirestoreService>();
+    final userId = auth.currentUserData?['uid'] ?? '';
+    final residenceId = auth.currentResidenceId;
+
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
@@ -66,7 +71,7 @@ class _NotificationsViewState extends State<NotificationsView> {
         ),
         actions: [
           StreamBuilder<List<NotificationModel>>(
-            stream: _getNotificationsStream(context),
+            stream: firestore.getNotifications(userId, residenceId: residenceId),
             builder: (context, snapshot) {
               final notifs = snapshot.data ?? [];
               final unread = notifs.where((n) => !n.isRead).toList();
@@ -82,8 +87,33 @@ class _NotificationsViewState extends State<NotificationsView> {
         ],
       ),
       body: StreamBuilder<List<NotificationModel>>(
-        stream: _getNotificationsStream(context),
+        stream: firestore.getNotifications(userId, residenceId: residenceId),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Erreur de chargement',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      snapshot.error.toString(),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(color: Colors.grey, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           if (!snapshot.hasData) {
             return const Center(
               child: CircularProgressIndicator(color: Color(0xFF286944)),
@@ -99,7 +129,7 @@ class _NotificationsViewState extends State<NotificationsView> {
             children: [
               // ── Toggle Tabs ──
               Container(
-              color: isDark ? context.appCard : Colors.white,
+                color: isDark ? context.appCard : Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
@@ -119,7 +149,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                 ),
               ),
 
-              // ── Filter Data ──
+              // ── List Content ──
               Expanded(
                 child: _buildListContent(allNotifs, unreadNotifs, readNotifs),
               ),
