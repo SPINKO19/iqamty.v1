@@ -63,10 +63,11 @@ class AdminDashboard extends StatelessWidget {
         final resolvedPercent = complaints.isEmpty ? 0 : (resolvedComplaintsCount / complaints.length * 100).toInt();
 
         int totalReservations = 0;
-        if (restaurant != null) {
-          totalReservations = restaurant.breakfast.reservedBy.length + 
-                             restaurant.lunch.reservedBy.length + 
-                             restaurant.dinner.reservedBy.length;
+        if (restaurant != null && restaurant.days.isNotEmpty) {
+          final today = restaurant.days[0];
+          totalReservations = today.breakfast.reservedBy.length + 
+                             today.lunch.reservedBy.length + 
+                             today.dinner.reservedBy.length;
         }
 
         return LayoutBuilder(
