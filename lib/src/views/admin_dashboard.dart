@@ -385,7 +385,7 @@ class AdminDashboard extends StatelessWidget {
     final timeStr = _formatTimeAgo(timestamp);
     
     Color dotColor = Colors.blue;
-    String route = '/admin/announcements';
+    String route = '/admin/community';
     if (type == 'complaint') {
       dotColor = Colors.red;
       route = '/admin/complaints';
@@ -396,7 +396,7 @@ class AdminDashboard extends StatelessWidget {
     }
 
     return InkWell(
-      onTap: () => context.go(route),
+      onTap: () => context.go(route, extra: item['id']),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
         decoration: BoxDecoration(border: Border(bottom: BorderSide(color: context.appBorder))),
@@ -443,49 +443,76 @@ class AdminDashboard extends StatelessWidget {
   }
 
   Widget _buildRequestItem(BuildContext context, ServiceRequest req, LanguageProvider lp) {
+    final firestore = context.read<FirestoreService>();
     final cat = req.category;
     Color chipColor = Colors.blue.shade100;
     Color textColor = Colors.blue.shade800;
     if (cat.contains('Renouvellement')) { chipColor = Colors.green.shade100; textColor = Colors.green.shade800; }
     if (cat.contains('Maintenance')) { chipColor = Colors.orange.shade100; textColor = Colors.orange.shade800; }
 
-    return InkWell(
-      onTap: () => context.go('/admin/requests'),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: context.appCard,
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: firestore.getUserById(req.userId),
+      builder: (context, snapshot) {
+        final userData = snapshot.data;
+        
+        // Robust name resolution
+        String studentName = lp.getText('student');
+        if (userData != null) {
+          if (userData['displayName'] != null && userData['displayName'].toString().trim().isNotEmpty) {
+            studentName = userData['displayName'];
+          } else if (userData['firstName'] != null) {
+            studentName = '${userData['firstName']} ${userData['lastName'] ?? ''}'.trim();
+          } else if (userData['fullName'] != null) {
+            studentName = userData['fullName'];
+          } else if (userData['name'] != null) {
+            studentName = userData['name'];
+          } else if (userData['matricule'] != null) {
+            studentName = 'ID: ${userData['matricule']}';
+          }
+        }
+
+        final room = userData?['room']?.toString() ?? userData?['chambre']?.toString() ?? '-';
+        final initials = studentName.isNotEmpty && studentName != lp.getText('student') ? studentName[0].toUpperCase() : 'S';
+
+        return InkWell(
+          onTap: () => context.go('/admin/requests'),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: context.appBorder),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-              child: Center(child: Text('ST', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold))),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: context.appCard,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: context.appBorder),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(lp.getText('student'), style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: context.appTextPrimary)),
-                  Text('Ch.${req.userId.hashCode % 500}', style: GoogleFonts.inter(fontSize: 10, color: context.appTextSecondary)),
-                ],
-              ),
+            child: Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: Center(child: Text(initials, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold))),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(studentName, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: context.appTextPrimary)),
+                      Text('Ch.$room', style: GoogleFonts.inter(fontSize: 10, color: context.appTextSecondary)),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: chipColor, borderRadius: BorderRadius.circular(20)),
+                  child: Text(cat, style: GoogleFonts.inter(color: textColor, fontSize: 9, fontWeight: FontWeight.w600)),
+                ),
+              ],
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: chipColor, borderRadius: BorderRadius.circular(20)),
-              child: Text(cat, style: GoogleFonts.inter(color: textColor, fontSize: 9, fontWeight: FontWeight.w600)),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      }
     );
   }
 

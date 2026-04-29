@@ -41,10 +41,32 @@ class FirestoreService extends ChangeNotifier {
         .collection('announcements')
         .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Announcement.fromJson(doc.data()..['id'] = doc.id))
-            .where((a) => residenceId == null || residenceId.isEmpty || a.residenceId == residenceId || a.residenceId == null || a.residenceId == '')
-            .toList());
+        .map((snapshot) {
+      final list = snapshot.docs
+          .map((doc) => Announcement.fromJson(doc.data()..['id'] = doc.id))
+          .where((a) =>
+              residenceId == null ||
+              residenceId.isEmpty ||
+              a.residenceId == residenceId ||
+              a.residenceId == null ||
+              a.residenceId == '')
+          .toList();
+
+      // Sort by isPinned (true first) then timestamp
+      list.sort((a, b) {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return b.timestamp.compareTo(a.timestamp);
+      });
+      return list;
+    });
+  }
+
+  Future<void> toggleAnnouncementPin(String announcementId, bool isPinned) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    await _db!.collection('announcements').doc(announcementId).update({
+      'isPinned': isPinned,
+    });
   }
 
   Stream<Announcement> streamAnnouncement(String id, {String? residenceId}) {
@@ -197,8 +219,81 @@ class FirestoreService extends ChangeNotifier {
         .doc(residenceId)
         .snapshots()
         .map((doc) {
-          if (!doc.exists) return null;
-          return RestaurantInfo.fromJson(doc.data()!..['id'] = doc.id);
+          if (!doc.exists) {
+            // Initialize empty info if not exists
+            final now = DateTime.now();
+            final today = DateTime(now.year, now.month, now.day);
+            final initialInfo = RestaurantInfo(
+              days: List.generate(3, (i) => RestaurantDay.empty(today.add(Duration(days: i)))),
+              residenceId: residenceId,
+              lastUpdated: DateTime.now(),
+            );
+            updateRestaurantInfo(initialInfo);
+            return initialInfo;
+          }
+          
+          final info = RestaurantInfo.fromJson(doc.data()!..['id'] = doc.id);
+          
+          // Shifting logic: ensure we show Today, Tomorrow, DayAfter
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          
+          bool changed = false;
+          List<RestaurantDay> currentDays = List.from(info.days);
+          
+          // 1. Remove past days
+          while (currentDays.isNotEmpty && 
+                 DateTime(currentDays[0].date.year, currentDays[0].date.month, currentDays[0].date.day).isBefore(today)) {
+            currentDays.removeAt(0);
+            changed = true;
+          }
+          
+          // 2. Ensure at least 3 days exist starting from today
+          if (currentDays.isEmpty || !DateTime(currentDays[0].date.year, currentDays[0].date.month, currentDays[0].date.day).isAtSameMomentAs(today)) {
+             // If first day is NOT today (e.g. they skipped a few days or it's empty)
+             // We might need to re-align completely or just prepend today.
+             // Simple approach: if empty or first is after today, prepend today.
+             if (currentDays.isEmpty || currentDays[0].date.isAfter(today)) {
+               // This case is rare but possible if admin manually deleted days.
+               // For simplicity, let's just make sure we fill up to 3 days starting from today.
+             }
+          }
+
+          // More robust fill:
+          // If the list doesn't start with today, we might want to clear it or prepend?
+          // The user said "show next three days always".
+          
+          // Let's re-build if the start is wrong or it's too short.
+          List<RestaurantDay> freshDays = [];
+          for (int i = 0; i < 3; i++) {
+            final targetDate = today.add(Duration(days: i));
+            // Find if we already have this date
+            final existing = currentDays.where((d) => 
+              d.date.year == targetDate.year && 
+              d.date.month == targetDate.month && 
+              d.date.day == targetDate.day
+            );
+            
+            if (existing.isNotEmpty) {
+              freshDays.add(existing.first);
+            } else {
+              freshDays.add(RestaurantDay.empty(targetDate));
+              changed = true;
+            }
+          }
+
+          if (changed) {
+            final updatedInfo = RestaurantInfo(
+              id: info.id,
+              days: freshDays,
+              residenceId: info.residenceId,
+              lastUpdated: DateTime.now(),
+            );
+            updateRestaurantInfo(updatedInfo);
+            return updatedInfo;
+          }
+          
+          return info;
         });
   }
 
@@ -986,6 +1081,20 @@ class FirestoreService extends ChangeNotifier {
       'commentsCount': FieldValue.increment(1),
     });
 
+    await batch.commit();
+  }
+
+  Future<void> deleteForumReply(String postId, String replyId,
+      {String collection = 'forum'}) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final batch = _db!.batch();
+    batch.delete(_db!.collection(collection)
+        .doc(postId)
+        .collection('replies')
+        .doc(replyId));
+    batch.update(_db!.collection(collection).doc(postId), {
+      'commentsCount': FieldValue.increment(-1),
+    });
     await batch.commit();
   }
 

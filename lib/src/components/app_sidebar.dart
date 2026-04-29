@@ -315,6 +315,7 @@ class AppSidebar extends StatelessWidget {
       _NavItemData(Icons.report_problem_outlined, 'Complaints', '/admin/complaints'),
       _NavItemData(Icons.handyman_outlined, 'Requests', '/admin/requests'),
       _NavItemData(Icons.people_outline_rounded, 'Users', '/admin/users'),
+      _NavItemData(Icons.forum_outlined, 'Community', '/admin/community'),
     ];
   }
 
@@ -335,6 +336,7 @@ class AppSidebar extends StatelessWidget {
         }),
         badgeColor: const Color(0xFF3B82F6),
       ),
+      _NavItemData(Icons.forum_outlined, 'Communauté', '/community'),
       _NavItemData(Icons.person_outline_rounded, 'Profil', '/profile'),
     ];
   }

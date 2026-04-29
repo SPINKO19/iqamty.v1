@@ -254,7 +254,11 @@ class _AdminUsersViewState extends State<AdminUsersView> {
   }
 
   Widget _buildModernUserCard(BuildContext context, LanguageProvider lp, Map<String, dynamic> student, FirestoreService firestore, String? residenceId) {
-    final name = student['displayName'] ?? 'Étudiant';
+    final name = student['displayName'] ?? 
+                 student['fullName'] ?? 
+                 '${student['firstName'] ?? ""} ${student['lastName'] ?? ""}'.trim();
+    final nameFinal = name.isEmpty ? 'Étudiant' : name;
+    
     final residence = student['residence'] ?? '---';
     final bloc = student['bloc'] ?? '---';
     final room = student['room'] ?? student['chambre'] ?? '---';
@@ -284,7 +288,7 @@ class _AdminUsersViewState extends State<AdminUsersView> {
             ),
             child: Center(
               child: Text(
-                name[0].toUpperCase(),
+                nameFinal[0].toUpperCase(),
                 style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
@@ -294,7 +298,7 @@ class _AdminUsersViewState extends State<AdminUsersView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: context.appTextPrimary)),
+                Text(nameFinal, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: context.appTextPrimary)),
                 const SizedBox(height: 4),
                 Text('$residence • Bloc $bloc • Ch $room', style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 11)),
               ],
@@ -309,9 +313,9 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                 await firestore.toggleUserBan(userId, !isBanned);
               } else if (val == 'chat') {
                 final router = GoRouter.of(context);
-                final chatId = await firestore.startOrGetChat(userId, name, residenceId: residenceId);
+                final chatId = await firestore.startOrGetChat(userId, nameFinal, residenceId: residenceId);
                 if (!mounted) return;
-                router.go('/admin/chat/$chatId', extra: {'name': name, 'isAdmin': true});
+                router.go('/admin/chat/$chatId', extra: {'name': nameFinal, 'isAdmin': true});
               }
             },
             itemBuilder: (context) => [

@@ -480,7 +480,7 @@ class _AnnouncementCard extends StatelessWidget {
         color: context.appCard,
         borderRadius: BorderRadius.circular(24),
         child: InkWell(
-          onTap: () => context.go('/announcement', extra: announcement),
+          onTap: () => context.go('/community', extra: announcement.id),
           borderRadius: BorderRadius.circular(24),
           child: Container(
             padding: const EdgeInsets.all(20),

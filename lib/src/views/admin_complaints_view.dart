@@ -56,6 +56,7 @@ class AdminComplaintsView extends StatelessWidget {
                       crossAxisCount: cardsPerRow,
                       crossAxisSpacing: 24,
                       mainAxisSpacing: 24,
+                      childAspectRatio: cardsPerRow == 2 ? 1.6 : 1.3,
                     ),
                     itemCount: complaints.length,
                     itemBuilder: (context, index) => _AdminComplaintCard(complaint: complaints[index]),
@@ -203,7 +204,7 @@ class _AdminComplaintCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         _buildMetaInfo(context, Icons.inventory_2_outlined, complaint.category),
@@ -214,7 +215,7 @@ class _AdminComplaintCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Divider(height: 1, color: context.appBorder),
               Padding(
                 padding: const EdgeInsets.all(16),

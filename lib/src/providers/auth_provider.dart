@@ -44,6 +44,8 @@ class AuthProvider with ChangeNotifier {
       _currentStudent?.residenceId ??
       _authService.userData?['residenceId'] as String?;
 
+  bool get isAdmin => currentUserData?['role'] == 'administrator';
+
   // Needed by main.dart to initialize state
   Future<void> checkAuthStatus() async {
     // Auth status is now driven by FirebaseAuth streams + SharedPreferences cache in AuthService

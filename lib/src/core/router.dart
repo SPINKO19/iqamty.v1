@@ -114,7 +114,12 @@ class AppRouter {
           GoRoute(path: '/sports', pageBuilder: (context, state) => const NoTransitionPage(child: SportsProgramView())),
           GoRoute(path: '/notifications', pageBuilder: (context, state) => const NoTransitionPage(child: NotificationsView())),
           GoRoute(path: '/documents', pageBuilder: (context, state) => const NoTransitionPage(child: DocumentsView())),
-            GoRoute(path: '/community', pageBuilder: (context, state) => const NoTransitionPage(child: ForumView())),
+            GoRoute(
+              path: '/community', 
+              pageBuilder: (context, state) => NoTransitionPage(
+                child: ForumView(initialPostId: state.extra as String?),
+              ),
+            ),
             GoRoute(
               path: '/chat', 
               pageBuilder: (context, state) => const NoTransitionPage(child: ChatView()),
@@ -209,6 +214,12 @@ class AppRouter {
               }
             ),
 
+            GoRoute(
+              path: '/admin/community', 
+              pageBuilder: (context, state) => NoTransitionPage(
+                child: ForumView(initialPostId: state.extra as String?),
+              ),
+            ),
             GoRoute(path: '/admin/settings', pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen())),
           ],
         ),

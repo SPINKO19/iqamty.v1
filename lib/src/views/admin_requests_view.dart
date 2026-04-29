@@ -144,6 +144,30 @@ class AdminRequestsView extends StatelessWidget {
               color: context.appTextSecondary,
             ),
           ),
+          const SizedBox(height: 12),
+          FutureBuilder<Map<String, dynamic>?>(
+            future: firestore.getUserById(request.userId),
+            builder: (context, snapshot) {
+              final userData = snapshot.data;
+              String studentInfo = 'Utilisateur ID: ${request.userId}';
+              if (userData != null) {
+                final name = userData['displayName'] ?? 
+                             userData['fullName'] ?? 
+                             '${userData['firstName'] ?? ""} ${userData['lastName'] ?? ""}'.trim();
+                final room = userData['room'] ?? userData['chambre'] ?? 'N/A';
+                final bloc = userData['bloc'] ?? 'N/A';
+                studentInfo = "$name (Bloc $bloc • Ch.$room)";
+              }
+              return Text(
+                studentInfo,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary.withValues(alpha: 0.8),
+                ),
+              );
+            },
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -413,6 +437,28 @@ class _AdminRequestDetailsSheet extends StatelessWidget {
                   future: firestore.getUserById(request.userId),
                   builder: (context, snapshot) {
                     final userData = snapshot.data;
+                    
+                    // Robust Name Resolution
+                    String name = 'Chargement...';
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      if (userData != null) {
+                        name = userData['displayName'] ?? 
+                               userData['fullName'] ?? 
+                               '${userData['firstName'] ?? ""} ${userData['lastName'] ?? ""}'.trim();
+                        if (name.isEmpty) name = 'Utilisateur: ${request.userId}';
+                      } else {
+                        name = 'ID: ${request.userId}';
+                      }
+                    }
+
+                    // Robust Room Resolution
+                    String roomInfo = 'N/A';
+                    if (userData != null) {
+                      final bloc = userData['bloc'] ?? 'N/A';
+                      final room = userData['room'] ?? userData['chambre'] ?? 'N/A';
+                      roomInfo = "Bloc: $bloc • Chambre: $room";
+                    }
+
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -424,7 +470,7 @@ class _AdminRequestDetailsSheet extends StatelessWidget {
                           CircleAvatar(
                             backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                             child: Text(
-                              userData?['displayName']?[0] ?? 'U',
+                              name.isNotEmpty ? name[0].toUpperCase() : 'U',
                               style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -434,7 +480,7 @@ class _AdminRequestDetailsSheet extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  userData?['displayName'] ?? 'Utilisateur ID: ${request.userId}',
+                                  name,
                                   style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary),
                                 ),
                                 if (userData != null) ...[
@@ -443,7 +489,7 @@ class _AdminRequestDetailsSheet extends StatelessWidget {
                                     style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary, fontWeight: FontWeight.bold),
                                   ),
                                   Text(
-                                    "Bloc: ${userData['bloc'] ?? 'N/A'} • Chambre: ${userData['room'] ?? userData['chambre'] ?? 'N/A'}",
+                                    roomInfo,
                                     style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary),
                                   ),
                                 ],

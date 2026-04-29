@@ -20,14 +20,22 @@ class AdminShell extends StatelessWidget {
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth > 1100;
 
-        return Scaffold(
-          backgroundColor: context.appBackground, // Uses theme-aware background
-          drawer: isDesktop ? null : Drawer(
-            width: 200,
-            child: _AdminSidebarContent(),
-          ),
-          body: Row(
-            children: [
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            if (context.canPop()) {
+              context.pop();
+            }
+          },
+          child: Scaffold(
+            backgroundColor: context.appBackground, // Uses theme-aware background
+            drawer: isDesktop ? null : Drawer(
+              width: 200,
+              child: _AdminSidebarContent(),
+            ),
+            body: Row(
+              children: [
               if (isDesktop)
                 SizedBox(
                   width: 200,
@@ -45,7 +53,8 @@ class AdminShell extends StatelessWidget {
               ),
             ],
           ),
-        );
+        ),
+      );
       },
     );
   }
@@ -181,6 +190,7 @@ class _AdminSidebarContent extends StatelessWidget {
                 ),
                 
                 _buildNavItem(context, Icons.campaign_rounded, lp.getText('announcements'), '/admin/announcements', currentRoute),
+                _buildNavItem(context, Icons.forum_rounded, lp.getText('community'), '/admin/community', currentRoute),
                 _buildNavItem(context, Icons.settings_rounded, lp.getText('settings'), '/admin/settings', currentRoute),
               ],
             ),
@@ -319,10 +329,21 @@ class _AdminHeader extends StatelessWidget {
       child: Row(
         children: [
           if (!isDesktop)
-            IconButton(
-              onPressed: () => Scaffold.of(context).openDrawer(),
-              icon: const Icon(Icons.menu_rounded),
-            ),
+            (context.canPop() || GoRouterState.of(context).uri.path != '/admin')
+              ? IconButton(
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/admin');
+                    }
+                  },
+                  icon: const Icon(Icons.arrow_back_rounded),
+                )
+              : IconButton(
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                  icon: const Icon(Icons.menu_rounded),
+                ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -379,6 +400,7 @@ class _AdminHeader extends StatelessWidget {
     if (route.startsWith('/admin/rooms')) return lp.getText('rooms');
     if (route.startsWith('/admin/resources')) return 'Ressources';
     if (route.startsWith('/admin/announcements')) return lp.getText('announcements');
+    if (route.startsWith('/admin/community')) return lp.getText('community');
     if (route.startsWith('/admin/dining')) return lp.getText('restoration');
     if (route.startsWith('/admin/documents')) return lp.getText('documents_and_programs');
     if (route.startsWith('/admin/settings')) return lp.getText('settings');

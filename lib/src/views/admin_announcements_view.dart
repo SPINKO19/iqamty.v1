@@ -432,7 +432,9 @@ class _AdminAnnouncementCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.appCard,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+        border: ann.isPinned 
+            ? Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5)
+            : Border.all(color: context.appBorder.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
@@ -440,6 +442,22 @@ class _AdminAnnouncementCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (ann.isPinned)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), bottomRight: Radius.circular(12)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.push_pin_rounded, size: 12, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Text('ÉPINGLÉ', style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1)),
+                ],
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -454,6 +472,11 @@ class _AdminAnnouncementCard extends StatelessWidget {
                       Text(DateFormat('dd MMM, HH:mm').format(ann.timestamp), style: GoogleFonts.outfit(color: context.appTextSecondary, fontSize: 11)),
                     ],
                   ),
+                ),
+                IconButton(
+                  icon: Icon(ann.isPinned ? Icons.push_pin_rounded : Icons.push_pin_outlined, 
+                    color: ann.isPinned ? AppColors.primary : context.appTextSecondary, size: 20),
+                  onPressed: () => context.read<FirestoreService>().toggleAnnouncementPin(ann.id!, !ann.isPinned),
                 ),
                 IconButton(
                   icon: Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 22),

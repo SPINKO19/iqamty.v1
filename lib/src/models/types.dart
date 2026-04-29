@@ -100,6 +100,7 @@ class Announcement {
   final int likesCount;
   final int commentsCount;
   final List<String> likedBy;
+  final bool isPinned;
 
   Announcement({
     this.id,
@@ -113,6 +114,7 @@ class Announcement {
     this.likesCount = 0,
     this.commentsCount = 0,
     this.likedBy = const [],
+    this.isPinned = false,
   });
 
   factory Announcement.fromJson(Map<String, dynamic> json) {
@@ -136,6 +138,7 @@ class Announcement {
       likesCount: json['likesCount'] ?? (json['likedBy'] as List?)?.length ?? 0,
       commentsCount: json['commentsCount'] ?? json['replyCount'] ?? 0,
       likedBy: List<String>.from(json['likedBy'] ?? []),
+      isPinned: json['isPinned'] ?? false,
     );
   }
 
@@ -150,6 +153,7 @@ class Announcement {
       'likesCount': likesCount,
       'commentsCount': commentsCount,
       'likedBy': likedBy,
+      'isPinned': isPinned,
       // timestamp is added by the server
     };
   }
@@ -793,6 +797,15 @@ class RestaurantDay {
       breakfast: RestaurantMeal.fromJson(json['breakfast'] ?? {}),
       lunch: RestaurantMeal.fromJson(json['lunch'] ?? {}),
       dinner: RestaurantMeal.fromJson(json['dinner'] ?? {}),
+    );
+  }
+
+  factory RestaurantDay.empty(DateTime date) {
+    return RestaurantDay(
+      date: date,
+      breakfast: RestaurantMeal(menu: '', startTime: '07:00', endTime: '09:00'),
+      lunch: RestaurantMeal(menu: '', startTime: '12:00', endTime: '14:00'),
+      dinner: RestaurantMeal(menu: '', startTime: '18:30', endTime: '20:30'),
     );
   }
 

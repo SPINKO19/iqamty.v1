@@ -26,7 +26,8 @@ String _formatTime(DateTime time) {
 }
 
 class ForumView extends StatelessWidget {
-  const ForumView({super.key});
+  final String? initialPostId;
+  const ForumView({super.key, this.initialPostId});
   @override
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
@@ -93,11 +94,11 @@ class ForumView extends StatelessWidget {
             ),
           ),
         ),
-        body: const TabBarView(
+        body: TabBarView(
           children: [
-            _FeedTab(postType: 'announcement'),
-            _FeedTab(postType: 'post'),
-            _FeedTab(postType: 'poll'),
+            _FeedTab(postType: 'announcement', highlightedPostId: initialPostId),
+            const _FeedTab(postType: 'post'),
+            const _FeedTab(postType: 'poll'),
           ],
         ),
       ),
@@ -107,7 +108,8 @@ class ForumView extends StatelessWidget {
 
 class _FeedTab extends StatelessWidget {
   final String postType;
-  const _FeedTab({required this.postType});
+  final String? highlightedPostId;
+  const _FeedTab({required this.postType, this.highlightedPostId});
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +170,7 @@ class _FeedTab extends StatelessWidget {
                 authorName: 'Administration',
                 createdAt: a.timestamp,
                 attachments: a.imageUrls.isNotEmpty ? a.imageUrls : (a.imageUrl != null ? [a.imageUrl!] : null),
-                isPinned: true,
+                isPinned: a.isPinned,
                 residenceId: a.residenceId,
                 likesCount: a.likesCount,
                 commentsCount: a.commentsCount,
@@ -207,7 +209,11 @@ class _FeedTab extends StatelessWidget {
               itemBuilder: (context, index) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: _PostCard(post: posts[index], userId: userData?['uid'] ?? '').animate().fade(duration: 400.ms).slideY(begin: 0.05, end: 0, curve: Curves.easeOutQuad),
+                  child: _PostCard(
+                    post: posts[index], 
+                    userId: userData?['uid'] ?? '',
+                    isHighlighted: posts[index].id == highlightedPostId,
+                  ).animate().fade(duration: 400.ms).slideY(begin: 0.05, end: 0, curve: Curves.easeOutQuad),
                 );
               },
             );
@@ -277,8 +283,9 @@ class _FeedTab extends StatelessWidget {
 class _PostCard extends StatefulWidget {
   final ForumPost post;
   final String userId;
+  final bool isHighlighted;
 
-  const _PostCard({required this.post, required this.userId});
+  const _PostCard({required this.post, required this.userId, this.isHighlighted = false});
 
   @override
   State<_PostCard> createState() => _PostCardState();
@@ -296,11 +303,20 @@ class _PostCardState extends State<_PostCard> {
         color: context.appCard,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isOfficial 
-              ? AppColors.primary.withValues(alpha: 0.2) 
-              : context.appBorder.withValues(alpha: 0.4),
+          color: widget.isHighlighted 
+              ? AppColors.primary 
+              : (isOfficial 
+                  ? AppColors.primary.withValues(alpha: 0.2) 
+                  : context.appBorder.withValues(alpha: 0.4)),
+          width: widget.isHighlighted ? 2 : 1,
         ),
         boxShadow: [
+          if (widget.isHighlighted)
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.3),
+              blurRadius: 20,
+              spreadRadius: 2,
+            ),
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 15,
@@ -636,10 +652,75 @@ class _PostCardState extends State<_PostCard> {
   }
 
   Widget _buildCardMenu() {
-    return IconButton(
+    final auth = context.read<AuthProvider>();
+    final isAuthor = widget.post.authorId == widget.userId;
+    final isAdmin = auth.currentUserData?['role'] == 'administrator';
+
+    if (!isAuthor && !isAdmin) return const SizedBox.shrink();
+
+    return PopupMenuButton<String>(
       icon: Icon(Icons.more_horiz_rounded, color: Colors.grey[500]),
-      onPressed: () {},
-      splashRadius: 20,
+      onSelected: (val) {
+        if (val == 'delete') {
+          _confirmDelete();
+        } else if (val == 'pin') {
+          context.read<FirestoreService>().toggleAnnouncementPin(widget.post.id!, !widget.post.isPinned);
+        }
+      },
+      itemBuilder: (ctx) => [
+        if (isAdmin && widget.post.type == 'announcement')
+          PopupMenuItem(
+            value: 'pin',
+            child: Row(
+              children: [
+                Icon(widget.post.isPinned ? Icons.push_pin_outlined : Icons.push_pin_rounded, color: AppColors.primary, size: 18),
+                const SizedBox(width: 8),
+                Text(widget.post.isPinned ? 'Dépingler' : 'Epingler'),
+              ],
+            ),
+          ),
+        const PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline, color: Colors.red, size: 18),
+              SizedBox(width: 8),
+              Text('Supprimer', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer ?'),
+        content: const Text('Voulez-vous vraiment supprimer ce contenu ?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler')),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (widget.post.type == 'announcement') {
+                context
+                    .read<FirestoreService>()
+                    .deleteAnnouncement(widget.post.id!);
+              } else {
+                context
+                    .read<FirestoreService>()
+                    .deleteForumPost(widget.post.id!);
+              }
+            },
+            child: const Text('Supprimer',
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -667,6 +748,7 @@ class _RepliesSheetState extends State<_RepliesSheet> {
   final _replyController = TextEditingController();
   String? _replyingToId;
   String? _replyingToName;
+  String? _replyingToUserId;
   bool _isLoading = false;
 
   Future<void> _submitReply() async {
@@ -683,11 +765,23 @@ class _RepliesSheetState extends State<_RepliesSheet> {
     );
     final collection = widget.post.type == 'announcement' ? 'announcements' : 'forum';
     await context.read<FirestoreService>().addForumReply(widget.post.id!, reply, collection: collection);
+    
+    // Notification for mention/reply
+    if (_replyingToUserId != null && _replyingToUserId != (authData?['uid'] ?? widget.currentUserId)) {
+      await context.read<FirestoreService>().createNotification(
+        userId: _replyingToUserId!,
+        title: 'Réponse à votre commentaire',
+        body: '${authData?['displayName'] ?? 'Utilisateur'} a répondu à votre commentaire sur "${widget.post.title.isNotEmpty ? widget.post.title : 'le forum'}"',
+        type: 'comment',
+      );
+    }
+
     if (!mounted) return;
     _replyController.clear();
     setState(() {
       _replyingToId = null;
       _replyingToName = null;
+      _replyingToUserId = null;
       _isLoading = false;
     });
   }
@@ -751,15 +845,35 @@ class _RepliesSheetState extends State<_RepliesSheet> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _ReplyTile(reply: mainR, onReply: () => setState(() {
-                            _replyingToId = mainR.id;
-                            _replyingToName = mainR.authorName;
-                          })),
+                          _ReplyTile(
+                            reply: mainR, 
+                            postId: widget.post.id!,
+                            postType: widget.post.type,
+                            currentUserId: widget.currentUserId,
+                            onReply: () => setState(() {
+                              _replyingToId = mainR.id;
+                              _replyingToName = mainR.authorName;
+                              _replyingToUserId = mainR.authorId;
+                              _replyController.text = "@${mainR.authorName} ";
+                            })
+                          ),
                           if (children.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(left: 44),
                               child: Column(
-                                children: children.map((c) => _ReplyTile(reply: c, isChild: true)).toList(),
+                                children: children.map((c) => _ReplyTile(
+                                  reply: c, 
+                                  isChild: true,
+                                  postId: widget.post.id!,
+                                  postType: widget.post.type,
+                                  currentUserId: widget.currentUserId,
+                                  onReply: () => setState(() {
+                                    _replyingToId = mainR.id; // Still reply to main for threading if simple
+                                    _replyingToName = c.authorName;
+                                    _replyingToUserId = c.authorId;
+                                    _replyController.text = "@${c.authorName} ";
+                                  }),
+                                )).toList(),
                               ),
                             ),
                           const Divider(height: 24, thickness: 0.5),
@@ -844,8 +958,18 @@ class _ReplyTile extends StatelessWidget {
   final ForumReply reply;
   final bool isChild;
   final VoidCallback? onReply;
+  final String currentUserId;
+  final String postId;
+  final String postType;
 
-  const _ReplyTile({required this.reply, this.isChild = false, this.onReply});
+  const _ReplyTile({
+    required this.reply, 
+    required this.currentUserId,
+    required this.postId,
+    required this.postType,
+    this.isChild = false, 
+    this.onReply
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -875,6 +999,14 @@ class _ReplyTile extends StatelessWidget {
                       _formatTime(reply.createdAt), 
                       style: GoogleFonts.outfit(fontSize: 10, color: context.appTextSecondary)
                     ),
+                    const Spacer(),
+                    if (reply.authorId == currentUserId || context.read<AuthProvider>().isAdmin)
+                      IconButton(
+                        icon: const Icon(Icons.more_horiz_rounded, size: 16),
+                        onPressed: () => _showDeleteMenu(context),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -882,7 +1014,7 @@ class _ReplyTile extends StatelessWidget {
                   reply.content, 
                   style: GoogleFonts.inter(fontSize: 14, color: context.appTextPrimary, height: 1.4)
                 ),
-                if (!isChild && onReply != null)
+                if (onReply != null)
                   GestureDetector(
                     onTap: onReply,
                     child: Padding(
@@ -897,6 +1029,38 @@ class _ReplyTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showDeleteMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: context.appCard,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+              title: Text('Supprimer le commentaire', style: GoogleFonts.outfit(color: Colors.red, fontWeight: FontWeight.bold)),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.read<FirestoreService>().deleteForumReply(
+                  postId, 
+                  reply.id!, 
+                  collection: postType == 'announcement' ? 'announcements' : 'forum'
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
       ),
     );
   }
