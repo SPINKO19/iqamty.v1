@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:diacritic/diacritic.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -298,7 +299,50 @@ class AuthService extends ChangeNotifier {
 
   Future<void> loginWithWebEtu(String matricule, String password) async {
     try {
-      // Step 1: Always authenticate with Progres to verify credentials
+      // ---------------------------------------------------------------------------
+      // STEP 0: Hash the password (never store or compare plaintext)
+      // ---------------------------------------------------------------------------
+      final passwordHash = sha256.convert(utf8.encode(password)).toString();
+
+      // ---------------------------------------------------------------------------
+      // STEP 1: FIRESTORE-FIRST — Check if this is a returning user
+      // ---------------------------------------------------------------------------
+      if (_firestore != null) {
+        final existingDoc = await _firestore!.collection('users').doc(matricule).get();
+        if (existingDoc.exists) {
+          final data = existingDoc.data();
+
+          // Security: Check ban status
+          if (data?['isBanned'] == true) {
+            throw Exception('ACCOUNT_BANNED');
+          }
+
+          // If we have a stored password hash, verify it
+          final storedHash = data?['passwordHash'] as String?;
+          if (storedHash != null && storedHash == passwordHash && data!.containsKey('displayName')) {
+            // ✅ MATCH — Log in instantly from Firestore, no Progres needed!
+            if (kDebugMode) print('FIRESTORE-FIRST: Returning user — logging in without Progres API');
+            
+            _userData = data;
+            _startUserListener(matricule);
+            await _persistUserData(_userData!);
+            
+            // Ensure Firebase auth session for Firestore security rules
+            if (_auth?.currentUser == null) {
+              try { await _auth?.signInAnonymously(); } catch (_) {}
+            }
+            
+            notifyListeners();
+            return;
+          }
+        }
+      }
+
+      // ---------------------------------------------------------------------------
+      // STEP 2: NEW USER or HASH MISMATCH — Authenticate with Progres API
+      // ---------------------------------------------------------------------------
+      if (kDebugMode) print('PROGRES LOGIN: Attempting authentication with Progres API...');
+      
       final response = await http.post(
         Uri.parse('${AppConfig.apiBaseUrl}/authentication/v1/'),
         headers: {'Content-Type': 'application/json'},
@@ -306,21 +350,7 @@ class AuthService extends ChangeNotifier {
           'username': matricule,
           'password': password,
         }),
-      ).timeout(const Duration(seconds: 10));
-
-      Map<String, dynamic>? existingUserData;
-
-      // SECURITY PRE-CHECK: Even if Progres succeeds, check if the student is localy banned in Firestore
-      if (_firestore != null) {
-         final existingDoc = await _firestore!.collection('users').doc(matricule).get();
-         if (existingDoc.exists) {
-           final data = existingDoc.data();
-           if (data?['isBanned'] == true) {
-             throw Exception('ACCOUNT_BANNED'); // Signal to UI that account is suspended
-           }
-           existingUserData = data;
-         }
-      }
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         String token = '';
@@ -341,21 +371,39 @@ class AuthService extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', token);
 
-        // Step 2: Check Firestore Fast-Track (P1.0)
+        // ---------------------------------------------------------------------------
+        // STEP 3: Save password hash to Firestore for future logins
+        // ---------------------------------------------------------------------------
+        if (_firestore != null) {
+          await _firestore!.collection('users').doc(matricule).set(
+            {'passwordHash': passwordHash},
+            SetOptions(merge: true),
+          );
+          if (kDebugMode) print('FIRESTORE-FIRST: Password hash saved — next login will skip Progres');
+        }
+
+        // ---------------------------------------------------------------------------
+        // STEP 4: Load profile (fast-track from Firestore or full fetch from Progres)
+        // ---------------------------------------------------------------------------
+        Map<String, dynamic>? existingUserData;
+        if (_firestore != null) {
+          final existingDoc = await _firestore!.collection('users').doc(matricule).get();
+          if (existingDoc.exists) existingUserData = existingDoc.data();
+        }
+
+        // Fast-track: use Firestore profile if available
         if (existingUserData != null && existingUserData.containsKey('displayName')) {
           _userData = existingUserData;
-          _startUserListener(matricule); // Start listening for real-time ban updates
+          _startUserListener(matricule);
           await _persistUserData(_userData!);
           notifyListeners();
           
-          if (kDebugMode) print('P1.0: Loaded profile from Firestore fast-track — logging in instantly');
-          
-          // Background refresh
+          if (kDebugMode) print('P1.0: Loaded profile from Firestore fast-track');
           _refreshProfileInBackground(token, matricule);
           return;
         }
 
-        // Step 2.1: Check for cached profile (P1.1 — skip Progres fetch)
+        // Check local cache
         final cached = prefs.getString('user_data_cache');
         if (cached != null && cached.isNotEmpty) {
           try {
@@ -363,17 +411,15 @@ class AuthService extends ChangeNotifier {
             if (cachedData['uid'] == matricule || cachedData['matricule'] == matricule) {
               _userData = cachedData;
               notifyListeners();
-              
-              if (kDebugMode) print('P1.1: Loaded profile from cache — logging in instantly');
-              
+              if (kDebugMode) print('P1.1: Loaded profile from cache');
               _refreshProfileInBackground(token, matricule);
               return;
             }
           } catch (_) {}
         }
 
-        // Step 3: No valid cache — full fetch from Progres API
-        if (kDebugMode) print('P1.1: No cache found — fetching from Progres API blockingly');
+        // Full fetch from Progres API (first-time user)
+        if (kDebugMode) print('P1.2: No cache — fetching full profile from Progres API');
         await _fetchAndSaveProfile(token, matricule);
       } else {
         throw Exception('Login failed: ${response.statusCode}');
@@ -637,7 +683,7 @@ class AuthService extends ChangeNotifier {
       for (var endpoint in ['bac', 'etudiant']) {
         pending++;
         final url = '${AppConfig.apiBaseUrl}/infos/$endpoint/$id';
-        http.get(Uri.parse(url), headers: header).timeout(const Duration(seconds: 10)).then((response) {
+        http.get(Uri.parse(url), headers: header).timeout(const Duration(seconds: 30)).then((response) {
           if (completed) return;
           if (response.statusCode == 200) {
             try {
@@ -683,7 +729,7 @@ class AuthService extends ChangeNotifier {
     try {
       final response = await http.get(
           Uri.parse('${AppConfig.apiBaseUrl}/infos/bac/$uuid/individu'),
-          headers: header).timeout(const Duration(seconds: 10));
+          headers: header).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         final decoded = jsonDecode(utf8.decode(response.bodyBytes));
         if (decoded is Map<String, dynamic>) return decoded;
@@ -698,7 +744,7 @@ class AuthService extends ChangeNotifier {
     try {
       final response = await http.get(
           Uri.parse('${AppConfig.apiBaseUrl}/infos/bac/$uuid/demandesHebregement'),
-          headers: header).timeout(const Duration(seconds: 10));
+          headers: header).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         final List<dynamic> housingList =
             jsonDecode(utf8.decode(response.bodyBytes));
@@ -740,7 +786,7 @@ class AuthService extends ChangeNotifier {
     try {
       final response = await http.get(
           Uri.parse('${AppConfig.apiBaseUrl}/infos/image/$uuid'),
-          headers: header).timeout(const Duration(seconds: 10));
+          headers: header).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         return response.body.trim();
       }
@@ -754,7 +800,7 @@ class AuthService extends ChangeNotifier {
     try {
       final response = await http.get(
           Uri.parse('${AppConfig.apiBaseUrl}/infos/bac/$uuid/dias'),
-          headers: header).timeout(const Duration(seconds: 10));
+          headers: header).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         final List<dynamic> diasJsonList =
             jsonDecode(utf8.decode(response.bodyBytes));
