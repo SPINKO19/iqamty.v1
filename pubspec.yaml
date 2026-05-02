@@ -55,7 +55,6 @@ dependencies:
   url_launcher: ^6.3.2
   file_picker: ^8.1.7
   diacritic: ^0.1.5
-  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

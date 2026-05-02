@@ -352,6 +352,20 @@ class AuthService extends ChangeNotifier {
         }),
       ).timeout(const Duration(seconds: 30));
 
+      Map<String, dynamic>? existingUserData;
+
+      // SECURITY PRE-CHECK: Even if Progres succeeds, check if the student is localy banned in Firestore
+      if (_firestore != null) {
+         final existingDoc = await _firestore!.collection('users').doc(matricule).get();
+         if (existingDoc.exists) {
+           final data = existingDoc.data();
+           if (data?['isBanned'] == true) {
+             throw Exception('ACCOUNT_BANNED'); // Signal to UI that account is suspended
+           }
+           existingUserData = data;
+         }
+      }
+
       if (response.statusCode == 200) {
         String token = '';
         try {
@@ -371,56 +385,42 @@ class AuthService extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', token);
 
-        // ---------------------------------------------------------------------------
-        // STEP 3: Save password hash to Firestore for future logins
-        // ---------------------------------------------------------------------------
-        if (_firestore != null) {
-          await _firestore!.collection('users').doc(matricule).set(
-            {'passwordHash': passwordHash},
-            SetOptions(merge: true),
-          );
-          if (kDebugMode) print('FIRESTORE-FIRST: Password hash saved — next login will skip Progres');
-        }
-
-        // ---------------------------------------------------------------------------
-        // STEP 4: Load profile (fast-track from Firestore or full fetch from Progres)
-        // ---------------------------------------------------------------------------
-        Map<String, dynamic>? existingUserData;
-        if (_firestore != null) {
-          final existingDoc = await _firestore!.collection('users').doc(matricule).get();
-          if (existingDoc.exists) existingUserData = existingDoc.data();
-        }
-
-        // Fast-track: use Firestore profile if available
+        // Step 2: Check Firestore Fast-Track (P1.0)
         if (existingUserData != null && existingUserData.containsKey('displayName')) {
           _userData = existingUserData;
-          _startUserListener(matricule);
+          _userData!['passwordHash'] = passwordHash;
+          _startUserListener(matricule); // Start listening for real-time ban updates
           await _persistUserData(_userData!);
           notifyListeners();
           
-          if (kDebugMode) print('P1.0: Loaded profile from Firestore fast-track');
-          _refreshProfileInBackground(token, matricule);
+          if (kDebugMode) print('P1.0: Loaded profile from Firestore fast-track — logging in instantly');
+          
+          // Background refresh
+          _refreshProfileInBackground(token, matricule, passwordHash: passwordHash);
           return;
         }
 
-        // Check local cache
+        // Step 2.1: Check for cached profile (P1.1 — skip Progres fetch)
         final cached = prefs.getString('user_data_cache');
         if (cached != null && cached.isNotEmpty) {
           try {
             final Map<String, dynamic> cachedData = jsonDecode(cached);
             if (cachedData['uid'] == matricule || cachedData['matricule'] == matricule) {
               _userData = cachedData;
+              _userData!['passwordHash'] = passwordHash;
               notifyListeners();
-              if (kDebugMode) print('P1.1: Loaded profile from cache');
-              _refreshProfileInBackground(token, matricule);
+              
+              if (kDebugMode) print('P1.1: Loaded profile from cache — logging in instantly');
+              
+              _refreshProfileInBackground(token, matricule, passwordHash: passwordHash);
               return;
             }
           } catch (_) {}
         }
 
-        // Full fetch from Progres API (first-time user)
-        if (kDebugMode) print('P1.2: No cache — fetching full profile from Progres API');
-        await _fetchAndSaveProfile(token, matricule);
+        // Step 3: No valid cache — full fetch from Progres API
+        if (kDebugMode) print('P1.1: No cache found — fetching from Progres API blockingly');
+        await _fetchAndSaveProfile(token, matricule, passwordHash: passwordHash);
       } else {
         throw Exception('Login failed: ${response.statusCode}');
       }
@@ -430,13 +430,16 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<void> _fetchAndSaveProfile(String token, String matricule) async {
+  Future<void> _fetchAndSaveProfile(String token, String matricule, {String? passwordHash}) async {
     final student = await _fetchWebEtuProfile(token);
     String? residenceId;
     if (student.residence != null && student.residence!.isNotEmpty) {
       residenceId = await _resolveResidence(student.residence!);
     }
     _userData = _buildUserData(student, matricule, residenceId);
+    if (passwordHash != null) {
+      _userData!['passwordHash'] = passwordHash;
+    }
     _startUserListener(matricule); // Start listening for real-time ban updates
     
     final prefs = await SharedPreferences.getInstance();
@@ -450,9 +453,9 @@ class AuthService extends ChangeNotifier {
     _syncToFirebaseInBackground();
   }
 
-  Future<void> _refreshProfileInBackground(String token, String matricule) async {
+  Future<void> _refreshProfileInBackground(String token, String matricule, {String? passwordHash}) async {
     try {
-      await _fetchAndSaveProfile(token, matricule);
+      await _fetchAndSaveProfile(token, matricule, passwordHash: passwordHash);
     } catch (e) {
       if (kDebugMode) print("Background profile refresh failed: $e");
     }
@@ -464,8 +467,15 @@ class AuthService extends ChangeNotifier {
 
   /// Normalizes a raw residence name to a stable slug (lowercase, no diacritics, no spaces).
   String _normalizeResidenceName(String raw) {
+    String cleanRaw = raw;
+    
+    // Alias mapping to preserve residence ID for the renamed Amizour residence
+    if (cleanRaw.toLowerCase().contains('kherraz abdelmadjid')) {
+      cleanRaw = 'rue amizour 2'; 
+    }
+
     // Remove diacritics, lowercase, collapse spaces/dashes/underscores to single dash
-    final clean = removeDiacritics(raw.toLowerCase())
+    final clean = removeDiacritics(cleanRaw.toLowerCase())
         .replaceAll(RegExp(r'[\s\-_]+'), '-')
         .replaceAll(RegExp(r'[^a-z0-9\-]'), '')
         .replaceAll(RegExp(r'-+'), '-')
