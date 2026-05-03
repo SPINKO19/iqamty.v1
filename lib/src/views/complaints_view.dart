@@ -55,7 +55,7 @@ class ComplaintsView extends StatelessWidget {
                     const Icon(Icons.error_outline, color: Colors.red, size: 48),
                     const SizedBox(height: 16),
                     Text(
-                      'Erreur de base de données',
+                      lp.getText('db_error'),
                       style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary),
                     ),
                     const SizedBox(height: 8),
@@ -66,10 +66,10 @@ class ComplaintsView extends StatelessWidget {
                     ),
                     if (snapshot.error.toString().contains('index')) ...[
                       const SizedBox(height: 16),
-                      const Text(
-                        '💡 Firestore nécessite un index pour cette recherche. Vérifiez votre console Firebase pour le lien de création.',
+                      Text(
+                        lp.getText('firestore_index_msg'),
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.blue, fontSize: 13),
+                        style: const TextStyle(color: Colors.blue, fontSize: 13),
                       ),
                     ],
                   ],
@@ -214,7 +214,7 @@ class _ModernComplaintCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Ref: #${(complaint.id ?? "000000").substring(0, 5)}',
+                      '${lp.getText('ref_label')}: #${(complaint.id ?? "000000").substring(0, 5)}',
                       style: GoogleFonts.robotoMono(
                         fontSize: 10,
                         color: context.appTextSecondary.withValues(alpha: 0.5),
@@ -274,7 +274,7 @@ class _ModernComplaintCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    lp.getText('details') == 'details' ? 'Détails' : lp.getText('details'),
+                    lp.getText('details'),
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -384,15 +384,18 @@ class _ComplaintDetailsSheet extends StatelessWidget {
                     style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary, letterSpacing: 1),
                   ),
                   const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.network(
-                      complaint.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (ctx, err, stack) => Container(
-                        height: 100,
-                        color: Colors.grey.withValues(alpha: 0.1),
-                        child: const Center(child: Icon(Icons.broken_image_outlined, color: Colors.grey)),
+                  GestureDetector(
+                    onTap: () => _showFullScreenImage(context, complaint.imageUrl!),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.network(
+                        complaint.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => Container(
+                          height: 100,
+                          color: Colors.grey.withValues(alpha: 0.1),
+                          child: const Center(child: Icon(Icons.broken_image_outlined, color: Colors.grey)),
+                        ),
                       ),
                     ),
                   ),
@@ -415,7 +418,7 @@ class _ComplaintDetailsSheet extends StatelessWidget {
                             Icon(Icons.admin_panel_settings_outlined, size: 18, color: AppColors.primary),
                             const SizedBox(width: 8),
                             Text(
-                              "RÉPONSE DE L'ADMINISTRATION",
+                              lp.getText('admin_response_title'),
                               style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.primary),
                             ),
                           ],
@@ -437,6 +440,41 @@ class _ComplaintDetailsSheet extends StatelessWidget {
       ),
     );
   }
+
+  void _showFullScreenImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ComplaintSubmissionSheet extends StatefulWidget {
@@ -452,6 +490,7 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
   String _selectedCategory = 'category_plumbing';
   XFile? _imageFile;
   bool _isUploading = false;
+  bool _isUrgent = false;
   Uint8List? _previewBytes;
 
   Future<void> _pickImage() async {
@@ -495,10 +534,11 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
         description: _descController.text.trim(),
         category: context.read<LanguageProvider>().getText(_selectedCategory),
         userId: userId,
-        priority: Priority.medium,
+        priority: _isUrgent ? Priority.high : Priority.medium,
         status: Status.received,
         timestamp: DateTime.now(),
         imageUrl: imageUrl,
+        isUrgent: _isUrgent,
       );
 
       await firestore.submitComplaint(complaint, residenceId: residenceId);
@@ -506,7 +546,7 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Complaint submitted successfully')),
+          SnackBar(content: Text(context.read<LanguageProvider>().getText('complaint_success'))),
         );
       }
     } catch (e) {
@@ -609,11 +649,16 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
                         value: _selectedCategory,
                         isExpanded: true,
                         dropdownColor: isDark ? context.appCard : Colors.white,
-                        items: ['category_plumbing', 'category_electricity', 'category_cleaning', 'category_furniture', 'category_other']
+                        items: ['category_plumbing', 'category_electricity', 'category_cleaning', 'category_furniture', 'category_security', 'category_other']
                             .map((catKey) => DropdownMenuItem(value: catKey, child: Text(lp.getText(catKey), style: GoogleFonts.inter(color: context.appTextPrimary))))
                             .toList(),
                         onChanged: (val) {
-                          if (val != null) setState(() => _selectedCategory = val);
+                          if (val != null) {
+                            setState(() {
+                              _selectedCategory = val;
+                              if (val != 'category_security') _isUrgent = false;
+                            });
+                          }
                         },
                       ),
                     ),
@@ -628,6 +673,18 @@ class _ComplaintSubmissionSheetState extends State<_ComplaintSubmissionSheet> {
                     maxLines: 5,
                   ),
                   const SizedBox(height: 24),
+                  if (_selectedCategory == 'category_security') ...[
+                    SwitchListTile(
+                      value: _isUrgent,
+                      onChanged: (val) => setState(() => _isUrgent = val),
+                      title: Text(lp.getText('urgent_label'), style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+                      subtitle: Text(lp.getText('mark_as_urgent'), style: GoogleFonts.inter(fontSize: 12, color: context.appTextSecondary)),
+                      secondary: Icon(Icons.warning_amber_rounded, color: _isUrgent ? Colors.red : Colors.grey),
+                      contentPadding: EdgeInsets.zero,
+                      activeColor: Colors.red,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                   _buildFieldLabel(lp.getText('photo_optional')),
                   const SizedBox(height: 10),
                   GestureDetector(

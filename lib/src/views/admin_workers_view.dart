@@ -289,6 +289,7 @@ class _AdminWorkersViewState extends State<AdminWorkersView> {
       'Maçonnerie',
       'Peinture',
       'Nettoyage',
+      'Sécurité',
       'Espaces Verts',
       'Administration',
       'Autre'

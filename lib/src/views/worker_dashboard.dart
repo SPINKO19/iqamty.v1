@@ -73,7 +73,19 @@ class WorkerDashboard extends StatelessWidget {
               final tasks = taskSnapshot.data ?? [];
               final allComplaints = complaintSnapshot.data ?? [];
               
-              final pendingComplaints = allComplaints.where((c) => c.status != Status.resolved).toList();
+              final department = auth.currentUserData?['department'];
+              final pendingComplaints = allComplaints.where((c) {
+                if (c.status == Status.resolved) return false;
+                if (department == 'Sécurité' && c.category == 'Sécurité') return true;
+                return true; // Default show all pending to all workers? Or filter by department?
+              }).toList();
+              
+              // Sort urgent first
+              pendingComplaints.sort((a, b) {
+                if (a.isUrgent && !b.isUrgent) return -1;
+                if (!a.isUrgent && b.isUrgent) return 1;
+                return b.timestamp.compareTo(a.timestamp);
+              });
 
               return SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -295,7 +307,17 @@ class WorkerDashboard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(complaint.title.toUpperCase(), style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: context.appTextPrimary, letterSpacing: -0.3)),
+                    Row(
+                      children: [
+                        Expanded(child: Text(complaint.title.toUpperCase(), style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: context.appTextPrimary, letterSpacing: -0.3))),
+                        if (complaint.isUrgent)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(6)),
+                            child: Text('URGENT', style: GoogleFonts.inter(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                          ),
+                      ],
+                    ),
                     const SizedBox(height: 4),
                     Text(complaint.description, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
                   ],
@@ -616,9 +638,12 @@ class _WorkerDetailSheet extends StatelessWidget {
                   const SizedBox(height: 32),
                   _buildSectionHeader("IMAGE"),
                   const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.network(imageUrl!, fit: BoxFit.cover),
+                  GestureDetector(
+                    onTap: () => _showFullScreenImage(context, imageUrl!),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.network(imageUrl!, fit: BoxFit.cover),
+                    ),
                   ),
                 ],
                 const SizedBox(height: 60),
@@ -632,5 +657,40 @@ class _WorkerDetailSheet extends StatelessWidget {
 
   Widget _buildSectionHeader(String title) {
     return Text(title.toUpperCase(), style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.2));
+  }
+
+  void _showFullScreenImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

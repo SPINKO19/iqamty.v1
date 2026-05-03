@@ -6,7 +6,7 @@ import '../models/types.dart';
 import '../providers/auth_provider.dart';
 import '../services/firestore_service.dart';
 import '../core/theme/colors.dart';
-
+import '../providers/language_provider.dart';
 import '../components/custom_menu_button.dart';
 
 class NotificationsView extends StatefulWidget {
@@ -18,14 +18,6 @@ class NotificationsView extends StatefulWidget {
 
 class _NotificationsViewState extends State<NotificationsView> {
   int _selectedTabIndex = 0; // 0: Toutes, 1: Non lues
-
-  Stream<List<NotificationModel>> _getNotificationsStream(BuildContext context) {
-    final auth = context.read<AuthProvider>();
-    final firestore = context.read<FirestoreService>();
-    final userId = auth.currentUserData?['uid'] ?? '';
-    final residenceId = auth.currentResidenceId;
-    return firestore.getNotifications(userId, residenceId: residenceId);
-  }
 
   Future<void> _markAsRead(BuildContext context, String notificationId) async {
     await context.read<FirestoreService>().markNotificationAsRead(notificationId);
@@ -41,6 +33,7 @@ class _NotificationsViewState extends State<NotificationsView> {
 
   @override
   Widget build(BuildContext context) {
+    final lp = context.watch<LanguageProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final auth = context.watch<AuthProvider>();
     final firestore = context.watch<FirestoreService>();
@@ -64,7 +57,7 @@ class _NotificationsViewState extends State<NotificationsView> {
             const Icon(Icons.notifications_none_rounded, size: 24, color: Colors.white),
             const SizedBox(width: 8),
             Text(
-              'Notifications',
+              lp.getText('notifications_title'),
               style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 18, color: Colors.white),
             ),
           ],
@@ -79,7 +72,7 @@ class _NotificationsViewState extends State<NotificationsView> {
 
               return IconButton(
                 icon: const Icon(Icons.done_all_rounded, color: Colors.white),
-                tooltip: 'Tout marquer comme lu',
+                tooltip: lp.getText('mark_all_read'),
                 onPressed: () => _markAllAsRead(context, unread),
               );
             },
@@ -99,7 +92,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                     const Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
                     const SizedBox(height: 16),
                     Text(
-                      'Erreur de chargement',
+                      lp.getText('loading_error'),
                       style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 8),
@@ -134,13 +127,13 @@ class _NotificationsViewState extends State<NotificationsView> {
                 child: Row(
                   children: [
                     _buildTabButton(
-                      title: 'Toutes',
+                      title: lp.getText('tab_all'),
                       isSelected: _selectedTabIndex == 0,
                       onTap: () => setState(() => _selectedTabIndex = 0),
                     ),
                     const SizedBox(width: 12),
                     _buildTabButton(
-                      title: 'Non lues',
+                      title: lp.getText('tab_unread'),
                       badgeCount: unreadNotifs.length,
                       isSelected: _selectedTabIndex == 1,
                       onTap: () => setState(() => _selectedTabIndex = 1),
@@ -151,7 +144,7 @@ class _NotificationsViewState extends State<NotificationsView> {
 
               // ── List Content ──
               Expanded(
-                child: _buildListContent(allNotifs, unreadNotifs, readNotifs),
+                child: _buildListContent(allNotifs, unreadNotifs, readNotifs, lp),
               ),
             ],
           );
@@ -164,91 +157,65 @@ class _NotificationsViewState extends State<NotificationsView> {
     List<NotificationModel> allNotifs,
     List<NotificationModel> unreadNotifs,
     List<NotificationModel> readNotifs,
+    LanguageProvider lp,
   ) {
     if (allNotifs.isEmpty) {
-      return _buildEmptyStateAll();
+      return _buildEmptyStateAll(lp);
     }
 
     if (_selectedTabIndex == 1 && unreadNotifs.isEmpty) {
-      return _buildEmptyStateUnread();
+      return _buildEmptyStateUnread(lp);
     }
 
-    if (_selectedTabIndex == 1) {
-      // Show ONLY unread
-      return ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: unreadNotifs.length,
-        itemBuilder: (context, index) {
-          return _NotificationCard(
-            notification: unreadNotifs[index],
-            onTap: () => _markAsRead(context, unreadNotifs[index].id),
-            onIgnore: () => _ignoreNotification(context, unreadNotifs[index].id),
-          );
-        },
-      );
-    }
+    return _buildNotificationsList(
+      _selectedTabIndex == 0 ? allNotifs : unreadNotifs,
+      unreadNotifs,
+      lp,
+    );
+  }
 
-    // "Toutes" Tab: Split into 2 clear sections
+  Widget _buildNotificationsList(List<NotificationModel> displayNotifs,
+      List<NotificationModel> unreadNotifs, LanguageProvider lp) {
+    final today = DateTime.now();
+    final todayNotifs = displayNotifs
+        .where((n) =>
+            n.createdAt.year == today.year &&
+            n.createdAt.month == today.month &&
+            n.createdAt.day == today.day)
+        .toList();
+    final earlierNotifs = displayNotifs
+        .where((n) =>
+            n.createdAt.year != today.year ||
+            n.createdAt.month != today.month ||
+            n.createdAt.day != today.day)
+        .toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        if (unreadNotifs.isNotEmpty) ...[
-          // SECTION 1 Header
-          Row(
-            children: [
-              Text(
-                'Non lues',
-                style: GoogleFonts.inter(
-                    fontSize: 16, fontWeight: FontWeight.bold, color: context.isDark ? AppColors.textPrimaryDark : const Color(0xFF111827)),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444), // Match badge red color
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${unreadNotifs.length}',
-                  style: GoogleFonts.inter(
-                      fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              )
-            ],
-          ),
+        if (todayNotifs.isNotEmpty) ...[
+          _buildSectionHeader(lp.getText('today_label')),
           const SizedBox(height: 12),
-          ...unreadNotifs.map((n) {
+          ...todayNotifs.map((n) {
             return _NotificationCard(
               notification: n,
               onTap: () => _markAsRead(context, n.id),
               onIgnore: () => _ignoreNotification(context, n.id),
+              lp: lp,
             );
           }),
           const SizedBox(height: 16),
         ],
-        if (readNotifs.isNotEmpty) ...[
-          // SECTION 2 Header
-          Row(
-            children: [
-              Text(
-                'Lues',
-                style: GoogleFonts.inter(
-                    fontSize: 16, fontWeight: FontWeight.w600, color: context.isDark ? AppColors.textSecondaryDark : const Color(0xFF6B7280)),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${readNotifs.length}',
-                style: GoogleFonts.inter(
-                    fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF9CA3AF)),
-              ),
-            ],
-          ),
+        if (earlierNotifs.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _buildSectionHeader(lp.getText('earlier_label')),
           const SizedBox(height: 12),
-          ...readNotifs.map((n) {
+          ...earlierNotifs.map((n) {
             return _NotificationCard(
               notification: n,
-              onTap: () {}, // Already read
+              onTap: n.isRead ? () {} : () => _markAsRead(context, n.id),
               onIgnore: () => _ignoreNotification(context, n.id),
+              lp: lp,
             );
           }),
         ]
@@ -256,7 +223,18 @@ class _NotificationsViewState extends State<NotificationsView> {
     );
   }
 
-  Widget _buildEmptyStateAll() {
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.inter(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: context.isDark ? AppColors.textPrimaryDark : const Color(0xFF111827),
+      ),
+    );
+  }
+
+  Widget _buildEmptyStateAll(LanguageProvider lp) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -264,7 +242,7 @@ class _NotificationsViewState extends State<NotificationsView> {
           Icon(Icons.notifications_off_outlined, size: 60, color: Colors.grey.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
           Text(
-            'Aucune notification pour le moment',
+            lp.getText('no_notifications'),
             style: GoogleFonts.inter(color: Colors.grey, fontSize: 15, fontWeight: FontWeight.w500),
           )
         ],
@@ -272,7 +250,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     );
   }
 
-  Widget _buildEmptyStateUnread() {
+  Widget _buildEmptyStateUnread(LanguageProvider lp) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -287,7 +265,7 @@ class _NotificationsViewState extends State<NotificationsView> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Tout est lu ✓',
+            lp.getText('all_caught_up'),
             style: GoogleFonts.inter(
                 color: const Color(0xFF059669), fontSize: 18, fontWeight: FontWeight.bold),
           )
@@ -355,7 +333,10 @@ class _NotificationCard extends StatelessWidget {
     required this.notification,
     required this.onTap,
     required this.onIgnore,
+    required this.lp,
   });
+
+  final LanguageProvider lp;
 
   Map<String, dynamic> _getTypeConfig(String? type) {
     switch (type?.toLowerCase()) {
@@ -374,12 +355,13 @@ class _NotificationCard extends StatelessWidget {
     }
   }
 
-  String _timeAgo(DateTime t) {
+  String _timeAgo(DateTime t, LanguageProvider lp) {
     final d = DateTime.now().difference(t);
-    if (d.inHours < 1) return 'Il y a ${d.inMinutes}min';
-    if (d.inDays < 1) return 'Il y a ${d.inHours}h';
-    if (d.inDays == 1 && DateTime.now().day != t.day) return 'Hier';
-    if (d.inDays < 7) return 'Il y a ${d.inDays}j';
+    if (d.inHours < 1) return '${lp.getText('ago_2h').split(' ')[0]} ${d.inMinutes}${lp.getText('time_min')}'; // Simplified or use better key
+    if (d.inHours < 1) return '${d.inMinutes}${lp.getText('time_min')}';
+    if (d.inDays < 1) return '${d.inHours}${lp.getText('time_hours')}';
+    if (d.inDays == 1 && DateTime.now().day != t.day) return lp.getText('yesterday');
+    if (d.inDays < 7) return '${d.inDays}${lp.getText('time_days')}';
     return '${t.day.toString().padLeft(2, '0')}/${t.month.toString().padLeft(2, '0')}/${t.year}';
   }
 
@@ -477,7 +459,7 @@ class _NotificationCard extends StatelessWidget {
                               Row(
                                 children: [
                                   Text(
-                                    _timeAgo(notification.createdAt),
+                                    _timeAgo(notification.createdAt, lp),
                                     style: GoogleFonts.inter(
                                       fontSize: 12,
                                       color: const Color(0xFF9CA3AF),
@@ -488,7 +470,7 @@ class _NotificationCard extends StatelessWidget {
                                   InkWell(
                                     onTap: onIgnore,
                                     child: Text(
-                                      '× Ignorer',
+                                      '× ${lp.getText('ignore_btn')}',
                                       style: GoogleFonts.inter(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,

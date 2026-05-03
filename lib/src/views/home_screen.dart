@@ -48,7 +48,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Announcements Section
-                _buildSectionHeader(context, lp.getText('recent_announcements'), lp, onPressed: () => context.go('/community')),
+                _buildSectionHeader(context, lp.getText('recent_announcements'), lp, onPressed: () => context.push('/community')),
                 const SizedBox(height: 16),
                 SizedBox(
                   height: 280,
@@ -109,7 +109,7 @@ class HomeScreen extends StatelessWidget {
                               color: const Color(0xFFEF4444),
                               badgeCount: count,
                               isDark: isDark,
-                              onTap: () => context.go('/complaints'),
+                              onTap: () => context.push('/complaints'),
                             );
                           },
                         ),
@@ -119,20 +119,20 @@ class HomeScreen extends StatelessWidget {
                           icon: Icons.restaurant_rounded,
                           color: const Color(0xFF10B981), 
                           isDark: isDark,
-                          onTap: () => context.go('/dining'),
+                          onTap: () => context.push('/dining'),
                         ),
                         StreamBuilder<List<ServiceRequest>>(
                           stream: firestore.getMyRequests(student?.id?.toString() ?? '', residenceId: residenceId),
                           builder: (context, snapshot) {
                             final count = snapshot.data?.where((r) => r.status != 'completed').length ?? 0;
                             return _QuickActionCard(
-                              title: 'Transport',
+                              title: lp.getText('transport'),
                               subtitle: lp.getText('technical_services'),
                               icon: Icons.directions_bus_outlined,
                               color: const Color(0xFF3B82F6),
                               badgeCount: count,
                               isDark: isDark,
-                              onTap: () => context.go('/transport'),
+                              onTap: () => context.push('/transport'),
                             );
                           },
                         ),
@@ -142,15 +142,15 @@ class HomeScreen extends StatelessWidget {
                           icon: Icons.description_rounded,
                           color: const Color(0xFF8B5CF6),
                           isDark: isDark,
-                          onTap: () => context.go('/documents'),
+                          onTap: () => context.push('/documents'),
                         ),
                         _QuickActionCard(
-                          title: lp.getText('sports_program') == 'sports_program' ? 'Planning' : lp.getText('sports_program'),
-                          subtitle: lp.getText('sports_subtitle') == 'sports_subtitle' ? 'Programme et douches' : lp.getText('sports_subtitle'),
+                          title: lp.getText('planning'),
+                          subtitle: lp.getText('sports_subtitle'),
                           icon: Icons.calendar_month_rounded,
                           color: const Color(0xFFF59E0B),
                           isDark: isDark,
-                          onTap: () => context.go('/planning'),
+                          onTap: () => context.push('/planning'),
                         ),
                       ],
                     );
@@ -198,7 +198,9 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
-  }  Widget _buildHeaderSection(BuildContext context, dynamic student, LanguageProvider lp, bool isDark, AuthProvider auth) {
+  }
+
+  Widget _buildHeaderSection(BuildContext context, dynamic student, LanguageProvider lp, bool isDark, AuthProvider auth) {
     final firestore = context.watch<FirestoreService>();
     final String prenom = student?.prenomFr ?? '';
     final String nom = student?.nomFr ?? '';
@@ -239,7 +241,7 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 26),
-                        onPressed: () => context.go('/notifications'),
+                        onPressed: () => context.push('/notifications'),
                       ),
                       if (count > 0)
                         Positioned(
@@ -262,7 +264,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(width: 8),
               // Avatar with initials
               GestureDetector(
-                onTap: () => context.go('/profile'),
+                onTap: () => context.push('/profile'),
                 child: Container(
                   width: 44,
                   height: 44,
@@ -305,7 +307,7 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     _buildGreetingColumn(fullName, lp),
                     const SizedBox(height: 16),
-                    _buildResidenceHeaderPill(residence),
+                    _buildResidenceHeaderPill(residence, lp),
                   ],
                 );
               }
@@ -318,7 +320,7 @@ class HomeScreen extends StatelessWidget {
                     child: _buildGreetingColumn(fullName, lp),
                   ),
                   const SizedBox(width: 16),
-                  _buildResidenceHeaderPill(residence),
+                  _buildResidenceHeaderPill(residence, lp),
                 ],
               );
             },
@@ -368,7 +370,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildResidenceHeaderPill(String residence) {
+  Widget _buildResidenceHeaderPill(String residence, LanguageProvider lp) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -391,8 +393,8 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Résidence',
+              Text(
+                lp.getText('residence'),
                 style: TextStyle(
                   color: Color(0xFF9CA3AF),
                   fontSize: 8,
@@ -401,6 +403,8 @@ class HomeScreen extends StatelessWidget {
               ),
               Text(
                 residence,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: Colors.black,
                   fontSize: 10,
@@ -480,7 +484,7 @@ class _AnnouncementCard extends StatelessWidget {
         color: context.appCard,
         borderRadius: BorderRadius.circular(24),
         child: InkWell(
-          onTap: () => context.go('/community', extra: announcement.id),
+          onTap: () => context.push('/community', extra: announcement.id),
           borderRadius: BorderRadius.circular(24),
           child: Container(
             padding: const EdgeInsets.all(20),
@@ -574,7 +578,7 @@ class _AnnouncementCard extends StatelessWidget {
                     Icon(Icons.access_time_filled_rounded, size: 12, color: isDark ? Colors.white30 : const Color(0xFF9CA3AF)),
                     const SizedBox(width: 4),
                     Text(
-                      _formatTimeAgo(announcement.timestamp),
+                      _formatTimeAgo(announcement.timestamp, context),
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         color: context.appTextSecondary,
@@ -609,12 +613,13 @@ class _AnnouncementCard extends StatelessWidget {
     );
   }
 
-  String _formatTimeAgo(DateTime time) {
+  String _formatTimeAgo(DateTime time, BuildContext context) {
+    final lp = context.read<LanguageProvider>();
     final diff = DateTime.now().difference(time);
-    if (diff.inDays > 0) return 'Il y a ${diff.inDays}j';
-    if (diff.inHours > 0) return 'Il y a ${diff.inHours}h';
-    if (diff.inMinutes > 0) return 'Il y a ${diff.inMinutes}m';
-    return 'À l\'instant';
+    if (diff.inDays > 0) return '${lp.getText('ago_prefix')} ${diff.inDays}${lp.getText('days_unit')}';
+    if (diff.inHours > 0) return '${lp.getText('ago_prefix')} ${diff.inHours}${lp.getText('hours_unit')}';
+    if (diff.inMinutes > 0) return '${lp.getText('ago_prefix')} ${diff.inMinutes}${lp.getText('minutes_unit')}';
+    return lp.getText('just_now');
   }
 }
 
@@ -783,7 +788,7 @@ class _ActivityListItem extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            _formatTimeAgo(request.createdAt),
+            _formatTimeAgo(request.createdAt, context),
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w500,
@@ -795,11 +800,12 @@ class _ActivityListItem extends StatelessWidget {
     );
   }
 
-  String _formatTimeAgo(DateTime time) {
+  String _formatTimeAgo(DateTime time, BuildContext context) {
+    final lp = context.read<LanguageProvider>();
     final diff = DateTime.now().difference(time);
-    if (diff.inDays > 0) return '${diff.inDays}j';
-    if (diff.inHours > 0) return '${diff.inHours}h';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}m';
-    return 'Maintenant';
+    if (diff.inDays > 0) return '${diff.inDays}${lp.getText('days_unit')}';
+    if (diff.inHours > 0) return '${diff.inHours}${lp.getText('hours_unit')}';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}${lp.getText('minutes_unit')}';
+    return lp.getText('just_now');
   }
 }

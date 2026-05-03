@@ -38,7 +38,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
         initialData: announcement,
         builder: (context, snapshot) {
           final ann = snapshot.data ?? announcement;
-          final bool isLiked = ann.likedBy.contains(userId);
+          final bool isLiked = ann.reactions.containsKey(userId);
 
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),

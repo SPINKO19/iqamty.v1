@@ -66,18 +66,18 @@ class AppSidebar extends StatelessWidget {
     if (role == 'student' && auth.currentStudent != null) {
       final prenom = auth.currentStudent?.prenomFr ?? '';
       final nom = auth.currentStudent?.nomFr ?? '';
-      fullName = '$prenom $nom'.trim().isEmpty ? 'Utilisateur' : '$prenom $nom';
+      fullName = '$prenom $nom'.trim().isEmpty ? languageProvider.getText('user_label') : '$prenom $nom';
       initials = (prenom.isNotEmpty ? prenom[0].toUpperCase() : '') + (nom.isNotEmpty ? nom[0].toUpperCase() : 'U');
-      subtitle = 'Chambre ${auth.currentStudent?.chambre?.toString() ?? 'N/A'}';
+      subtitle = '${languageProvider.getText('room_label')} ${auth.currentStudent?.chambre?.toString() ?? 'N/A'}';
     } else {
-      fullName = auth.currentUserData?['displayName']?.toString() ?? auth.currentUserData?['name']?.toString() ?? 'Employé';
+      fullName = auth.currentUserData?['displayName']?.toString() ?? auth.currentUserData?['name']?.toString() ?? languageProvider.getText('employee_label');
       final parts = fullName.split(' ');
       if (parts.length > 1) {
         initials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
       } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
         initials = parts[0][0].toUpperCase();
       }
-      subtitle = auth.currentUserData?['department']?.toString() ?? (role == 'administrator' ? 'Administration' : 'Service Technique');
+      subtitle = auth.currentUserData?['department']?.toString() ?? (role == 'administrator' ? languageProvider.getText('direction') : languageProvider.getText('tech_service_label'));
     }
 
     final header = Container(
@@ -225,30 +225,30 @@ class AppSidebar extends StatelessWidget {
                   ),
                   builder: (context, snapshot) {
                     final unreadCount = snapshot.data ?? 0;
-                    return _buildNavItem(
-                      context,
-                      _NavItemData(
-                        Icons.notifications_none_rounded, 
-                        'Notifications', 
-                        '/notifications',
-                        badgeCount: unreadCount,
-                        badgeColor: const Color(0xFFEF4444),
-                      ),
-                      currentRoute,
-                    );
-                  }
-                ),
-                _buildNavItem(
+                return _buildNavItem(
                   context,
-                  _NavItemData(Icons.settings_outlined, 'Paramètres', '/settings'),
+                  _NavItemData(
+                    Icons.notifications_none_rounded, 
+                    languageProvider.getText('notifications_nav'), 
+                    '/notifications',
+                    badgeCount: unreadCount,
+                    badgeColor: const Color(0xFFEF4444),
+                  ),
                   currentRoute,
-                ),
-                _buildNavItem(
-                  context,
-                  _NavItemData(Icons.logout_rounded, 'Déconnexion', '/logout'),
-                  currentRoute,
-                  isLogout: true,
-                ),
+                );
+              }
+            ),
+            _buildNavItem(
+              context,
+              _NavItemData(Icons.settings_outlined, languageProvider.getText('settings'), '/settings'),
+              currentRoute,
+            ),
+            _buildNavItem(
+              context,
+              _NavItemData(Icons.logout_rounded, languageProvider.getText('logout_action'), '/logout'),
+              currentRoute,
+              isLogout: true,
+            ),
               ],
             ),
           ),
@@ -263,12 +263,12 @@ class AppSidebar extends StatelessWidget {
     final studentId = auth.currentStudent?.id?.toString() ?? '';
 
     return [
-      _NavHeaderData('PLATEFORME'),
-      _NavItemData(Icons.home_outlined, 'Dashboard', '/'),
-      _NavItemData(Icons.restaurant_outlined, 'Restauration', '/dining'),
+      _NavHeaderData(lp.getText('platform_header')),
+      _NavItemData(Icons.home_outlined, lp.getText('dashboard'), '/'),
+      _NavItemData(Icons.restaurant_outlined, lp.getText('restaurant'), '/dining'),
 
       const SizedBox(height: 8),
-      _NavHeaderData('SERVICES'),
+      _NavHeaderData(lp.getText('services_header')),
       StreamBuilder<List<Complaint>>(
         stream: firestore.getMyComplaints(studentId),
         builder: (context, snapshot) {
@@ -277,7 +277,7 @@ class AppSidebar extends StatelessWidget {
             context,
             _NavItemData(
               Icons.warning_amber_rounded,
-              'Réclamations',
+              lp.getText('complaints'),
               '/complaints',
               badgeCount: count,
               badgeColor: const Color(0xFFEF4444),
@@ -286,14 +286,14 @@ class AppSidebar extends StatelessWidget {
           );
         },
       ),
-      _NavItemData(Icons.assignment_outlined, 'Demandes', '/requests'),
+      _NavItemData(Icons.assignment_outlined, lp.getText('demands'), '/requests'),
 
       const SizedBox(height: 8),
-      _NavHeaderData('RÉSEAU'),
-      _NavItemData(Icons.people_outline, 'Communauté', '/community'),
+      _NavHeaderData(lp.getText('network_header')),
+      _NavItemData(Icons.people_outline, lp.getText('community_nav'), '/community'),
       _NavItemData(
         Icons.chat_bubble_outline_rounded,
-        'Messages',
+        lp.getText('messaging'),
         '/chat',
         streamBadge: firestore.getAllChats().map((list) {
           final userId = auth.currentUserData?['uid'] ?? auth.currentStudent?.matricule ?? '';
@@ -301,34 +301,34 @@ class AppSidebar extends StatelessWidget {
         }),
         badgeColor: const Color(0xFF3B82F6),
       ),
-      _NavItemData(Icons.person_outline_rounded, 'Profil', '/profile'),
+      _NavItemData(Icons.person_outline_rounded, lp.getText('profile'), '/profile'),
     ];
   }
 
   List<dynamic> _adminItems(BuildContext context, LanguageProvider lp) {
     return [
-      _NavHeaderData('PLATFORM'),
-      _NavItemData(Icons.dashboard_outlined, 'Dashboard', '/admin'),
+      _NavHeaderData(lp.getText('platform_header')),
+      _NavItemData(Icons.dashboard_outlined, lp.getText('dashboard'), '/admin'),
 
       const SizedBox(height: 8),
-      _NavHeaderData('MANAGEMENT'),
-      _NavItemData(Icons.report_problem_outlined, 'Complaints', '/admin/complaints'),
-      _NavItemData(Icons.handyman_outlined, 'Requests', '/admin/requests'),
-      _NavItemData(Icons.people_outline_rounded, 'Users', '/admin/users'),
-      _NavItemData(Icons.forum_outlined, 'Community', '/admin/community'),
+      _NavHeaderData(lp.getText('management_header')),
+      _NavItemData(Icons.report_problem_outlined, lp.getText('complaints'), '/admin/complaints'),
+      _NavItemData(Icons.handyman_outlined, lp.getText('demands'), '/admin/requests'),
+      _NavItemData(Icons.people_outline_rounded, lp.getText('users'), '/admin/users'),
+      _NavItemData(Icons.forum_outlined, lp.getText('community_nav'), '/admin/community'),
     ];
   }
 
   List<dynamic> _workerItems(BuildContext context, LanguageProvider lp, AuthProvider auth, FirestoreService firestore) {
     return [
-      _NavHeaderData('ESPACE TRAVAILLEUR'),
-      _NavItemData(Icons.build_outlined, 'Tableau de bord', '/worker-dashboard'),
+      _NavHeaderData(lp.getText('worker_space_header')),
+      _NavItemData(Icons.build_outlined, lp.getText('dashboard'), '/worker-dashboard'),
       
       const SizedBox(height: 8),
-      _NavHeaderData('COMMUNICATION'),
+      _NavHeaderData(lp.getText('communication_header')),
       _NavItemData(
         Icons.chat_bubble_outline_rounded,
-        'Messages',
+        lp.getText('messaging'),
         '/chat',
         streamBadge: firestore.getAllChats().map((list) {
           final userId = auth.currentUserData?['uid'] ?? auth.currentStudent?.matricule ?? '';
@@ -336,8 +336,8 @@ class AppSidebar extends StatelessWidget {
         }),
         badgeColor: const Color(0xFF3B82F6),
       ),
-      _NavItemData(Icons.forum_outlined, 'Communauté', '/community'),
-      _NavItemData(Icons.person_outline_rounded, 'Profil', '/profile'),
+      _NavItemData(Icons.forum_outlined, lp.getText('community_nav'), '/community'),
+      _NavItemData(Icons.person_outline_rounded, lp.getText('profile'), '/profile'),
     ];
   }
 

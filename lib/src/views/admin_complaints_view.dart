@@ -507,22 +507,25 @@ class _AdminComplaintDetailsSheet extends StatelessWidget {
                   const SizedBox(height: 32),
                   _buildSectionHeader(lp.getText('photo_optional')),
                   const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.network(
-                      complaint.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (ctx, err, stack) => Container(
-                        height: 200,
-                        width: double.infinity,
-                        color: Colors.grey.withValues(alpha: 0.1),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.broken_image_outlined, color: Colors.grey, size: 40),
-                            SizedBox(height: 8),
-                            Text("Impossible de charger l'image", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                          ],
+                  GestureDetector(
+                    onTap: () => _showFullScreenImage(context, complaint.imageUrl!),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.network(
+                        complaint.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => Container(
+                          height: 200,
+                          width: double.infinity,
+                          color: Colors.grey.withValues(alpha: 0.1),
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.broken_image_outlined, color: Colors.grey, size: 40),
+                              SizedBox(height: 8),
+                              Text("Impossible de charger l'image", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -623,6 +626,41 @@ class _AdminComplaintDetailsSheet extends StatelessWidget {
         fontWeight: FontWeight.w900,
         color: Colors.grey,
         letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  void _showFullScreenImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

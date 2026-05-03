@@ -28,6 +28,7 @@ class _DiningViewState extends State<DiningView> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final userId = auth.currentUserData?['uid'] ?? '';
 
+    final lp = context.watch<LanguageProvider>();
     return Scaffold(
       backgroundColor: context.appBackground,
       appBar: AppBar(
@@ -43,7 +44,7 @@ class _DiningViewState extends State<DiningView> {
           ),
         ),
         title: Text(
-          'Restaurant',
+          lp.getText('restaurant_title'),
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.bold,
             fontSize: 22,
@@ -61,7 +62,7 @@ class _DiningViewState extends State<DiningView> {
 
           final info = snapshot.data;
           if (info == null || info.days.isEmpty) {
-            return _buildEmptyState(context);
+            return _buildEmptyState(context, lp);
           }
 
           final currentDay = info.days[_selectedDayIndex < info.days.length ? _selectedDayIndex : 0];
@@ -71,16 +72,16 @@ class _DiningViewState extends State<DiningView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildDateSelector(info.days),
+                _buildDateSelector(info.days, lp),
                 const SizedBox(height: 24),
                 
-                _buildMealCard(context, 'Petit-déjeuner', currentDay.breakfast, Icons.coffee_rounded, const Color(0xFFF4A261), isDark, 'breakfast', residenceId!, userId, _selectedDayIndex)
+                _buildMealCard(context, lp.getText('breakfast_label'), currentDay.breakfast, Icons.coffee_rounded, const Color(0xFFF4A261), isDark, 'breakfast', residenceId!, userId, _selectedDayIndex, lp)
                     .animate().fade().slideY(begin: 0.2, duration: 400.ms),
                 const SizedBox(height: 20),
-                _buildMealCard(context, 'Déjeuner', currentDay.lunch, Icons.wb_sunny_rounded, const Color(0xFF2A9D8F), isDark, 'lunch', residenceId, userId, _selectedDayIndex)
+                _buildMealCard(context, lp.getText('lunch_label'), currentDay.lunch, Icons.wb_sunny_rounded, const Color(0xFF2A9D8F), isDark, 'lunch', residenceId, userId, _selectedDayIndex, lp)
                     .animate().fade().slideY(begin: 0.2, delay: 100.ms, duration: 400.ms),
                 const SizedBox(height: 20),
-                _buildMealCard(context, 'Dîner', currentDay.dinner, Icons.nightlight_round, const Color(0xFF264653), isDark, 'dinner', residenceId, userId, _selectedDayIndex)
+                _buildMealCard(context, lp.getText('dinner_label'), currentDay.dinner, Icons.nightlight_round, const Color(0xFF264653), isDark, 'dinner', residenceId, userId, _selectedDayIndex, lp)
                     .animate().fade().slideY(begin: 0.2, delay: 200.ms, duration: 400.ms),
                   
                 const SizedBox(height: 40),
@@ -92,7 +93,7 @@ class _DiningViewState extends State<DiningView> {
     );
   }
 
-  Widget _buildDateSelector(List<RestaurantDay> days) {
+  Widget _buildDateSelector(List<RestaurantDay> days, LanguageProvider lp) {
     return Container(
       height: 90,
       child: ListView.separated(
@@ -108,10 +109,18 @@ class _DiningViewState extends State<DiningView> {
           final now = DateTime.now();
           final diff = DateTime(day.date.year, day.date.month, day.date.day).difference(DateTime(now.year, now.month, now.day)).inDays;
           
-          if (diff == 0) dayName = 'Aujourd\'hui';
-          else if (diff == 1) dayName = 'Demain';
+          if (diff == 0) dayName = lp.getText('today_label');
+          else if (diff == 1) dayName = lp.getText('tomorrow_label');
           else {
-            final daysList = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+            final daysList = [
+              lp.getText('monday'), 
+              lp.getText('tuesday'), 
+              lp.getText('wednesday'), 
+              lp.getText('thursday'), 
+              lp.getText('friday'), 
+              lp.getText('saturday'), 
+              lp.getText('sunday')
+            ];
             dayName = daysList[day.date.weekday - 1];
           }
 
@@ -163,7 +172,7 @@ class _DiningViewState extends State<DiningView> {
     );
   }
 
-  Widget _buildMealCard(BuildContext context, String title, RestaurantMeal meal, IconData icon, Color accentColor, bool isDark, String mealKey, String residenceId, String userId, int dayIndex) {
+  Widget _buildMealCard(BuildContext context, String title, RestaurantMeal meal, IconData icon, Color accentColor, bool isDark, String mealKey, String residenceId, String userId, int dayIndex, LanguageProvider lp) {
     final bool isReserved = meal.isReserved(userId);
     final bool hasRated = meal.hasRated(userId);
     return Container(
@@ -256,7 +265,7 @@ class _DiningViewState extends State<DiningView> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    meal.menu.isNotEmpty ? meal.menu : 'Menu non disponible pour le moment.',
+                    meal.menu.isNotEmpty ? meal.menu : lp.getText('menu_not_available'),
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       height: 1.6,
@@ -269,11 +278,11 @@ class _DiningViewState extends State<DiningView> {
                   Row(
                     children: [
                       // Reservation Button
-                      Expanded(
+                       Expanded(
                         child: _buildActionButton(
                           context,
                           isReserved ? Icons.check_circle_rounded : Icons.bookmark_add_rounded,
-                          isReserved ? 'Réservé' : 'Réserver',
+                          isReserved ? lp.getText('reserved_status') : lp.getText('reserve_action'),
                           isReserved ? Colors.green : AppColors.primary,
                           () => context.read<FirestoreService>().toggleRestaurantMealReservation(
                             residenceId, 
@@ -290,9 +299,9 @@ class _DiningViewState extends State<DiningView> {
                         child: _buildActionButton(
                           context,
                           hasRated ? Icons.star_rounded : Icons.star_outline_rounded,
-                          hasRated ? '${meal.averageRating.toStringAsFixed(1)}' : 'Noter',
+                          hasRated ? '${meal.averageRating.toStringAsFixed(1)}' : lp.getText('rate_action'),
                           const Color(0xFFFFB703),
-                          hasRated ? null : () => _showRatingDialog(context, residenceId, dayIndex, mealKey, userId),
+                          hasRated ? null : () => _showRatingDialog(context, residenceId, dayIndex, mealKey, userId, lp),
                           isDark,
                         ),
                       ),
@@ -340,18 +349,18 @@ class _DiningViewState extends State<DiningView> {
     );
   }
 
-  void _showRatingDialog(BuildContext context, String resId, int dayIndex, String mealKey, String userId) {
+  void _showRatingDialog(BuildContext context, String resId, int dayIndex, String mealKey, String userId, LanguageProvider lp) {
     double selectedRating = 5.0;
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text('Noter le repas', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          title: Text(lp.getText('rate_meal_title'), style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Comment était le repas ?', style: GoogleFonts.inter(color: Colors.grey)),
+              Text(lp.getText('how_was_meal'), style: GoogleFonts.inter(color: Colors.grey)),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -371,7 +380,7 @@ class _DiningViewState extends State<DiningView> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Annuler', style: GoogleFonts.outfit(color: Colors.grey)),
+              child: Text(lp.getText('cancel_btn'), style: GoogleFonts.outfit(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -382,7 +391,7 @@ class _DiningViewState extends State<DiningView> {
                 backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text('Confirmer', style: GoogleFonts.outfit(color: Colors.white)),
+              child: Text(lp.getText('confirm_btn'), style: GoogleFonts.outfit(color: Colors.white)),
             ),
           ],
         ),
@@ -390,7 +399,7 @@ class _DiningViewState extends State<DiningView> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, LanguageProvider lp) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -398,11 +407,11 @@ class _DiningViewState extends State<DiningView> {
           Icon(Icons.restaurant_menu_rounded, size: 80, color: Colors.grey.withValues(alpha: 0.2)),
           const SizedBox(height: 20),
           Text(
-            'Aucun menu publié',
+            lp.getText('no_menu_published'),
             style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: context.appTextPrimary),
           ),
           Text(
-            'L\'administration n\'a pas encore configuré le menu.',
+            lp.getText('admin_not_configured_menu'),
             style: GoogleFonts.outfit(color: context.appTextSecondary),
           ),
         ],

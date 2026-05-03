@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/language_provider.dart';
 import '../providers/auth_provider.dart';
@@ -10,18 +11,20 @@ import '../models/types.dart';
 import '../core/theme/colors.dart';
 import '../components/custom_menu_button.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import '../services/storage_service.dart';
+import 'dart:io';
 
 extension StringExtension on String {
   String capitalize() => "${this[0].toUpperCase()}${substring(1)}";
 }
 
-String _formatTime(DateTime time) {
-
+String _formatTime(DateTime time, LanguageProvider lp) {
   final now = DateTime.now();
   final diff = now.difference(time);
-  if (diff.inMinutes < 1) return 'Just now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
+  if (diff.inMinutes < 1) return lp.getText('just_now');
+  if (diff.inMinutes < 60) return '${diff.inMinutes}${lp.getText('minutes_ago')}';
+  if (diff.inHours < 24) return '${diff.inHours}${lp.getText('hours_ago')}';
   return DateFormat('dd/MM HH:mm').format(time);
 }
 
@@ -85,10 +88,10 @@ class ForumView extends StatelessWidget {
                   ],
                 ),
                 labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13),
-                tabs: const [
-                  Tab(text: 'Annonces'),
-                  Tab(text: 'Posts'),
-                  Tab(text: 'Polls'),
+                tabs: [
+                  Tab(text: lp.getText('announcements')),
+                  Tab(text: lp.getText('posts')),
+                  Tab(text: lp.getText('polls')),
                 ],
               ),
             ),
@@ -117,6 +120,7 @@ class _FeedTab extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final userData = auth.currentUserData;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lp = context.watch<LanguageProvider>();
     
     return Stack(
       children: [
@@ -135,7 +139,7 @@ class _FeedTab extends StatelessWidget {
                       const Icon(Icons.cloud_off_rounded, color: Colors.grey, size: 48),
                       const SizedBox(height: 16),
                       Text(
-                        'Une erreur est survenue',
+                        lp.getText('error_occurred'),
                         style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: context.appTextPrimary),
                       ),
                       const SizedBox(height: 8),
@@ -167,14 +171,14 @@ class _FeedTab extends StatelessWidget {
                 title: a.title,
                 content: a.content,
                 authorId: 'admin',
-                authorName: 'Administration',
+                authorName: lp.getText('direction'),
                 createdAt: a.timestamp,
                 attachments: a.imageUrls.isNotEmpty ? a.imageUrls : (a.imageUrl != null ? [a.imageUrl!] : null),
                 isPinned: a.isPinned,
                 residenceId: a.residenceId,
                 likesCount: a.likesCount,
                 commentsCount: a.commentsCount,
-                likedBy: a.likedBy,
+                reactions: a.reactions,
               )).toList();
             } else {
               posts = snapshot.data as List<ForumPost>? ?? [];
@@ -195,7 +199,7 @@ class _FeedTab extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'Aucun contenu trouvé', 
+                      lp.getText('no_posts'), 
                       style: GoogleFonts.outfit(color: context.appTextSecondary, fontWeight: FontWeight.w500)
                     ),
                   ],
@@ -229,7 +233,7 @@ class _FeedTab extends StatelessWidget {
               elevation: 4,
               onPressed: () {
                  if (postType == 'announcement' && userData?['role'] != 'administrator') {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Accès restreint à l\'administration')));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(lp.getText('restricted_access'))));
                     return;
                  }
                  _showCreateSheet(context, postType);
@@ -295,7 +299,9 @@ class _PostCardState extends State<_PostCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    bool isLiked = widget.post.likedBy.contains(widget.userId);
+    final lp = context.watch<LanguageProvider>();
+    final userReaction = widget.post.reactions[widget.userId];
+    final isLiked = userReaction != null;
     final isOfficial = widget.post.type == 'announcement';
 
     return Container(
@@ -340,7 +346,7 @@ class _PostCardState extends State<_PostCard> {
                   Icon(Icons.verified_rounded, size: 14, color: AppColors.primary),
                   const SizedBox(width: 6),
                   Text(
-                    'Annonce Officielle',
+                    lp.getText('official_annonce'),
                     style: GoogleFonts.outfit(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -392,7 +398,7 @@ class _PostCardState extends State<_PostCard> {
                         ],
                       ),
                       Text(
-                        _formatTime(widget.post.createdAt), 
+                        _formatTime(widget.post.createdAt, context.read<LanguageProvider>()), 
                         style: GoogleFonts.outfit(fontSize: 11, color: context.appTextSecondary, fontWeight: FontWeight.w500)
                       ),
                     ],
@@ -433,15 +439,26 @@ class _PostCardState extends State<_PostCard> {
                padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
                child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.network(
-                    widget.post.attachments!.first, 
-                    width: double.infinity, 
-                    fit: BoxFit.cover, 
-                    height: 220,
-                    errorBuilder: (ctx, err, stack) => Container(
-                      height: 150, 
-                      color: Colors.grey.withValues(alpha: 0.1),
-                      child: const Icon(Icons.broken_image_rounded, color: Colors.grey),
+                  child: GestureDetector(
+                    onTap: () => _showFullScreenImage(context, widget.post.attachments!.first),
+                    child: Image.network(
+                      widget.post.attachments!.first, 
+                      width: double.infinity, 
+                      fit: BoxFit.cover, 
+                      height: 220,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 220,
+                          color: Colors.grey.withValues(alpha: 0.1),
+                          child: const Center(child: CircularProgressIndicator()),
+                        );
+                      },
+                      errorBuilder: (ctx, err, stack) => Container(
+                        height: 150, 
+                        color: Colors.grey.withValues(alpha: 0.1),
+                        child: const Icon(Icons.broken_image_rounded, color: Colors.grey),
+                      ),
                     ),
                   ),
                ),
@@ -460,7 +477,7 @@ class _PostCardState extends State<_PostCard> {
              child: Row(
                 children: [
                    if (widget.post.likesCount > 0) ...[
-                     _buildStatBadge(Icons.thumb_up_rounded, '${widget.post.likesCount}', Colors.blue),
+                     _buildReactionSummary(context),
                      const SizedBox(width: 8),
                    ],
                    if (widget.post.commentsCount > 0)
@@ -485,23 +502,18 @@ class _PostCardState extends State<_PostCard> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildInteractionBtn(
-                  isLiked ? Icons.thumb_up_rounded : Icons.thumb_up_outlined, 
-                  'Like', 
-                  isLiked ? Colors.blue : context.appTextSecondary, 
-                  () => _toggleLike(isLiked)
+                _buildReactionBtn(
+                  userReaction,
+                  lp,
+                  isDark,
+                  () => _toggleLike(isLiked),
+                  onLongPress: () => _showReactionMenu(context),
                 ),
                 _buildInteractionBtn(
                   Icons.chat_bubble_outline_rounded, 
-                  'Comment', 
+                  lp.getText('comment_btn'), 
                   context.appTextSecondary, 
                   () => _showRepliesSheet(context, widget.post, widget.userId)
-                ),
-                _buildInteractionBtn(
-                  Icons.share_outlined, 
-                  'Share', 
-                  context.appTextSecondary, 
-                  () {}
                 ),
               ],
             ),
@@ -513,30 +525,78 @@ class _PostCardState extends State<_PostCard> {
 
   Widget _buildStatBadge(IconData icon, String count, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: context.appCard,
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: context.appBorder.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 10, color: color),
-          const SizedBox(width: 4),
-          Text(count, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(count, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: context.appTextPrimary)),
         ],
       ),
     );
   }
 
-  Widget _buildInteractionBtn(IconData icon, String label, Color color, VoidCallback onTap) {
-    bool isLikedIcon = icon == Icons.thumb_up_rounded;
-    
+  Widget _buildReactionBtn(String? type, LanguageProvider lp, bool isDark, VoidCallback onTap, {VoidCallback? onLongPress}) {
+    IconData icon = Icons.thumb_up_outlined;
+    String label = lp.getText('reaction_like');
+    Color color = context.appTextSecondary;
+
+    if (type != null) {
+      switch (type) {
+        case 'love':
+          icon = Icons.favorite_rounded;
+          label = lp.getText('reaction_love');
+          color = Colors.red;
+          break;
+        case 'haha':
+          icon = Icons.sentiment_very_satisfied_rounded;
+          label = lp.getText('reaction_haha');
+          color = Colors.orange;
+          break;
+        case 'wow':
+          icon = Icons.sentiment_very_dissatisfied_rounded;
+          label = lp.getText('reaction_wow');
+          color = Colors.amber;
+          break;
+        case 'sad':
+          icon = Icons.sentiment_very_dissatisfied_rounded;
+          label = lp.getText('reaction_sad');
+          color = Colors.blueGrey;
+          break;
+        case 'angry':
+          icon = Icons.sentiment_very_dissatisfied_rounded;
+          label = lp.getText('reaction_angry');
+          color = Colors.deepOrange;
+          break;
+        case 'like':
+        default:
+          icon = Icons.thumb_up_rounded;
+          label = lp.getText('reaction_like');
+          color = Colors.blue;
+          break;
+      }
+    }
+
     return Expanded(
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
+          onLongPress: onLongPress,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -554,6 +614,228 @@ class _PostCardState extends State<_PostCard> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildReactionSummary(BuildContext context) {
+    final Map<String, int> counts = {};
+    for (var type in widget.post.reactions.values) {
+      counts[type] = (counts[type] ?? 0) + 1;
+    }
+
+    final sortedReactions = counts.keys.toList()
+      ..sort((a, b) => counts[b]!.compareTo(counts[a]!));
+    
+    final topReactions = sortedReactions.take(3).toList();
+
+    return GestureDetector(
+      onTap: () => _showReactorsList(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: context.appCard,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: Border.all(color: context.appBorder.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (topReactions.isNotEmpty)
+              SizedBox(
+                width: 20.0 + (topReactions.length > 1 ? (topReactions.length - 1) * 14.0 : 0),
+                height: 20,
+                child: Stack(
+                  children: topReactions.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final type = entry.value;
+                    return Positioned(
+                      left: idx * 12.0,
+                      child: _getReactionEmoji(type, size: 14),
+                    );
+                  }).toList(),
+                ),
+              ),
+            const SizedBox(width: 4),
+            Text(
+              '${widget.post.likesCount}', 
+              style: GoogleFonts.outfit(
+                fontSize: 13, 
+                fontWeight: FontWeight.bold, 
+                color: context.appTextPrimary,
+              )
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _getReactionEmoji(String type, {double size = 16}) {
+    switch (type) {
+      case 'love': return Icon(Icons.favorite_rounded, size: size, color: Colors.red);
+      case 'haha': return Text('😂', style: TextStyle(fontSize: size));
+      case 'wow': return Text('😮', style: TextStyle(fontSize: size));
+      case 'sad': return Text('😢', style: TextStyle(fontSize: size));
+      case 'angry': return Text('😡', style: TextStyle(fontSize: size));
+      case 'like':
+      default: return Icon(Icons.thumb_up_rounded, size: size, color: Colors.blue);
+    }
+  }
+
+  void _showReactorsList(BuildContext context) {
+    final lp = context.read<LanguageProvider>();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: context.appCard,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 24),
+            Text('Reactions', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+            const SizedBox(height: 24),
+            if (widget.post.reactions.isEmpty)
+              const Expanded(child: Center(child: Text('No reactions yet')))
+            else
+              Expanded(
+                child: ListView.builder(
+                  itemCount: widget.post.reactions.length,
+                  itemBuilder: (context, index) {
+                    final userId = widget.post.reactions.keys.elementAt(index);
+                    final type = widget.post.reactions[userId]!;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Row(
+                        children: [
+                          Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.1), width: 1),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: Colors.grey.withValues(alpha: 0.05),
+                                  child: Icon(Icons.person_rounded, color: Colors.grey[400], size: 28),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: context.appCard,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: _getReactionEmoji(type, size: 16),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _ReactorName(userId: userId),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInteractionBtn(IconData icon, String label, Color color, VoidCallback onTap) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 20),
+                const SizedBox(width: 6),
+                Text(label, style: GoogleFonts.outfit(color: color, fontWeight: FontWeight.w600, fontSize: 13)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showReactionMenu(BuildContext context) {
+    final List<Map<String, dynamic>> reactions = [
+      {'type': 'like', 'emoji': '👍', 'color': Colors.blue},
+      {'type': 'love', 'emoji': '❤️', 'color': Colors.red},
+      {'type': 'haha', 'emoji': '😂', 'color': Colors.orange},
+      {'type': 'wow', 'emoji': '😮', 'color': Colors.amber},
+      {'type': 'sad', 'emoji': '😢', 'color': Colors.blueGrey},
+      {'type': 'angry', 'emoji': '😡', 'color': Colors.deepOrange},
+    ];
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      builder: (context) => Stack(
+        children: [
+          GestureDetector(onTap: () => Navigator.pop(context), child: Container(color: Colors.transparent)),
+          Positioned(
+            bottom: 100, // Adjust based on button position if possible
+            left: 20,
+            right: 20,
+            child: Material(
+              color: Colors.transparent,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(40),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10)),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: reactions.map((r) => GestureDetector(
+                      onTap: () {
+                        context.read<FirestoreService>().addReaction(widget.post.id!, widget.userId, r['type']);
+                        Navigator.pop(context);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: _getReactionEmoji(r['type'], size: 28),
+                      ),
+                    )).toList(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -644,8 +926,10 @@ class _PostCardState extends State<_PostCard> {
   }
   void _toggleLike(bool isLiked) async {
     try {
+      final userReaction = widget.post.reactions[widget.userId];
+      final typeToToggle = userReaction ?? 'like';
       final collection = widget.post.type == 'announcement' ? 'announcements' : 'forum';
-      await context.read<FirestoreService>().toggleLike(widget.post.id!, widget.userId, collection: collection);
+      await context.read<FirestoreService>().addReaction(widget.post.id!, widget.userId, typeToToggle, collection: collection);
     } catch (e) {
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur lors de la mise à jour.')));
     }
@@ -694,6 +978,7 @@ class _PostCardState extends State<_PostCard> {
   }
 
   void _confirmDelete() {
+    final lp = context.read<LanguageProvider>();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -716,10 +1001,45 @@ class _PostCardState extends State<_PostCard> {
                     .deleteForumPost(widget.post.id!);
               }
             },
-            child: const Text('Supprimer',
-                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: Text(lp.getText('delete_btn'),
+                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showFullScreenImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -996,7 +1316,7 @@ class _ReplyTile extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _formatTime(reply.createdAt), 
+                      _formatTime(reply.createdAt, context.read<LanguageProvider>()), 
                       style: GoogleFonts.outfit(fontSize: 10, color: context.appTextSecondary)
                     ),
                     const Spacer(),
@@ -1093,6 +1413,15 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
   final _titleController = TextEditingController();
   final List<TextEditingController> _pollOptControllers = [TextEditingController(), TextEditingController()];
   bool _isLoading = false;
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (image != null) {
+      setState(() => _selectedImage = File(image.path));
+    }
+  }
 
   void _submit() async {
     final content = _contentController.text.trim();
@@ -1111,6 +1440,11 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
       }
     }
 
+    String? imageUrl;
+    if (_selectedImage != null) {
+      imageUrl = await context.read<StorageService>().uploadForumImage(_selectedImage!, authData?['uid'] ?? 'unknown');
+    }
+
     final post = ForumPost(
       type: widget.postType,
       title: widget.postType == 'announcement' ? _titleController.text.trim() : '',
@@ -1119,6 +1453,7 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
       authorName: authData?['displayName'] ?? 'Utilisateur',
       createdAt: DateTime.now(),
       pollOptions: opts,
+      attachments: imageUrl != null ? [imageUrl] : null,
       residenceId: context.read<AuthProvider>().currentResidenceId,
     );
 
@@ -1177,6 +1512,39 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
               label: const Text('Ajouter une option')
             ),
           ],
+          const SizedBox(height: 16),
+          if (_selectedImage != null)
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(_selectedImage!, height: 150, width: double.infinity, fit: BoxFit.cover),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedImage = null),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                      child: const Icon(Icons.close, color: Colors.white, size: 16),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else if (widget.postType != 'poll')
+            OutlinedButton.icon(
+              onPressed: _pickImage,
+              icon: const Icon(Icons.image_rounded, size: 20),
+              label: const Text('Ajouter une photo'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
+              ),
+            ),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -1213,6 +1581,29 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
         contentPadding: const EdgeInsets.all(16),
       ),
+    );
+  }
+}
+
+class _ReactorName extends StatelessWidget {
+  final String userId;
+  const _ReactorName({required this.userId});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Text('...', style: GoogleFonts.outfit(fontSize: 15, color: context.appTextSecondary));
+        }
+        final data = snapshot.data!.data() as Map<String, dynamic>?;
+        final name = data?['displayName'] ?? data?['name'] ?? 'User $userId';
+        return Text(
+          name, 
+          style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600, color: context.appTextPrimary)
+        );
+      },
     );
   }
 }

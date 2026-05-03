@@ -13,6 +13,25 @@ class FirestoreService extends ChangeNotifier {
     }
   }
 
+  /// Centralized logic for strict multi-tenancy isolation.
+  bool _checkResidenceMatch(String? itemResidenceId, String? queryResidenceId, {bool allowGlobal = false}) {
+    // 1. Super Admin Bypass: If the user's residenceId is strictly 'all', they see everything across all residences.
+    if (queryResidenceId == 'all') return true;
+
+    // 2. User has no residence: They should only see system-global items (if allowed). They do NOT get to see everything.
+    if (queryResidenceId == null || queryResidenceId.isEmpty) {
+      return allowGlobal && (itemResidenceId == null || itemResidenceId.isEmpty);
+    }
+
+    // 3. User has a specific residence: They see their own items.
+    if (itemResidenceId == queryResidenceId) return true;
+
+    // 4. They can also see global items (like system-wide announcements) if allowed.
+    if (allowGlobal && (itemResidenceId == null || itemResidenceId.isEmpty)) return true;
+
+    return false;
+  }
+
   // Announcements
   Future<void> addAnnouncement(Announcement announcement,
       {String? residenceId}) async {
@@ -44,12 +63,7 @@ class FirestoreService extends ChangeNotifier {
         .map((snapshot) {
       final list = snapshot.docs
           .map((doc) => Announcement.fromJson(doc.data()..['id'] = doc.id))
-          .where((a) =>
-              residenceId == null ||
-              residenceId.isEmpty ||
-              a.residenceId == residenceId ||
-              a.residenceId == null ||
-              a.residenceId == '')
+          .where((a) => _checkResidenceMatch(a.residenceId, residenceId, allowGlobal: true))
           .toList();
 
       // Sort by isPinned (true first) then timestamp
@@ -95,7 +109,7 @@ class FirestoreService extends ChangeNotifier {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => Meal.fromJson(doc.data()..['id'] = doc.id))
-            .where((m) => residenceId == null || residenceId.isEmpty || m.residenceId == residenceId || m.residenceId == null || m.residenceId == '')
+            .where((m) => _checkResidenceMatch(m.residenceId, residenceId, allowGlobal: false))
             .toList());
   }
 
@@ -115,7 +129,7 @@ class FirestoreService extends ChangeNotifier {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => Meal.fromJson(doc.data()..['id'] = doc.id))
-            .where((m) => residenceId == null || residenceId.isEmpty || m.residenceId == residenceId || m.residenceId == null || m.residenceId == '')
+            .where((m) => _checkResidenceMatch(m.residenceId, residenceId, allowGlobal: false))
             .toList());
   }
 
@@ -408,7 +422,7 @@ class FirestoreService extends ChangeNotifier {
       final list = snapshot.docs
           .map((doc) => Complaint.fromJson(
               doc.data() as Map<String, dynamic>..['id'] = doc.id))
-          .where((c) => residenceId == null || residenceId.isEmpty || c.residenceId == residenceId || c.residenceId == null || c.residenceId == '')
+          .where((c) => _checkResidenceMatch(c.residenceId, residenceId, allowGlobal: false))
           .toList();
       list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       return list;
@@ -438,7 +452,7 @@ class FirestoreService extends ChangeNotifier {
       final list = snapshot.docs
           .map((doc) => ServiceRequest.fromJson(
               doc.data() as Map<String, dynamic>..['id'] = doc.id))
-          .where((r) => residenceId == null || residenceId.isEmpty || r.residenceId == residenceId || r.residenceId == null || r.residenceId == '')
+          .where((r) => _checkResidenceMatch(r.residenceId, residenceId, allowGlobal: false))
           .toList();
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;
@@ -489,15 +503,7 @@ class FirestoreService extends ChangeNotifier {
               return data;
             }).where((u) {
               final uResId = u['residenceId'];
-              // Include if:
-              // 1. We are not filtering (residenceId is null/empty)
-              // 2. OR the user matches the filter
-              // 3. OR the user has no residence assigned (legacy data)
-              return residenceId == null ||
-                  residenceId.isEmpty ||
-                  uResId == residenceId ||
-                  uResId == null ||
-                  uResId == '';
+              return _checkResidenceMatch(uResId, residenceId, allowGlobal: false);
             }).toList());
   }
 
@@ -515,11 +521,7 @@ class FirestoreService extends ChangeNotifier {
               return data;
             }).where((u) {
               final uResId = u['residenceId'];
-              return residenceId == null ||
-                  residenceId.isEmpty ||
-                  uResId == residenceId ||
-                  uResId == null ||
-                  uResId == '';
+              return _checkResidenceMatch(uResId, residenceId, allowGlobal: false);
             }).toList());
   }
 
@@ -542,7 +544,7 @@ class FirestoreService extends ChangeNotifier {
     return _db!.collection('requests').snapshots().map((snapshot) {
       final list = snapshot.docs
           .map((doc) => ServiceRequest.fromJson(doc.data()..['id'] = doc.id))
-          .where((r) => residenceId == null || residenceId.isEmpty || r.residenceId == residenceId || r.residenceId == null || r.residenceId == '')
+          .where((r) => _checkResidenceMatch(r.residenceId, residenceId, allowGlobal: false))
           .toList();
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;
@@ -652,7 +654,7 @@ class FirestoreService extends ChangeNotifier {
         // Filter by residenceId
         bool matchesResidence = true;
         if (residenceId != null && residenceId.isNotEmpty) {
-          matchesResidence = doc.residenceId == null || doc.residenceId == residenceId;
+          matchesResidence = _checkResidenceMatch(doc.residenceId, residenceId, allowGlobal: true);
         }
 
         // Filter by target
@@ -696,7 +698,7 @@ class FirestoreService extends ChangeNotifier {
     return _db!.collection('complaints').snapshots().map((snapshot) {
       final list = snapshot.docs
           .map((doc) => Complaint.fromJson(doc.data()..['id'] = doc.id))
-          .where((c) => residenceId == null || residenceId.isEmpty || c.residenceId == residenceId || c.residenceId == null || c.residenceId == '')
+          .where((c) => _checkResidenceMatch(c.residenceId, residenceId, allowGlobal: false))
           .toList();
       list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       return list;
@@ -793,7 +795,7 @@ class FirestoreService extends ChangeNotifier {
         .map((snapshot) => snapshot.docs
             .map((doc) => NotificationModel.fromJson(doc.data(), doc.id))
             .where((n) => n.isDeleted != true)
-            .where((n) => residenceId == null || residenceId.isEmpty || n.residenceId == residenceId || n.residenceId == null || n.residenceId == '')
+            .where((n) => _checkResidenceMatch(n.residenceId, residenceId, allowGlobal: false))
             .toList()
           ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
   }
@@ -994,25 +996,57 @@ class FirestoreService extends ChangeNotifier {
     await _db!.collection('forum').doc(postId).delete();
   }
 
-  Future<void> toggleLike(String postId, String userId, {String collection = 'forum'}) async {
+  Future<void> addReaction(String postId, String userId, String reactionType, {String collection = 'forum'}) async {
     if (_db == null) throw Exception("Firestore not initialized");
     final docRef = _db!.collection(collection).doc(postId);
-    final doc = await docRef.get();
-    if (!doc.exists) return;
+    final reactionRef = docRef.collection('reactions').doc(userId);
 
-    final likedBy = List<String>.from(doc.data()?['likedBy'] ?? []);
-    int change = 0;
-    if (likedBy.contains(userId)) {
-      likedBy.remove(userId);
-      change = -1;
-    } else {
-      likedBy.add(userId);
-      change = 1;
-    }
-    await docRef.update({
-      'likedBy': likedBy,
-      'likesCount': FieldValue.increment(change),
+    await _db!.runTransaction((transaction) async {
+      final doc = await transaction.get(docRef);
+      if (!doc.exists) return;
+
+      final reactionDoc = await transaction.get(reactionRef);
+      final reactionData = doc.data()?['reactionsCount'] as Map<String, dynamic>? ?? {};
+      
+      if (reactionDoc.exists) {
+        final oldType = reactionDoc.data()?['type'] as String?;
+        if (oldType == reactionType) {
+          // Remove reaction if same type clicked
+          transaction.delete(reactionRef);
+          reactionData[oldType!] = (reactionData[oldType] ?? 1) - 1;
+          transaction.update(docRef, {
+            'reactionsCount': reactionData,
+            'likesCount': FieldValue.increment(-1),
+            'reactions.$userId': FieldValue.delete(),
+          });
+          return;
+        } else if (oldType != null) {
+          // Change reaction type
+          reactionData[oldType] = (reactionData[oldType] ?? 1) - 1;
+          reactionData[reactionType] = (reactionData[reactionType] ?? 0) + 1;
+          transaction.set(reactionRef, {'type': reactionType, 'timestamp': FieldValue.serverTimestamp()});
+          transaction.update(docRef, {
+            'reactionsCount': reactionData,
+            'reactions.$userId': reactionType,
+          });
+          return;
+        }
+      }
+
+      // Add new reaction
+      transaction.set(reactionRef, {'type': reactionType, 'timestamp': FieldValue.serverTimestamp()});
+      reactionData[reactionType] = (reactionData[reactionType] ?? 0) + 1;
+      transaction.update(docRef, {
+        'reactionsCount': reactionData,
+        'likesCount': FieldValue.increment(1),
+        'reactions.$userId': reactionType,
+      });
     });
+  }
+
+  Future<void> toggleLike(String postId, String userId, {String collection = 'forum'}) async {
+    // Legacy support: defaults to 'like' type
+    await addReaction(postId, userId, 'like', collection: collection);
   }
 
   Future<void> voteInPoll(String postId, int optionIndex, String userId) async {

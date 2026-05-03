@@ -189,7 +189,6 @@ class _AdminSidebarContent extends StatelessWidget {
                   child: Divider(color: Colors.white10, height: 1),
                 ),
                 
-                _buildNavItem(context, Icons.campaign_rounded, lp.getText('announcements'), '/admin/announcements', currentRoute),
                 _buildNavItem(context, Icons.forum_rounded, lp.getText('community'), '/admin/community', currentRoute),
                 _buildNavItem(context, Icons.settings_rounded, lp.getText('settings'), '/admin/settings', currentRoute),
               ],
@@ -399,7 +398,6 @@ class _AdminHeader extends StatelessWidget {
     if (route.startsWith('/admin/rooms/')) return 'Détails Bloc';
     if (route.startsWith('/admin/rooms')) return lp.getText('rooms');
     if (route.startsWith('/admin/resources')) return 'Ressources';
-    if (route.startsWith('/admin/announcements')) return lp.getText('announcements');
     if (route.startsWith('/admin/community')) return lp.getText('community');
     if (route.startsWith('/admin/dining')) return lp.getText('restoration');
     if (route.startsWith('/admin/documents')) return lp.getText('documents_and_programs');

@@ -17,6 +17,7 @@ class Student {
   final String? chambre;
   final String? role;
   final bool isBanned;
+  final Map<String, dynamic>? rawMetadata;
 
   Student({
     this.id,
@@ -37,6 +38,7 @@ class Student {
     this.chambre,
     this.role,
     this.isBanned = false,
+    this.rawMetadata,
   });
 
   factory Student.fromJson(Map<String, dynamic> json, {String? residence, String? residenceId, String? bloc, String? chambre}) {
@@ -59,6 +61,7 @@ class Student {
       chambre: chambre ?? json['chambre'],
       role: json['role'] as String?,
       isBanned: json['isBanned'] == true,
+      rawMetadata: json,
     );
   }
 
@@ -82,6 +85,7 @@ class Student {
       if (chambre != null) 'chambre': chambre,
       if (role != null) 'role': role,
       'isBanned': isBanned,
+      if (rawMetadata != null) 'rawMetadata': rawMetadata,
     };
   }
 }

@@ -29,6 +29,7 @@ class Complaint {
   final String? department;
   final String? assignedWorkerId;
   final String? residenceId;
+  final bool isUrgent;
 
   Complaint({
     this.id,
@@ -44,6 +45,7 @@ class Complaint {
     this.department,
     this.assignedWorkerId,
     this.residenceId,
+    this.isUrgent = false,
   });
 
   factory Complaint.fromJson(Map<String, dynamic> json) {
@@ -65,6 +67,7 @@ class Complaint {
       department: json['department'],
       assignedWorkerId: json['assignedWorkerId'],
       residenceId: json['residenceId'],
+      isUrgent: json['isUrgent'] ?? false,
     );
   }
 
@@ -81,6 +84,7 @@ class Complaint {
       'department': department,
       'assignedWorkerId': assignedWorkerId,
       'residenceId': residenceId,
+      'isUrgent': isUrgent,
     };
     
     // We don't include timestamp here because it will be added by the server
@@ -99,7 +103,7 @@ class Announcement {
   final String? residenceId;
   final int likesCount;
   final int commentsCount;
-  final List<String> likedBy;
+  final Map<String, String> reactions;
   final bool isPinned;
 
   Announcement({
@@ -113,7 +117,7 @@ class Announcement {
     this.residenceId,
     this.likesCount = 0,
     this.commentsCount = 0,
-    this.likedBy = const [],
+    this.reactions = const {},
     this.isPinned = false,
   });
 
@@ -135,9 +139,9 @@ class Announcement {
       imageUrls: parsedUrls,
       urgency: json['urgency'] ?? 'normal',
       residenceId: json['residenceId'],
-      likesCount: json['likesCount'] ?? (json['likedBy'] as List?)?.length ?? 0,
+      likesCount: json['likesCount'] ?? (json['reactions'] as Map?)?.length ?? (json['likedBy'] as List?)?.length ?? 0,
       commentsCount: json['commentsCount'] ?? json['replyCount'] ?? 0,
-      likedBy: List<String>.from(json['likedBy'] ?? []),
+      reactions: Map<String, String>.from(json['reactions'] ?? {}),
       isPinned: json['isPinned'] ?? false,
     );
   }
@@ -152,7 +156,7 @@ class Announcement {
       'residenceId': residenceId,
       'likesCount': likesCount,
       'commentsCount': commentsCount,
-      'likedBy': likedBy,
+      'reactions': reactions,
       'isPinned': isPinned,
       // timestamp is added by the server
     };
@@ -459,7 +463,7 @@ class ForumPost {
   final List<String>? attachments;
   final List<PollOption>? pollOptions;
   final int votersCount;
-  final List<String> likedBy; // kept for robust local toggling
+  final Map<String, String> reactions; // userId -> reactionType
   final String? residenceId;
 
   ForumPost({
@@ -476,7 +480,7 @@ class ForumPost {
     this.attachments,
     this.pollOptions,
     this.votersCount = 0,
-    this.likedBy = const [],
+    this.reactions = const {},
     this.residenceId,
   });
 
@@ -495,7 +499,7 @@ class ForumPost {
       attachments: (json['attachments'] as List?)?.map((e) => e.toString()).toList() ?? (json['imageUrl'] != null ? [json['imageUrl']] : null),
       pollOptions: (json['pollOptions'] as List?)?.map((e) => PollOption.fromJson(e)).toList(),
       votersCount: json['votersCount'] ?? 0,
-      likedBy: List<String>.from(json['likedBy'] ?? []),
+      reactions: Map<String, String>.from(json['reactions'] ?? {}),
       residenceId: json['residenceId'],
     );
   }
@@ -513,7 +517,7 @@ class ForumPost {
       'attachments': attachments,
       'pollOptions': pollOptions?.map((e) => e.toJson()).toList(),
       'votersCount': votersCount,
-      'likedBy': likedBy,
+      'reactions': reactions,
       'residenceId': residenceId,
       // createdAt is added by the server
     };

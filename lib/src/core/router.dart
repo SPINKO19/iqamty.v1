@@ -30,6 +30,7 @@ import '../views/request_list_screen.dart';
 import '../views/create_request_screen.dart';
 import '../views/register_screen.dart';
 import '../views/banned_screen.dart';
+import '../views/no_residence_screen.dart';
 import '../views/placeholder_screen.dart';
 import '../views/admin_placeholder_view.dart';
 import '../views/admin_dining_config_view.dart';
@@ -54,6 +55,7 @@ class AppRouter {
         final isLoginRoute = state.matchedLocation == '/login';
         final isRegisterRoute = state.matchedLocation == '/register';
         final isBannedRoute = state.matchedLocation == '/banned';
+        final isNoResidenceRoute = state.matchedLocation == '/no-residence';
 
         if (!isAuthenticated && !isLoginRoute && !isRegisterRoute) {
           return '/login';
@@ -64,6 +66,16 @@ class AppRouter {
         }
 
         if (isAuthenticated && !isBanned && isBannedRoute) {
+          return '/';
+        }
+        
+        final hasNoResidence = authProvider.currentResidenceId == null || authProvider.currentResidenceId!.isEmpty;
+
+        if (isAuthenticated && !isBanned && hasNoResidence && !isNoResidenceRoute && !isLoginRoute && !isRegisterRoute) {
+          return '/no-residence';
+        }
+
+        if (isAuthenticated && !isBanned && !hasNoResidence && isNoResidenceRoute) {
           return '/';
         }
 
@@ -96,6 +108,10 @@ class AppRouter {
         GoRoute(
           path: '/banned',
           builder: (context, state) => const BannedScreen(),
+        ),
+        GoRoute(
+          path: '/no-residence',
+          builder: (context, state) => const NoResidenceScreen(),
         ),
         ShellRoute(
           builder: (context, state, child) {

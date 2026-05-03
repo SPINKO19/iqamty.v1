@@ -514,11 +514,19 @@ class _AdminRequestDetailsSheet extends StatelessWidget {
                   const SizedBox(height: 32),
                   _buildSectionHeader(lp.getText('photo_optional')),
                   const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.network(
-                      request.imageUrl!,
-                      fit: BoxFit.cover,
+                  GestureDetector(
+                    onTap: () => _showFullScreenImage(context, request.imageUrl!),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.network(
+                        request.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => Container(
+                          height: 200,
+                          color: Colors.grey.withValues(alpha: 0.1),
+                          child: const Center(child: Icon(Icons.broken_image_outlined, color: Colors.grey, size: 40)),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -721,6 +729,41 @@ class _AdminRequestDetailsSheet extends StatelessWidget {
         fontWeight: FontWeight.w900,
         color: Colors.grey,
         letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  void _showFullScreenImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

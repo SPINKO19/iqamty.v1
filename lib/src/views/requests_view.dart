@@ -18,7 +18,7 @@ class RequestsView extends StatefulWidget {
 }
 
 class _RequestsViewState extends State<RequestsView> {
-  String _selectedCategory = 'Tous'; 
+  String _selectedCategory = 'all_filter'; 
 
   @override
   Widget build(BuildContext context) {
@@ -55,13 +55,13 @@ class _RequestsViewState extends State<RequestsView> {
               physics: const BouncingScrollPhysics(),
               child: Row(
                 children: [
-                  _buildFilterChip('Tous'),
+                  _buildFilterChip('all_filter', lp.getText('all_filter')),
                   const SizedBox(width: 8),
-                  _buildFilterChip('Réparation'),
+                  _buildFilterChip('repair_category', lp.getText('repair_category')),
                   const SizedBox(width: 8),
-                  _buildFilterChip('Nettoyage'),
+                  _buildFilterChip('cleaning_category', lp.getText('cleaning_category')),
                   const SizedBox(width: 8),
-                  _buildFilterChip('Hébergement'),
+                  _buildFilterChip('housing_category', lp.getText('housing_category')),
                 ],
               ),
             ),
@@ -96,12 +96,12 @@ class _RequestsViewState extends State<RequestsView> {
 
                 var requests = snapshot.data ?? [];
 
-                if (_selectedCategory != 'Tous') {
+                if (_selectedCategory != 'all_filter') {
                   requests = requests.where((r) {
                     final cat = r.category.toLowerCase();
-                    if (_selectedCategory == 'Réparation') return cat == 'repair' || cat == 'réparation';
-                    if (_selectedCategory == 'Nettoyage') return cat == 'cleaning' || cat == 'nettoyage';
-                    if (_selectedCategory == 'Hébergement') return cat == 'housing' || cat == 'hébergement';
+                    if (_selectedCategory == 'repair_category') return cat == 'repair' || cat == 'réparation';
+                    if (_selectedCategory == 'cleaning_category') return cat == 'cleaning' || cat == 'nettoyage';
+                    if (_selectedCategory == 'housing_category') return cat == 'housing' || cat == 'hébergement';
                     return true;
                   }).toList();
                 }
@@ -144,10 +144,10 @@ class _RequestsViewState extends State<RequestsView> {
     );
   }
 
-  Widget _buildFilterChip(String label) {
-    final isSelected = _selectedCategory == label;
+  Widget _buildFilterChip(String key, String label) {
+    final isSelected = _selectedCategory == key;
     return GestureDetector(
-      onTap: () => setState(() => _selectedCategory = label),
+      onTap: () => setState(() => _selectedCategory = key),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
@@ -198,7 +198,7 @@ class _RequestCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildIconBox(),
+                _buildIconBox(context),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -218,7 +218,7 @@ class _RequestCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          _buildStatusChip(),
+                          _buildStatusChip(context),
                         ],
                       ),
                       const SizedBox(height: 6),
@@ -237,6 +237,21 @@ class _RequestCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (request.imageUrl != null && request.imageUrl!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: GestureDetector(
+                  onTap: () => _showFullScreenImage(context, request.imageUrl!),
+                  child: Image.network(
+                    request.imageUrl!,
+                    height: 150,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             const Divider(height: 1),
             const SizedBox(height: 12),
@@ -260,7 +275,7 @@ class _RequestCard extends StatelessWidget {
     );
   }
 
-  Widget _buildIconBox() {
+   Widget _buildIconBox(BuildContext context) {
     IconData icon;
     Color color;
     
@@ -295,24 +310,24 @@ class _RequestCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusChip() {
+   Widget _buildStatusChip(BuildContext context) {
     String label;
     Color color;
     
     switch (request.status.toLowerCase()) {
       case 'pending':
       case 'en attente':
-        label = 'En attente';
+        label = context.read<LanguageProvider>().getText('status_received');
         color = Colors.orange;
         break;
       case 'reviewed':
       case 'en cours':
-        label = 'En cours';
+        label = context.read<LanguageProvider>().getText('status_in_progress');
         color = Colors.blue;
         break;
       case 'completed':
       case 'résolu':
-        label = 'Résolu';
+        label = context.read<LanguageProvider>().getText('status_resolved');
         color = Colors.green;
         break;
       default:
@@ -375,5 +390,40 @@ class _RequestCard extends StatelessWidget {
 
   String _formatDate(DateTime dt) {
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
+  void _showFullScreenImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
