@@ -279,35 +279,36 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                     const SizedBox(height: 14),
 
-                                    // ── Forgot password ──
-                                    Center(
-                                      child: GestureDetector(
-                                        onTap: () => _showInstallAppOptions(context, lp, isDark),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                          decoration: BoxDecoration(
-                                            color: _kGreen.withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(20),
-                                            border: Border.all(color: _kGreen.withValues(alpha: 0.2)),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const Icon(Icons.install_mobile_rounded, size: 16, color: _kGreen),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                lp.getText('install_app'),
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 13,
-                                                  color: _kGreen,
-                                                  fontWeight: FontWeight.w700,
+                                    // ── Install App (Web only) / Forgot password ──
+                                    if (kIsWeb)
+                                      Center(
+                                        child: GestureDetector(
+                                          onTap: () => _showInstallAppOptions(context, lp, isDark),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: _kGreen.withValues(alpha: 0.1),
+                                              borderRadius: BorderRadius.circular(20),
+                                              border: Border.all(color: _kGreen.withValues(alpha: 0.2)),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(Icons.install_mobile_rounded, size: 16, color: _kGreen),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  lp.getText('install_app'),
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 13,
+                                                    color: _kGreen,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ),
