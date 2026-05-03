@@ -296,11 +296,28 @@ class _PostCard extends StatefulWidget {
 }
 
 class _PostCardState extends State<_PostCard> {
+  String? _optimisticReaction;
+
+  @override
+  void initState() {
+    super.initState();
+    _optimisticReaction = widget.post.reactions[widget.userId];
+  }
+
+  @override
+  void didUpdateWidget(_PostCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sync with server data if it changed
+    if (widget.post.reactions[widget.userId] != oldWidget.post.reactions[widget.userId]) {
+      _optimisticReaction = widget.post.reactions[widget.userId];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lp = context.watch<LanguageProvider>();
-    final userReaction = widget.post.reactions[widget.userId];
+    final userReaction = _optimisticReaction;
     final isLiked = userReaction != null;
     final isOfficial = widget.post.type == 'announcement';
 
@@ -568,12 +585,12 @@ class _PostCardState extends State<_PostCard> {
           color = Colors.orange;
           break;
         case 'wow':
-          icon = Icons.sentiment_very_dissatisfied_rounded;
+          icon = Icons.sentiment_satisfied_alt_rounded;
           label = lp.getText('reaction_wow');
           color = Colors.amber;
           break;
         case 'sad':
-          icon = Icons.sentiment_very_dissatisfied_rounded;
+          icon = Icons.sentiment_dissatisfied_rounded;
           label = lp.getText('reaction_sad');
           color = Colors.blueGrey;
           break;
@@ -822,7 +839,18 @@ class _PostCardState extends State<_PostCard> {
                     mainAxisSize: MainAxisSize.min,
                     children: reactions.map((r) => GestureDetector(
                       onTap: () {
-                        context.read<FirestoreService>().addReaction(widget.post.id!, widget.userId, r['type']);
+                        final type = r['type'] as String;
+                        final collection = widget.post.type == 'announcement' ? 'announcements' : 'forum';
+                        
+                        setState(() {
+                          if (_optimisticReaction == type) {
+                            _optimisticReaction = null;
+                          } else {
+                            _optimisticReaction = type;
+                          }
+                        });
+                        
+                        context.read<FirestoreService>().addReaction(widget.post.id!, widget.userId, type, collection: collection);
                         Navigator.pop(context);
                       },
                       child: Padding(
@@ -926,11 +954,20 @@ class _PostCardState extends State<_PostCard> {
   }
   void _toggleLike(bool isLiked) async {
     try {
-      final userReaction = widget.post.reactions[widget.userId];
-      final typeToToggle = userReaction ?? 'like';
       final collection = widget.post.type == 'announcement' ? 'announcements' : 'forum';
+      final typeToToggle = _optimisticReaction ?? 'like';
+      
+      setState(() {
+        if (_optimisticReaction != null) {
+          _optimisticReaction = null;
+        } else {
+          _optimisticReaction = 'like';
+        }
+      });
+
       await context.read<FirestoreService>().addReaction(widget.post.id!, widget.userId, typeToToggle, collection: collection);
     } catch (e) {
+      // Revert optimistic update on error if needed, but usually stream will fix it
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur lors de la mise à jour.')));
     }
   }

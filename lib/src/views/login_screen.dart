@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -281,15 +282,28 @@ class _LoginScreenState extends State<LoginScreen> {
                                     // ── Forgot password ──
                                     Center(
                                       child: GestureDetector(
-                                        onTap: () {},
-                                        child: Text(
-                                          lp.getText('forgot_password'),
-                                          style: GoogleFonts.inter(
-                                            fontSize: 13,
-                                            color: isDark
-                                                ? Colors.white54
-                                                : const Color(0xFF6B7280),
-                                            fontWeight: FontWeight.w500,
+                                        onTap: () => _showInstallAppOptions(context, lp, isDark),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: _kGreen.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(20),
+                                            border: Border.all(color: _kGreen.withValues(alpha: 0.2)),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.install_mobile_rounded, size: 16, color: _kGreen),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                lp.getText('install_app'),
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 13,
+                                                  color: _kGreen,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ),
@@ -621,6 +635,85 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         onPressed: () => themeProvider.setThemeMode(
             !isDark ? AppThemeMode.dark : AppThemeMode.normal),
+      ),
+    );
+  }
+
+  void _showInstallAppOptions(BuildContext context, LanguageProvider lp, bool isDark) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? context.appCard : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: Text(
+          lp.getText('install_app'),
+          style: GoogleFonts.inter(fontWeight: FontWeight.w800, color: context.appTextPrimary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildInstallOption(
+              icon: Icons.android_rounded,
+              label: lp.getText('download_android'),
+              color: const Color(0xFF3DDC84),
+              onTap: () => launchUrl(Uri.parse('https://www.mediafire.com/file/cforxi7pezqmnui/Iqamty-v1/file')),
+              isDark: isDark,
+            ),
+            const SizedBox(height: 12),
+            _buildInstallOption(
+              icon: Icons.apple_rounded,
+              label: lp.getText('download_ios'),
+              color: Colors.grey,
+              onTap: null, // Placeholder for iOS
+              isDark: isDark,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(lp.getText('cancel'), style: GoogleFonts.inter(color: context.appTextSecondary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInstallOption({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback? onTap,
+    required bool isDark,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: onTap == null ? Colors.grey : color, size: 28),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: onTap == null ? Colors.grey : (isDark ? Colors.white : Colors.black87),
+                ),
+              ),
+            ),
+            if (onTap != null)
+              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }

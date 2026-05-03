@@ -221,6 +221,9 @@ class LanguageProvider extends ChangeNotifier {
     'category_security': 'Security',
     'urgent_label': 'Urgent',
     'mark_as_urgent': 'Mark as Urgent',
+    'install_app': 'Install App',
+    'download_android': 'Download for Android',
+    'download_ios': 'Download for iOS (Coming Soon)',
 
     // Management & Statuses
     'status_received': 'Received',
@@ -814,6 +817,9 @@ class LanguageProvider extends ChangeNotifier {
     'category_security': 'Sécurité',
     'urgent_label': 'Urgent',
     'mark_as_urgent': 'Marquer comme urgent',
+    'install_app': "Installer l'application",
+    'download_android': 'Télécharger pour Android',
+    'download_ios': 'Télécharger pour iOS (Bientôt)',
   };
 
   // ─── ARABIC ───
@@ -980,6 +986,9 @@ class LanguageProvider extends ChangeNotifier {
     'category_other': 'أخرى',
     'urgent_label': 'عاجل',
     'mark_as_urgent': 'وضع كعاجل',
+    'install_app': 'تثبيت التطبيق',
+    'download_android': 'تحميل للأندرويد',
+    'download_ios': 'تحميل للآيفون (قريباً)',
     'complaints_management': 'إدارة الشكاوى',
     'assign': 'تعيين',
     'resolve': 'حل',
