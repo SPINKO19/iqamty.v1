@@ -217,7 +217,7 @@ class _AdminBlockDetailViewState extends State<AdminBlockDetailView> {
     final name = student['displayName'] ?? 'Étudiant';
     final room = student['room'] ?? student['chambre'] ?? '---';
     final isBanned = student['isBanned'] == true;
-    final userId = student['id'] ?? student['uid'];
+    final userId = student['matricule']?.toString() ?? student['uid']?.toString() ?? student['id']?.toString() ?? '';
 
     return Container(
       padding: const EdgeInsets.all(16),

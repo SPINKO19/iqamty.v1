@@ -74,8 +74,13 @@ class _ChatViewState extends State<ChatView> {
       timestamp: DateTime.now(),
     );
 
-    await firestore.sendMessage(_chatId!, message);
-    _messageController.clear();
+    final residenceId = auth.currentResidenceId ?? auth.currentUserData?['residenceId'];
+
+    await firestore.sendMessage(_chatId!, message, residenceId: residenceId);
+
+    if (mounted) {
+      _messageController.clear();
+    }
     _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
   }
 

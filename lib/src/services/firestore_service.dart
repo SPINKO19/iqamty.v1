@@ -27,6 +27,12 @@ class FirestoreService extends ChangeNotifier {
     // 3. User has a specific residence: They see their own items.
     if (itemResidenceId == queryResidenceId) return true;
 
+    // 3.5 Alias match for duplicated Amizour residence IDs
+    const amizourIds = ['rTiYCOBgKTMOVvn6cpks', 'ogT6xS6ijMOjOkTdDrWB'];
+    if (amizourIds.contains(itemResidenceId) && amizourIds.contains(queryResidenceId)) {
+      return true;
+    }
+
     // 4. They can also see global items (like system-wide announcements) if allowed.
     if (allowGlobal && (itemResidenceId == null || itemResidenceId.isEmpty)) return true;
 
@@ -916,9 +922,18 @@ class FirestoreService extends ChangeNotifier {
 
     if (chats.docs.isNotEmpty) {
       final docId = chats.docs.first.id;
-      final existingRole = chats.docs.first.data() as Map<String, dynamic>? ?? {};
-      if (existingRole['studentRole'] != role) {
-        await _db!.collection('chats').doc(docId).update({'studentRole': role});
+      final existingData = chats.docs.first.data() as Map<String, dynamic>? ?? {};
+      
+      final updates = <String, dynamic>{};
+      if (existingData['studentRole'] != role) {
+        updates['studentRole'] = role;
+      }
+      if (residenceId != null && existingData['residenceId'] != residenceId) {
+        updates['residenceId'] = residenceId;
+      }
+      
+      if (updates.isNotEmpty) {
+        await _db!.collection('chats').doc(docId).update(updates);
       }
       return docId;
     }
@@ -943,6 +958,7 @@ class FirestoreService extends ChangeNotifier {
 
   Stream<List<ChatMessage>> streamChatMessages(String chatId) {
     if (_db == null) return Stream.value([]);
+    print('DEBUG: LISTENING TO CHAT MESSAGES FOR CHAT ID: $chatId');
     return _db!
         .collection('chats')
         .doc(chatId)
@@ -954,8 +970,9 @@ class FirestoreService extends ChangeNotifier {
             .toList());
   }
 
-  Future<void> sendMessage(String chatId, ChatMessage message) async {
+  Future<void> sendMessage(String chatId, ChatMessage message, {String? residenceId}) async {
     if (_db == null) throw Exception("Firestore not initialized");
+    print('DEBUG: SENDING MESSAGE TO CHAT ID: $chatId | TEXT: ${message.text}');
     final data = message.toJson();
     data['timestamp'] = FieldValue.serverTimestamp();
 
@@ -964,11 +981,16 @@ class FirestoreService extends ChangeNotifier {
         _db!.collection('chats').doc(chatId).collection('messages').doc();
     batch.set(msgDoc, data);
 
-    batch.update(_db!.collection('chats').doc(chatId), {
+    final updates = <String, dynamic>{
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastMessageText': message.text,
       if (message.isAdmin) 'hasUnreadStudent': true else 'hasUnreadAdmin': true,
-    });
+    };
+    if (residenceId != null && residenceId.isNotEmpty) {
+      updates['residenceId'] = residenceId;
+    }
+
+    batch.update(_db!.collection('chats').doc(chatId), updates);
 
     await batch.commit();
   }

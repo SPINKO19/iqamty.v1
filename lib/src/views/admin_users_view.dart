@@ -263,7 +263,7 @@ class _AdminUsersViewState extends State<AdminUsersView> {
     final bloc = student['bloc'] ?? '---';
     final room = student['room'] ?? student['chambre'] ?? '---';
     final isBanned = student['isBanned'] == true;
-    final userId = student['id'] ?? student['uid'];
+    final userId = student['matricule']?.toString() ?? student['uid']?.toString() ?? student['id']?.toString() ?? '';
 
     return Container(
       padding: const EdgeInsets.all(16),
