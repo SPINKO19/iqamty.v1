@@ -449,6 +449,24 @@ class ServiceRequest {
   }
 }
 
+class ActivityItem {
+  final String id;
+  final String title;
+  final String subtitle;
+  final DateTime timestamp;
+  final String status;
+  final String type; // 'complaint', 'request', 'notification', etc.
+  
+  ActivityItem({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.timestamp,
+    required this.status,
+    required this.type,
+  });
+}
+
 class ForumPost {
   final String? id;
   final String type;

@@ -181,7 +181,7 @@ class AppRouter {
               path: '/settings',
               pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
             ),
-            GoRoute(path: '/planning', pageBuilder: (context, state) => const NoTransitionPage(child: SportsProgramView())),
+            GoRoute(path: '/planning', pageBuilder: (context, state) => const NoTransitionPage(child: DocumentsView(initialTab: 1))),
             GoRoute(path: '/gym', pageBuilder: (context, state) => const NoTransitionPage(child: GymView())),
             GoRoute(path: '/weightlifting', pageBuilder: (context, state) => const NoTransitionPage(child: WeightliftingView())),
             GoRoute(path: '/hamam', pageBuilder: (context, state) => const NoTransitionPage(child: HamamView())),

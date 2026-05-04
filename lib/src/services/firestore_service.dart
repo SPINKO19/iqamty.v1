@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:async/async.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
@@ -459,6 +460,57 @@ class FirestoreService extends ChangeNotifier {
     });
   }
 
+  Stream<List<ActivityItem>> getRecentActivity(String userId, {String? residenceId}) {
+    final controller = StreamController<List<ActivityItem>>.broadcast();
+    List<ServiceRequest> lastRequests = [];
+    List<Complaint> lastComplaints = [];
+
+    void emit() {
+      final List<ActivityItem> combined = [];
+      combined.addAll(lastRequests
+        .where((r) => r.status != 'completed')
+        .map((r) => ActivityItem(
+          id: r.id ?? '',
+          title: r.category,
+          subtitle: r.description,
+          timestamp: r.createdAt,
+          status: r.status,
+          type: 'request',
+        )));
+      combined.addAll(lastComplaints
+        .where((c) => c.status != Status.resolved)
+        .map((c) => ActivityItem(
+          id: c.id ?? '',
+          title: c.title,
+          subtitle: c.description,
+          timestamp: c.timestamp,
+          status: c.status.name,
+          type: 'complaint',
+        )));
+      combined.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      if (!controller.isClosed) {
+        controller.add(combined.take(10).toList());
+      }
+    }
+
+    final s1 = getMyRequests(userId, residenceId: residenceId).listen((data) {
+      lastRequests = data;
+      emit();
+    });
+    final s2 = getMyComplaints(userId, residenceId: residenceId).listen((data) {
+      lastComplaints = data;
+      emit();
+    });
+
+    controller.onCancel = () {
+      s1.cancel();
+      s2.cancel();
+      controller.close();
+    };
+
+    return controller.stream;
+  }
+
   // 1. Admin assigns a request to a worker
   Future<void> assignRequestToWorker({
     required String requestId,
@@ -732,6 +784,7 @@ class FirestoreService extends ChangeNotifier {
     if (userId != null) {
       await createNotification(
         userId: userId,
+        residenceId: doc.data()?['residenceId'],
         title: 'Réponse à votre réclamation',
         body:
             'L\'administration a répondu à votre réclamation. Consultez les détails.',
@@ -756,6 +809,7 @@ class FirestoreService extends ChangeNotifier {
     if (userId != null) {
       await createNotification(
         userId: userId,
+        residenceId: doc.data()?['residenceId'],
         title: 'Réclamation prise en charge',
         body: 'Votre réclamation a été assignée à un membre du personnel.',
         type: 'approved',
@@ -768,7 +822,8 @@ class FirestoreService extends ChangeNotifier {
     required String userId,
     required String title,
     required String body,
-    required String type,
+    String? type,
+    String? residenceId,
   }) async {
     if (_db == null) return;
     await _db!.collection('notifications').add({
@@ -778,6 +833,7 @@ class FirestoreService extends ChangeNotifier {
       'type': type,
       'isRead': false,
       'isDeleted': false,
+      'residenceId': residenceId,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -795,7 +851,7 @@ class FirestoreService extends ChangeNotifier {
         .map((snapshot) => snapshot.docs
             .map((doc) => NotificationModel.fromJson(doc.data(), doc.id))
             .where((n) => n.isDeleted != true)
-            .where((n) => _checkResidenceMatch(n.residenceId, residenceId, allowGlobal: false))
+            .where((n) => _checkResidenceMatch(n.residenceId, residenceId, allowGlobal: true))
             .toList()
           ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
   }
@@ -839,7 +895,7 @@ class FirestoreService extends ChangeNotifier {
         .map((snap) => snap.docs
             .map((doc) => doc.data())
             .where((data) => data['isDeleted'] != true)
-            .where((data) => residenceId == null || residenceId.isEmpty || data['residenceId'] == residenceId || data['residenceId'] == null || data['residenceId'] == '')
+            .where((data) => residenceId == null || residenceId.isEmpty || data['residenceId'] == residenceId || data['residenceId'] == null || data['residenceId'] == '' || residenceId == 'all')
             .length);
   }
 

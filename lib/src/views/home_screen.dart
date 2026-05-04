@@ -47,6 +47,60 @@ class HomeScreen extends StatelessWidget {
               delegate: SliverChildListDelegate([
                 const SizedBox(height: 24),
 
+                // Quick Actions Grid
+                _buildSectionHeader(context, lp.getText('quick_actions_title'), lp),
+                const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = constraints.maxWidth > 800 ? 4 : 2;
+                    return GridView.count(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: constraints.maxWidth > 800 ? 1.5 : 1.25,
+                      children: [
+                        _QuickActionCard(
+                          title: lp.getText('complaints'),
+                          subtitle: lp.getText('report_problem'),
+                          icon: Icons.report_problem_rounded,
+                          color: const Color(0xFFEF4444),
+                          isDark: isDark,
+                          onTap: () => context.push('/complaints'),
+                        ),
+                        _QuickActionCard(
+                          title: lp.getText('restoration'),
+                          subtitle: lp.getText('menu_of_the_day'),
+                          icon: Icons.restaurant_rounded,
+                          color: const Color(0xFF10B981), 
+                          isDark: isDark,
+                          onTap: () => context.push('/dining'),
+                        ),
+                        _QuickActionCard(
+                          title: lp.getText('transport'),
+                          subtitle: lp.getText('technical_services'),
+                          icon: Icons.directions_bus_outlined,
+                          color: const Color(0xFF3B82F6),
+                          isDark: isDark,
+                          onTap: () => context.push('/transport'),
+                        ),
+                        _QuickActionCard(
+                          title: lp.getText('documents_and_programs'),
+                          subtitle: lp.getText('docs_and_certs'),
+                          icon: Icons.description_rounded,
+                          color: const Color(0xFF8B5CF6),
+                          isDark: isDark,
+                          onTap: () => context.push('/documents'),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 36),
+
                 // Announcements Section
                 _buildSectionHeader(context, lp.getText('recent_announcements'), lp, onPressed: () => context.push('/community')),
                 const SizedBox(height: 16),
@@ -73,97 +127,11 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 36),
 
-                // Quick Actions Grid
-                _buildSectionHeader(context, lp.getText('quick_actions_title'), lp),
-                const SizedBox(height: 16),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final crossAxisCount = constraints.maxWidth > 800 ? 4 : 2;
-                    return GridView.count(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: constraints.maxWidth > 800 ? 1.4 : 1.05,
-                      children: [
-                        StreamBuilder<List<Complaint>>(
-                          stream: firestore.getMyComplaints(student?.id?.toString() ?? '', residenceId: residenceId),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasError) {
-                              return _QuickActionCard(
-                                title: lp.getText('complaints'),
-                                subtitle: 'Erreur de chargement',
-                                icon: Icons.error_outline,
-                                color: Colors.grey,
-                                onTap: () => context.push('/complaints'),
-                                isDark: isDark,
-                              );
-                            }
-                            final count = snapshot.data?.where((c) => c.status != Status.resolved).length ?? 0;
-                            return _QuickActionCard(
-                              title: lp.getText('complaints'),
-                              subtitle: lp.getText('report_problem'),
-                              icon: Icons.report_problem_rounded,
-                              color: const Color(0xFFEF4444),
-                              badgeCount: count,
-                              isDark: isDark,
-                              onTap: () => context.push('/complaints'),
-                            );
-                          },
-                        ),
-                        _QuickActionCard(
-                          title: lp.getText('restoration'),
-                          subtitle: lp.getText('menu_of_the_day'),
-                          icon: Icons.restaurant_rounded,
-                          color: const Color(0xFF10B981), 
-                          isDark: isDark,
-                          onTap: () => context.push('/dining'),
-                        ),
-                        StreamBuilder<List<ServiceRequest>>(
-                          stream: firestore.getMyRequests(student?.id?.toString() ?? '', residenceId: residenceId),
-                          builder: (context, snapshot) {
-                            final count = snapshot.data?.where((r) => r.status != 'completed').length ?? 0;
-                            return _QuickActionCard(
-                              title: lp.getText('transport'),
-                              subtitle: lp.getText('technical_services'),
-                              icon: Icons.directions_bus_outlined,
-                              color: const Color(0xFF3B82F6),
-                              badgeCount: count,
-                              isDark: isDark,
-                              onTap: () => context.push('/transport'),
-                            );
-                          },
-                        ),
-                        _QuickActionCard(
-                          title: lp.getText('documents_and_programs'),
-                          subtitle: lp.getText('docs_and_certs'),
-                          icon: Icons.description_rounded,
-                          color: const Color(0xFF8B5CF6),
-                          isDark: isDark,
-                          onTap: () => context.push('/documents'),
-                        ),
-                        _QuickActionCard(
-                          title: lp.getText('planning'),
-                          subtitle: lp.getText('sports_subtitle'),
-                          icon: Icons.calendar_month_rounded,
-                          color: const Color(0xFFF59E0B),
-                          isDark: isDark,
-                          onTap: () => context.push('/planning'),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 36),
-
                 // Recent Activity
                 _buildSectionHeader(context, lp.getText('recent_activity') == 'recent_activity' ? 'Activité récente' : lp.getText('recent_activity'), lp),
                 const SizedBox(height: 16),
-                StreamBuilder<List<ServiceRequest>>(
-                  stream: firestore.getMyRequests(student?.id?.toString() ?? '', residenceId: residenceId),
+                StreamBuilder<List<ActivityItem>>(
+                  stream: firestore.getRecentActivity(student?.matricule ?? auth.currentUserData?['uid'] ?? '', residenceId: residenceId),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) return const Center(child: Text('Erreur d\'activité'));
                     final activities = snapshot.data ?? [];
@@ -179,14 +147,13 @@ class HomeScreen extends StatelessWidget {
                       );
                     }
                     
-                    final recent = activities.take(5).toList();
                     return ListView.separated(
                       padding: EdgeInsets.zero,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: recent.length,
+                      itemCount: activities.length,
                       separatorBuilder: (context, index) => const SizedBox(height: 16),
-                      itemBuilder: (context, index) => _ActivityListItem(request: recent[index], isDark: isDark),
+                      itemBuilder: (context, index) => _ActivityListItem(item: activities[index], isDark: isDark),
                     );
                   },
                 ),
@@ -234,7 +201,7 @@ class HomeScreen extends StatelessWidget {
               ),
               // Notification Bell
               StreamBuilder<int>(
-                stream: firestore.getUnreadNotificationsCount(auth.currentStudent?.id?.toString() ?? auth.currentUserData?['id']?.toString() ?? ''),
+                stream: firestore.getUnreadNotificationsCount(auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? ''),
                 builder: (context, snapshot) {
                   final count = snapshot.data ?? 0;
                   return Stack(
@@ -612,15 +579,30 @@ class _AnnouncementCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  String _formatTimeAgo(DateTime time, BuildContext context) {
-    final lp = context.read<LanguageProvider>();
-    final diff = DateTime.now().difference(time);
-    if (diff.inDays > 0) return '${lp.getText('ago_prefix')} ${diff.inDays}${lp.getText('days_unit')}';
-    if (diff.inHours > 0) return '${lp.getText('ago_prefix')} ${diff.inHours}${lp.getText('hours_unit')}';
-    if (diff.inMinutes > 0) return '${lp.getText('ago_prefix')} ${diff.inMinutes}${lp.getText('minutes_unit')}';
+String _formatTimeAgo(DateTime time, BuildContext context) {
+  final lp = context.read<LanguageProvider>();
+  final diff = DateTime.now().difference(time);
+  final String prefix = lp.getText('ago_prefix');
+  final String suffix = lp.getText('ago_suffix');
+  
+  String timeStr = '';
+  if (diff.inDays > 0) {
+    timeStr = '${diff.inDays}${lp.getText('days_unit')}';
+  } else if (diff.inHours > 0) {
+    timeStr = '${diff.inHours}${lp.getText('hours_unit')}';
+  } else if (diff.inMinutes > 0) {
+    timeStr = '${diff.inMinutes}${lp.getText('minutes_unit')}';
+  } else {
     return lp.getText('just_now');
   }
+
+  String res = "";
+  if (prefix.isNotEmpty) res += "$prefix ";
+  res += timeStr;
+  if (suffix.isNotEmpty && suffix != 'ago_suffix') res += " $suffix";
+  return res;
 }
 
 class _QuickActionCard extends StatelessWidget {
@@ -647,7 +629,7 @@ class _QuickActionCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: context.appCard,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: isDark ? null : [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -660,11 +642,11 @@ class _QuickActionCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -677,7 +659,7 @@ class _QuickActionCard extends StatelessWidget {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: color.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(icon, color: color, size: 20),
                         ),
@@ -733,17 +715,19 @@ class _QuickActionCard extends StatelessWidget {
 }
 
 class _ActivityListItem extends StatelessWidget {
-  final ServiceRequest request;
+  final ActivityItem item;
   final bool isDark;
   
-  const _ActivityListItem({required this.request, required this.isDark});
+  const _ActivityListItem({required this.item, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     Color dotColor = Colors.orange; 
-    if (request.status.toLowerCase() == 'completed' || request.status.toLowerCase() == 'resolved') {
+    final status = item.status.toLowerCase();
+    
+    if (status == 'completed' || status == 'resolved' || status == 'done') {
       dotColor = Colors.green;
-    } else if (request.status.toLowerCase() == 'inprogress' || request.status.toLowerCase() == 'reviewed') {
+    } else if (status == 'inprogress' || status == 'reviewed') {
       dotColor = const Color(0xFF2D6A4F); 
     }
 
@@ -766,7 +750,7 @@ class _ActivityListItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  request.category,
+                  item.title,
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -775,7 +759,7 @@ class _ActivityListItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  request.description,
+                  item.subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
@@ -788,7 +772,7 @@ class _ActivityListItem extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            _formatTimeAgo(request.createdAt, context),
+            _formatTimeAgo(item.timestamp, context),
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w500,
@@ -798,14 +782,5 @@ class _ActivityListItem extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatTimeAgo(DateTime time, BuildContext context) {
-    final lp = context.read<LanguageProvider>();
-    final diff = DateTime.now().difference(time);
-    if (diff.inDays > 0) return '${diff.inDays}${lp.getText('days_unit')}';
-    if (diff.inHours > 0) return '${diff.inHours}${lp.getText('hours_unit')}';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}${lp.getText('minutes_unit')}';
-    return lp.getText('just_now');
   }
 }

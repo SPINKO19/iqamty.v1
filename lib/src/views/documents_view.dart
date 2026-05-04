@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../components/custom_menu_button.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
@@ -10,7 +11,8 @@ import '../providers/auth_provider.dart';
 import '../models/types.dart';
 
 class DocumentsView extends StatefulWidget {
-  const DocumentsView({super.key});
+  final int initialTab;
+  const DocumentsView({super.key, this.initialTab = 0});
 
   @override
   State<DocumentsView> createState() => _DocumentsViewState();
@@ -22,7 +24,7 @@ class _DocumentsViewState extends State<DocumentsView> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTab);
   }
 
   @override
@@ -105,35 +107,67 @@ class _DocumentsViewState extends State<DocumentsView> with SingleTickerProvider
 
         final items = snapshot.data ?? [];
 
-        if (items.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  contentType == 'document' ? Icons.folder_open_outlined : Icons.event_busy_outlined,
-                  size: 60,
-                  color: context.appTextSecondary.withValues(alpha: 0.3),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  contentType == 'document' ? lp.getText('no_documents_msg') : 'Aucun programme disponible',
-                  style: GoogleFonts.inter(fontSize: 15, color: context.appTextSecondary, fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return ListView.builder(
+        return ListView(
           padding: const EdgeInsets.all(20),
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return contentType == 'document' 
+          physics: const BouncingScrollPhysics(),
+          children: [
+            if (contentType == 'program') ...[
+              _buildStaticMenuCard(
+                context, 
+                lp.getText('gym_schedule'), 
+                lp.getText('gym'), 
+                Icons.sports_basketball_rounded, 
+                const Color(0xFF3B82F6),
+                () => context.push('/gym'),
+              ),
+              const SizedBox(height: 16),
+              _buildStaticMenuCard(
+                context, 
+                lp.getText('weightlifting_schedule'), 
+                lp.getText('weightlifting_room'), 
+                Icons.fitness_center_rounded, 
+                const Color(0xFF10B981),
+                () => context.push('/weightlifting'),
+              ),
+              const SizedBox(height: 16),
+              _buildStaticMenuCard(
+                context, 
+                lp.getText('hamam_schedule'), 
+                lp.getText('showers'), 
+                Icons.shower_rounded, 
+                const Color(0xFFF59E0B),
+                () => context.push('/hamam'),
+              ),
+              if (items.isNotEmpty) const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Divider(),
+              ),
+            ],
+            
+            if (items.isEmpty && contentType == 'document')
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 100),
+                    Icon(
+                      Icons.folder_open_outlined,
+                      size: 60,
+                      color: context.appTextSecondary.withValues(alpha: 0.3),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      lp.getText('no_documents_msg'),
+                      style: GoogleFonts.inter(fontSize: 15, color: context.appTextSecondary, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            
+            ...items.map((item) => contentType == 'document' 
               ? _buildDocCard(context, item, lp)
-              : _buildProgramCard(context, item, lp);
-          },
+              : _buildProgramCard(context, item, lp)).toList(),
+          ],
         );
       },
     );
@@ -245,6 +279,70 @@ class _DocumentsViewState extends State<DocumentsView> with SingleTickerProvider
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildStaticMenuCard(BuildContext context, String title, String subtitle, IconData icon, Color iconBg, VoidCallback onTap) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.appBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: iconBg.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(icon, color: iconBg, size: 28),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: context.appTextPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: context.appTextSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: context.appTextSecondary),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -37,7 +37,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final auth = context.watch<AuthProvider>();
     final firestore = context.watch<FirestoreService>();
-    final userId = auth.currentUserData?['uid'] ?? '';
+    final userId = auth.currentStudent?.matricule ?? auth.currentUserData?['uid'] ?? '';
     final residenceId = auth.currentResidenceId;
 
     return Scaffold(
@@ -348,8 +348,10 @@ class _NotificationCard extends StatelessWidget {
         return {'icon': Icons.error_outline_rounded, 'color': const Color(0xFFF59E0B)}; // Amber
       case 'rejected':
         return {'icon': Icons.cancel_outlined, 'color': const Color(0xFFEF4444)}; // Red
+      case 'resolved':
+        return {'icon': Icons.check_circle_rounded, 'color': const Color(0xFF10B981)}; // Green
       case 'reservation':
-        return {'icon': Icons.check_circle_outline, 'color': const Color(0xFF10B981)}; // Green
+        return {'icon': Icons.calendar_today_rounded, 'color': const Color(0xFF3B82F6)}; // Blue
       default:
         return {'icon': Icons.info_outline_rounded, 'color': const Color(0xFF6B7280)}; // Gray
     }
