@@ -47,16 +47,16 @@ class AdminComplaintsView extends StatelessWidget {
 
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  final cardsPerRow = constraints.maxWidth > 800 ? 2 : 1;
+                  final isDesktop = constraints.maxWidth > 800;
                   return GridView.builder(
                     padding: EdgeInsets.zero,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: cardsPerRow,
+                      crossAxisCount: isDesktop ? 2 : 1,
                       crossAxisSpacing: 24,
                       mainAxisSpacing: 24,
-                      childAspectRatio: cardsPerRow == 2 ? 1.6 : 1.3,
+                      mainAxisExtent: 340, // Fixed small height to keep them uniform
                     ),
                     itemCount: complaints.length,
                     itemBuilder: (context, index) => _AdminComplaintCard(complaint: complaints[index]),

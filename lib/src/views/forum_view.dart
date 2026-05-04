@@ -14,6 +14,7 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/storage_service.dart';
 import 'dart:io';
+import 'package:go_router/go_router.dart';
 
 extension StringExtension on String {
   String capitalize() => "${this[0].toUpperCase()}${substring(1)}";
@@ -35,6 +36,7 @@ class ForumView extends StatelessWidget {
   Widget build(BuildContext context) {
     final lp = context.watch<LanguageProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isAdminRoute = GoRouterState.of(context).uri.path.startsWith('/admin');
 
     return DefaultTabController(
       length: 3,
@@ -43,7 +45,8 @@ class ForumView extends StatelessWidget {
         appBar: AppBar(
           elevation: 0,
           backgroundColor: context.appBackground,
-          leading: Padding(
+          toolbarHeight: isAdminRoute ? 0 : kToolbarHeight,
+          leading: isAdminRoute ? null : Padding(
             padding: const EdgeInsets.all(8.0),
             child: CustomMenuButton(
               backgroundColor: isDark 
@@ -52,7 +55,7 @@ class ForumView extends StatelessWidget {
               iconColor: isDark ? Colors.white : AppColors.primary,
             ),
           ),
-          title: Text(
+          title: isAdminRoute ? const SizedBox.shrink() : Text(
             lp.getText('community'),
             style: GoogleFonts.outfit(
               fontWeight: FontWeight.bold,
@@ -62,7 +65,7 @@ class ForumView extends StatelessWidget {
           ),
           centerTitle: true,
           bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(50),
+            preferredSize: const Size.fromHeight(60),
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: BoxDecoration(

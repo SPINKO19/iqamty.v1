@@ -44,7 +44,8 @@ class AdminShell extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                    _AdminHeader(isDesktop: isDesktop),
+                    if (GoRouterState.of(context).uri.path != '/admin/notifications')
+                      _AdminHeader(isDesktop: isDesktop),
                     Expanded(
                       child: child,
                     ),

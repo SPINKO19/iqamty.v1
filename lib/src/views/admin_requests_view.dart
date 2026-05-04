@@ -65,7 +65,7 @@ class AdminRequestsView extends StatelessWidget {
                       crossAxisCount: cardsPerRow,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      mainAxisExtent: 215,
+                      mainAxisExtent: 260,
                     ),
                     itemCount: requests.length,
                     itemBuilder: (context, index) => _buildRequestCard(context, requests[index], firestore),

@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../services/notification_service.dart';
 
 import '../components/custom_menu_button.dart';
+import 'package:go_router/go_router.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -31,10 +32,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final languageProvider = context.watch<LanguageProvider>();
     final textTheme = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isAdminRoute = GoRouterState.of(context).uri.path.startsWith('/admin');
 
     return Scaffold(
       backgroundColor: context.appBackground,
-      appBar: AppBar(
+      appBar: isAdminRoute ? null : AppBar(
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: CustomMenuButton(
