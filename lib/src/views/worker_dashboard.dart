@@ -76,8 +76,10 @@ class WorkerDashboard extends StatelessWidget {
               final department = auth.currentUserData?['department'];
               final pendingComplaints = allComplaints.where((c) {
                 if (c.status == Status.resolved) return false;
+                // Exclude complaints submitted by this worker
+                if (c.userId == userId) return false;
                 if (department == 'Sécurité' && c.category == 'Sécurité') return true;
-                return true; // Default show all pending to all workers? Or filter by department?
+                return true;
               }).toList();
               
               // Sort urgent first
@@ -100,7 +102,7 @@ class WorkerDashboard extends StatelessWidget {
                       style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5),
                     ),
                     const SizedBox(height: 16),
-                    _buildWorkerStats(context, lp, tasks, pendingComplaints),
+                    _buildWorkerStats(context, lp, tasks, allComplaints, pendingComplaints, firestore),
                     const SizedBox(height: 32),
                     Text(
                       lp.getText('my_assigned_tasks') == 'my_assigned_tasks' ? 'Mes tâches assignées' : lp.getText('my_assigned_tasks'),
@@ -162,39 +164,115 @@ class WorkerDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildWorkerStats(BuildContext context, LanguageProvider lp, List<ServiceRequest> tasks, List<Complaint> pendingComplaints) {
-    final done = tasks.where((t) => t.status.toLowerCase() == 'completed' || t.status.toLowerCase() == 'resolved').length;
-    final toDo = tasks.length - done + pendingComplaints.length;
+  Widget _buildWorkerStats(BuildContext context, LanguageProvider lp, List<ServiceRequest> tasks, List<Complaint> allComplaints, List<Complaint> pendingComplaints, FirestoreService firestore) {
+    final doneTasks = tasks.where((t) => t.status.toLowerCase() == 'completed' || t.status.toLowerCase() == 'resolved' || t.status.toLowerCase() == 'done').toList();
+    final doneComplaints = allComplaints.where((c) => c.status == Status.resolved).toList();
+    
+    final toDo = tasks.length - doneTasks.length + pendingComplaints.length;
 
     return Row(
       children: [
         _buildStatItem(context, lp.getText('to_do') == 'to_do' ? 'À faire' : lp.getText('to_do'), toDo.toString(), const Color(0xFFF4A261)),
         const SizedBox(width: 12),
-        _buildStatItem(context, lp.getText('done_tasks') == 'done_tasks' ? 'Terminées' : lp.getText('done_tasks'), done.toString(), const Color(0xFF10B981)),
+        _buildStatItem(context, lp.getText('done_tasks') == 'done_tasks' ? 'Terminées' : lp.getText('done_tasks'), (doneTasks.length + doneComplaints.length).toString(), const Color(0xFF10B981), onTap: () {
+          _showHistoryModal(context, lp, doneTasks, doneComplaints, firestore);
+        }),
       ],
     );
   }
 
-  Widget _buildStatItem(BuildContext context, String label, String value, Color color) {
+  Widget _buildStatItem(BuildContext context, String label, String value, Color color, {VoidCallback? onTap}) {
     final isDark = context.isDark;
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: context.appCard,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: isDark ? null : [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
-          ],
-        ),
-        child: Column(
-          children: [
-            Text(value, style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w900, color: color, letterSpacing: -1)),
-            const SizedBox(height: 4),
-            Text(label, style: GoogleFonts.inter(color: context.appTextSecondary, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.5)),
-          ],
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: context.appCard,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: isDark ? null : [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 5)),
+              ],
+            ),
+            child: Column(
+              children: [
+                Text(value, style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w900, color: color, letterSpacing: -1)),
+                const SizedBox(height: 4),
+                Text(label, style: GoogleFonts.inter(color: context.appTextSecondary, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.5)),
+              ],
+            ),
+          ),
         ),
       ),
+    );
+  }
+
+  void _showHistoryModal(BuildContext context, LanguageProvider lp, List<ServiceRequest> doneTasks, List<Complaint> doneComplaints, FirestoreService firestore) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: BoxDecoration(
+            color: context.appCard,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("HISTORIQUE DES TÂCHES", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1)),
+                        IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    if (doneTasks.isEmpty && doneComplaints.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(40.0),
+                          child: Text("Aucun historique disponible", style: GoogleFonts.inter(color: context.appTextSecondary)),
+                        ),
+                      ),
+                    if (doneTasks.isNotEmpty) ...[
+                      Text("Demandes", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+                      const SizedBox(height: 12),
+                      ...doneTasks.map((task) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildTaskCard(context, task, const Color(0xFF10B981), firestore),
+                      )),
+                      const SizedBox(height: 24),
+                    ],
+                    if (doneComplaints.isNotEmpty) ...[
+                      Text("Réclamations", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: context.appTextPrimary)),
+                      const SizedBox(height: 12),
+                      ...doneComplaints.map((complaint) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildComplaintCard(context, complaint, firestore),
+                      )),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -524,7 +602,7 @@ class WorkerDashboard extends StatelessWidget {
                 department: deptController.text.trim(),
               );
               await firestore.submitComplaint(complaint, residenceId: residenceId);
-              if (context.mounted) Navigator.pop(ctx);
+              if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text('Envoyer'),
           ),
