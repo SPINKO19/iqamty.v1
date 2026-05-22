@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
 import '../services/firestore_service.dart';
+import '../services/cloudinary_service.dart';
 import '../providers/auth_provider.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
-import 'dart:io';
 import 'dart:math' as math;
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AdminDocumentsView extends StatefulWidget {
   const AdminDocumentsView({super.key});
@@ -81,31 +80,18 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> with SingleTick
     });
 
     try {
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_pickedFile!.name}';
-      final storageRef = FirebaseStorage.instance.ref().child('documents/$fileName');
-      
-      UploadTask uploadTask;
-      if (kIsWeb) {
-        uploadTask = storageRef.putData(_pickedFile!.bytes!);
-      } else {
-        uploadTask = storageRef.putFile(File(_pickedFile!.path!));
-      }
+      final xFile = XFile.fromData(
+        _pickedFile!.bytes!,
+        name: _pickedFile!.name,
+      );
+      final downloadUrl = await CloudinaryService.uploadFile(xFile);
 
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        if (mounted) {
-          setState(() {
-            _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
-          });
-        }
-      });
-
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
+      if (downloadUrl == null) throw Exception('Cloudinary upload returned null');
 
       if (!mounted) return;
       final auth = context.read<AuthProvider>();
       final firestore = context.read<FirestoreService>();
-      
+
       await firestore.addDocument(
         title: _pickedFile!.name,
         type: _pickedFile!.extension?.toLowerCase() ?? 'unknown',
@@ -158,20 +144,12 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> with SingleTick
       String? fileSize;
 
       if (_pickedFile != null) {
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_pickedFile!.name}';
-        final storageRef = FirebaseStorage.instance.ref().child('programs/$fileName');
-        final uploadTask = kIsWeb ? storageRef.putData(_pickedFile!.bytes!) : storageRef.putFile(File(_pickedFile!.path!));
-        
-        uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-          if (mounted) {
-            setState(() {
-              _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
-            });
-          }
-        });
-
-        final snapshot = await uploadTask;
-        downloadUrl = await snapshot.ref.getDownloadURL();
+        final xFile = XFile.fromData(
+          _pickedFile!.bytes!,
+          name: _pickedFile!.name,
+        );
+        downloadUrl = await CloudinaryService.uploadFile(xFile);
+        if (downloadUrl == null) throw Exception('Cloudinary upload returned null');
         fileType = _pickedFile!.extension?.toLowerCase();
         fileSize = _formatBytes(_pickedFile!.size);
       }
@@ -630,9 +608,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> with SingleTick
     try {
       final firestore = context.read<FirestoreService>();
       await firestore.deleteDocument(docId);
-      if (url.isNotEmpty) {
-        await FirebaseStorage.instance.refFromURL(url).delete();
-      }
+      // File is hosted on Cloudinary — deletion from storage is handled separately if needed
       if (mounted) {
         messenger.showSnackBar(const SnackBar(content: Text('Supprimé avec succès')));
       }

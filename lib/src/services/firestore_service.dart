@@ -21,7 +21,7 @@ class FirestoreService extends ChangeNotifier {
 
     // 2. User has no residence: They should only see system-global items (if allowed). They do NOT get to see everything.
     if (queryResidenceId == null || queryResidenceId.isEmpty) {
-      return allowGlobal && (itemResidenceId == null || itemResidenceId.isEmpty);
+      return allowGlobal && (itemResidenceId == null || itemResidenceId.isEmpty || itemResidenceId == 'all');
     }
 
     // 3. User has a specific residence: They see their own items.
@@ -34,7 +34,7 @@ class FirestoreService extends ChangeNotifier {
     }
 
     // 4. They can also see global items (like system-wide announcements) if allowed.
-    if (allowGlobal && (itemResidenceId == null || itemResidenceId.isEmpty)) return true;
+    if (allowGlobal && (itemResidenceId == null || itemResidenceId.isEmpty || itemResidenceId == 'all')) return true;
 
     return false;
   }

@@ -37,9 +37,7 @@ class _DocumentsViewState extends State<DocumentsView> with SingleTickerProvider
     if (url.isEmpty) return;
     final uri = Uri.parse(url);
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
       debugPrint('Error opening document: $e');
     }
@@ -81,6 +79,7 @@ class _DocumentsViewState extends State<DocumentsView> with SingleTickerProvider
       ),
       body: TabBarView(
         controller: _tabController,
+        physics: const NeverScrollableScrollPhysics(),
         children: [
           _buildContentList(context, 'document', lp),
           _buildContentList(context, 'program', lp),
@@ -101,8 +100,25 @@ class _DocumentsViewState extends State<DocumentsView> with SingleTickerProvider
         contentType: contentType,
       ),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
           return const Center(child: CircularProgressIndicator(color: Color(0xFF2D6A4F)));
+        }
+
+        if (snapshot.hasError) {
+          debugPrint('Documents stream error: ${snapshot.error}');
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline_rounded, size: 48, color: context.appTextSecondary.withValues(alpha: 0.4)),
+                const SizedBox(height: 12),
+                Text(
+                  lp.getText('no_documents_msg'),
+                  style: GoogleFonts.inter(fontSize: 14, color: context.appTextSecondary),
+                ),
+              ],
+            ),
+          );
         }
 
         final items = snapshot.data ?? [];
@@ -354,6 +370,7 @@ class _DocumentsViewState extends State<DocumentsView> with SingleTickerProvider
         backgroundColor: const Color(0xFF2D6A4F).withValues(alpha: 0.1),
         foregroundColor: const Color(0xFF2D6A4F),
         elevation: 0,
+        minimumSize: const Size(60, 36),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

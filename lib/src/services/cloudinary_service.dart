@@ -3,18 +3,17 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
+import '../config/cloudinary_config.dart';
+
 class CloudinaryService {
-  static const String cloudName = 'ddwviwsos';
-  static const String uploadPreset = 'iqamty';
-  static const String folder = 'iqamty/downloads'; // Or uploads
-  static const String _uploadUrl = 'https://api.cloudinary.com/v1_1/$cloudName/image/upload';
+  static const String _uploadUrl = 'https://api.cloudinary.com/v1_1/${CloudinaryConfig.cloudName}/image/upload';
 
   /// Uploads an image using XFile (works on web and mobile)
   static Future<String?> uploadImage(XFile file) async {
     try {
       final request = http.MultipartRequest('POST', Uri.parse(_uploadUrl));
-      request.fields['upload_preset'] = uploadPreset;
-      request.fields['folder'] = 'iqamty/uploads';
+      request.fields['upload_preset'] = CloudinaryConfig.uploadPreset;
+      request.fields['folder'] = CloudinaryConfig.folder;
 
       // Read bytes so it works on web as well
       final bytes = await file.readAsBytes();
@@ -48,10 +47,10 @@ class CloudinaryService {
     try {
       // For non-image files, the endpoint often is /auto/upload or /raw/upload
       // Here we'll try /auto/upload and let Cloudinary handle the detection.
-      const url = 'https://api.cloudinary.com/v1_1/$cloudName/auto/upload';
+      const url = 'https://api.cloudinary.com/v1_1/${CloudinaryConfig.cloudName}/auto/upload';
       final request = http.MultipartRequest('POST', Uri.parse(url));
-      request.fields['upload_preset'] = uploadPreset;
-      request.fields['folder'] = 'iqamty/uploads';
+      request.fields['upload_preset'] = CloudinaryConfig.uploadPreset;
+      request.fields['folder'] = CloudinaryConfig.folder;
 
       final bytes = await file.readAsBytes();
       request.files.add(

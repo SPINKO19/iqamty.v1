@@ -101,6 +101,9 @@ class LanguageProvider extends ChangeNotifier {
     'program_file_optional': 'Attachment (Optional)',
     'send_program': 'Send Program',
     'delete_program_confirm': 'Are you sure you want to delete this program?',
+    'open': 'Open',
+    'download': 'Download',
+    'no_documents_msg': 'No documents available yet.',
 
     'menu_today': "Today's Menu",
     'lunch': 'Lunch',
@@ -502,6 +505,9 @@ class LanguageProvider extends ChangeNotifier {
     'program_file_optional': 'Pièce jointe (Optionnel)',
     'send_program': 'Envoyer le Programme',
     'delete_program_confirm': 'Voulez-vous vraiment supprimer ce programme ?',
+    'open': 'Ouvrir',
+    'download': 'Télécharger',
+    'no_documents_msg': 'Aucun document disponible pour le moment.',
 
     'menu_today': "Menu d'aujourd'hui",
     'lunch': 'Déjeuner',
@@ -897,6 +903,9 @@ class LanguageProvider extends ChangeNotifier {
     'program_file_optional': 'مرفق (اختياري)',
     'send_program': 'إرسال البرنامج',
     'delete_program_confirm': 'هل أنت متأكد من حذف هذا البرنامج؟',
+    'open': 'فتح',
+    'download': 'تحميل',
+    'no_documents_msg': 'لا توجد وثائق متاحة حالياً.',
 
     'menu_today': 'قائمة اليوم',
     'lunch': 'الغداء',
