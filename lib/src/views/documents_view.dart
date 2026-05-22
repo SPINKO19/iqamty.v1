@@ -154,6 +154,15 @@ class _DocumentsViewState extends State<DocumentsView> with SingleTickerProvider
                 const Color(0xFFF59E0B),
                 () => context.push('/hamam'),
               ),
+              const SizedBox(height: 16),
+              _buildStaticMenuCard(
+                context, 
+                lp.getText('transport_schedule'), 
+                lp.getText('transport'), 
+                Icons.directions_bus_rounded, 
+                const Color(0xFF3B82F6),
+                () => context.push('/transport'),
+              ),
               if (items.isNotEmpty) const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: Divider(),

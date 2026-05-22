@@ -314,6 +314,8 @@ class TransportSchedule {
   final String time;
   final String? from;
   final String? to;
+  final String? busNumber;
+  final String? residenceId;
 
   TransportSchedule({
     this.id,
@@ -321,6 +323,8 @@ class TransportSchedule {
     required this.time,
     this.from,
     this.to,
+    this.busNumber,
+    this.residenceId,
   });
 
   factory TransportSchedule.fromJson(Map<String, dynamic> json) {
@@ -330,6 +334,8 @@ class TransportSchedule {
       time: json['time'] ?? '',
       from: json['from'],
       to: json['to'],
+      busNumber: json['busNumber'],
+      residenceId: json['residenceId'],
     );
   }
 
@@ -339,6 +345,8 @@ class TransportSchedule {
       'time': time,
       'from': from,
       'to': to,
+      'busNumber': busNumber,
+      'residenceId': residenceId,
     };
   }
 }

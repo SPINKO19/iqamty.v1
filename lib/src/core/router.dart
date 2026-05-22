@@ -37,6 +37,8 @@ import '../views/admin_dining_config_view.dart';
 import '../views/gym_view.dart';
 import '../views/weightlifting_view.dart';
 import '../views/hamam_view.dart';
+import '../views/transport_view.dart';
+import '../views/admin_transport_view.dart';
 import '../views/admin_chat_list_view.dart';
 import '../models/types.dart';
 
@@ -126,7 +128,7 @@ class AppRouter {
             GoRoute(path: '/dining', pageBuilder: (context, state) => const NoTransitionPage(child: DiningView())),
             GoRoute(path: '/complaints', pageBuilder: (context, state) => const NoTransitionPage(child: ComplaintsView())),
           GoRoute(path: '/requests', pageBuilder: (context, state) => const NoTransitionPage(child: RequestsView())),
-          GoRoute(path: '/transport', pageBuilder: (context, state) => const NoTransitionPage(child: PlaceholderScreen(title: 'Transport'))),
+          GoRoute(path: '/transport', pageBuilder: (context, state) => const NoTransitionPage(child: TransportView())),
           GoRoute(path: '/sports', pageBuilder: (context, state) => const NoTransitionPage(child: SportsProgramView())),
           GoRoute(path: '/notifications', pageBuilder: (context, state) => const NoTransitionPage(child: NotificationsView())),
           GoRoute(path: '/documents', pageBuilder: (context, state) => const NoTransitionPage(child: DocumentsView())),
@@ -211,6 +213,7 @@ class AppRouter {
               },
             ),
             GoRoute(path: '/admin/documents', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDocumentsView())),
+            GoRoute(path: '/admin/transport', pageBuilder: (context, state) => const NoTransitionPage(child: AdminTransportView())),
             GoRoute(path: '/admin/resources', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Resources'))),
             GoRoute(path: '/admin/dining', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Dining Config'))),
             GoRoute(path: '/admin/dining-config', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDiningConfigView())),

@@ -739,12 +739,28 @@ class FirestoreService extends ChangeNotifier {
 
 
   // Transport
-  Stream<List<TransportSchedule>> getTransportSchedules() {
+  Stream<List<TransportSchedule>> getTransportSchedules({String? residenceId}) {
     if (_db == null) return Stream.value([]);
-    return _db!.collection('transport').snapshots().map((snapshot) => snapshot
-        .docs
-        .map((doc) => TransportSchedule.fromJson(doc.data()..['id'] = doc.id))
-        .toList());
+    return _db!.collection('transport').snapshots().map((snapshot) {
+      return snapshot.docs
+          .map((doc) => TransportSchedule.fromJson(doc.data()..['id'] = doc.id))
+          .where((s) => _checkResidenceMatch(s.residenceId, residenceId, allowGlobal: true))
+          .toList();
+    });
+  }
+
+  Future<void> addTransportSchedule(TransportSchedule schedule, {String? residenceId}) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    final data = schedule.toJson();
+    if (residenceId != null && residenceId.isNotEmpty) {
+      data['residenceId'] = residenceId;
+    }
+    await _db!.collection('transport').add(data);
+  }
+
+  Future<void> deleteTransportSchedule(String id) async {
+    if (_db == null) throw Exception("Firestore not initialized");
+    await _db!.collection('transport').doc(id).delete();
   }
 
   // Complaints (Admin/Worker)
