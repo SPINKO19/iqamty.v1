@@ -180,9 +180,8 @@ class _DocumentsViewState extends State<DocumentsView> with SingleTickerProvider
                 ),
               ),
             
-            ...items.map((item) => contentType == 'document' 
-              ? _buildDocCard(context, item, lp)
-              : _buildProgramCard(context, item, lp)).toList(),
+            if (contentType == 'document')
+              ...items.map((item) => _buildDocCard(context, item, lp)).toList(),
           ],
         );
       },
@@ -218,82 +217,6 @@ class _DocumentsViewState extends State<DocumentsView> with SingleTickerProvider
             ),
           ),
           _buildOpenButton(doc.fileUrl, lp),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgramCard(BuildContext context, DocumentModel program, LanguageProvider lp) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: context.appCard,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: context.appBorder),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 6)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.event_note_rounded, color: Colors.orange, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(program.title, style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: context.appTextPrimary)),
-                    if (program.schedule != null && program.schedule!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.access_time_rounded, size: 14, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text(program.schedule!, style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (program.description != null && program.description!.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(program.description!, style: GoogleFonts.inter(color: context.appTextPrimary.withValues(alpha: 0.8), fontSize: 13, height: 1.5)),
-          ],
-          if (program.fileUrl.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: context.appBackground, borderRadius: BorderRadius.circular(12), border: Border.all(color: context.appBorder)),
-                    child: Row(
-                      children: [
-                        Icon(_getSmallIconForType(program.fileType), size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(program.title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                        const SizedBox(width: 8),
-                        Text(program.fileSize, style: TextStyle(fontSize: 10, color: context.appTextSecondary)),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                _buildOpenButton(program.fileUrl, lp),
-              ],
-            ),
-          ],
         ],
       ),
     );

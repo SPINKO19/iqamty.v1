@@ -13,7 +13,6 @@ class CloudinaryService {
     try {
       final request = http.MultipartRequest('POST', Uri.parse(_uploadUrl));
       request.fields['upload_preset'] = CloudinaryConfig.uploadPreset;
-      request.fields['folder'] = CloudinaryConfig.folder;
 
       // Read bytes so it works on web as well
       final bytes = await file.readAsBytes();
@@ -33,11 +32,11 @@ class CloudinaryService {
       } else {
         final err = await response.stream.bytesToString();
         debugPrint('Cloudinary upload failed: ${response.statusCode} - $err');
-        return null;
+        throw Exception(err);
       }
     } catch (e) {
-      debugPrint('Exception during Cloudinary upload: $e');
-      return null;
+        debugPrint('Exception during Cloudinary upload: $e');
+        rethrow;
     }
   }
 
@@ -50,7 +49,6 @@ class CloudinaryService {
       const url = 'https://api.cloudinary.com/v1_1/${CloudinaryConfig.cloudName}/auto/upload';
       final request = http.MultipartRequest('POST', Uri.parse(url));
       request.fields['upload_preset'] = CloudinaryConfig.uploadPreset;
-      request.fields['folder'] = CloudinaryConfig.folder;
 
       final bytes = await file.readAsBytes();
       request.files.add(
@@ -69,11 +67,11 @@ class CloudinaryService {
       } else {
         final err = await response.stream.bytesToString();
         debugPrint('Cloudinary auto upload failed: ${response.statusCode} - $err');
-        return null;
+        throw Exception(err);
       }
     } catch (e) {
       debugPrint('Exception during Cloudinary auto upload: $e');
-      return null;
+      rethrow;
     }
   }
 }

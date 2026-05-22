@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 import '../components/custom_menu_button.dart';
+import '../components/type_programs_list.dart';
 
 class GymView extends StatelessWidget {
   const GymView({super.key});
@@ -44,6 +45,7 @@ class GymView extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         physics: const BouncingScrollPhysics(),
         children: [
+          const TypeProgramsList(programType: 'gym'),
           ...schedules.entries.map((e) => _buildDayScheduleCard(context, e.key, e.value, Icons.sports_basketball_rounded)),
           const SizedBox(height: 24),
           _buildSectionHeader(context, lp.getText('team_registration'), Icons.group_add_rounded),

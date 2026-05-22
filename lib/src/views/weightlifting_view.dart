@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 import '../components/custom_menu_button.dart';
+import '../components/type_programs_list.dart';
 
 class WeightliftingView extends StatelessWidget {
   const WeightliftingView({super.key});
@@ -40,6 +41,7 @@ class WeightliftingView extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         physics: const BouncingScrollPhysics(),
         children: [
+          const TypeProgramsList(programType: 'weightlifting'),
           ...schedules.entries.map((e) => _buildDayScheduleCard(context, e.key, e.value, Icons.fitness_center_rounded)),
         ],
       ),

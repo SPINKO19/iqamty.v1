@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
 import '../core/theme/colors.dart';
 import '../components/custom_menu_button.dart';
+import '../components/type_programs_list.dart';
 
 class HamamView extends StatelessWidget {
   const HamamView({super.key});
@@ -44,6 +45,7 @@ class HamamView extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         physics: const BouncingScrollPhysics(),
         children: [
+          const TypeProgramsList(programType: 'hamam'),
           ...schedules.entries.map((e) => _buildDayScheduleCard(context, e.key, e.value, Icons.shower_rounded)),
         ],
       ),

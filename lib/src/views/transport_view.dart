@@ -7,6 +7,7 @@ import '../providers/language_provider.dart';
 import '../services/firestore_service.dart';
 import '../models/types.dart';
 import '../core/theme/colors.dart';
+import '../components/type_programs_list.dart';
 
 class TransportView extends StatelessWidget {
   const TransportView({super.key});
@@ -38,45 +39,39 @@ class TransportView extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: StreamBuilder<List<TransportSchedule>>(
-        stream: firestore.getTransportSchedules(residenceId: residenceId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text("Erreur de chargement", style: GoogleFonts.inter(color: Colors.red)));
-          }
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        physics: const BouncingScrollPhysics(),
+        children: [
+          const TypeProgramsList(programType: 'transport'),
+          StreamBuilder<List<TransportSchedule>>(
+            stream: firestore.getTransportSchedules(residenceId: residenceId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.all(40),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text("Erreur de chargement", style: GoogleFonts.inter(color: Colors.red)));
+              }
 
-          final schedules = snapshot.data ?? [];
+              final schedules = snapshot.data ?? [];
 
-          if (schedules.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.directions_bus_filled_outlined, size: 64, color: Colors.grey.withValues(alpha: 0.3)),
-                  const SizedBox(height: 16),
-                  Text(
-                    lp.getText('no_data'),
-                    style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-            );
-          }
+              if (schedules.isEmpty) {
+                return const SizedBox.shrink();
+              }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(24),
-            physics: const BouncingScrollPhysics(),
-            itemCount: schedules.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              final schedule = schedules[index];
-              return _TransportCard(schedule: schedule, isDark: isDark, lp: lp);
+              return Column(
+                children: schedules.map((schedule) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _TransportCard(schedule: schedule, isDark: isDark, lp: lp),
+                )).toList(),
+              );
             },
-          );
-        },
+          ),
+        ],
       ),
     );
   }

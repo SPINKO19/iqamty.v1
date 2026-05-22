@@ -29,7 +29,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> with SingleTick
   String _selectedTarget = 'students';
 
   // Program state
-  final _programTitleController = TextEditingController();
+  String _selectedProgramType = 'gym';
   final _programDescController = TextEditingController();
   final _programScheduleController = TextEditingController();
   String? _editingProgramId;
@@ -44,7 +44,6 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> with SingleTick
   @override
   void dispose() {
     _tabController.dispose();
-    _programTitleController.dispose();
     _programDescController.dispose();
     _programScheduleController.dispose();
     super.dispose();
@@ -126,7 +125,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> with SingleTick
 
   // --- Program Methods ---
   Future<void> _saveProgram() async {
-    if (_programTitleController.text.trim().isEmpty) {
+    if (_selectedProgramType.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Veuillez entrer un titre pour le programme')),
       );
@@ -157,7 +156,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> with SingleTick
       if (_isProgramEditMode && _editingProgramId != null) {
         await firestore.updateDocument(
           docId: _editingProgramId!,
-          title: _programTitleController.text,
+          title: _selectedProgramType,
           target: _selectedTarget,
           description: _programDescController.text,
           schedule: _programScheduleController.text,
@@ -167,7 +166,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> with SingleTick
         );
       } else {
         await firestore.addDocument(
-          title: _programTitleController.text,
+          title: _selectedProgramType,
           type: fileType ?? '',
           size: fileSize ?? '',
           url: downloadUrl ?? '',
@@ -195,7 +194,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> with SingleTick
 
   void _resetProgramForm() {
     setState(() {
-      _programTitleController.clear();
+      _selectedProgramType = 'gym';
       _programDescController.clear();
       _programScheduleController.clear();
       _pickedFile = null;
@@ -210,7 +209,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> with SingleTick
     setState(() {
       _isProgramEditMode = true;
       _editingProgramId = program.id;
-      _programTitleController.text = program.title;
+      _selectedProgramType = ['gym', 'weightlifting', 'hamam', 'transport'].contains(program.title) ? program.title : 'gym';
       _programDescController.text = program.description ?? '';
       _programScheduleController.text = program.schedule ?? '';
       _selectedTarget = program.target;
@@ -380,7 +379,24 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> with SingleTick
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTextField(_programTitleController, lp.getText('program_title'), Icons.title),
+              DropdownButtonFormField<String>(
+                value: _selectedProgramType,
+                decoration: InputDecoration(
+                  labelText: lp.getText('program_title'),
+                  prefixIcon: const Icon(Icons.category, size: 20),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                items: [
+                  DropdownMenuItem(value: 'gym', child: Text(lp.getText('gym'))),
+                  DropdownMenuItem(value: 'weightlifting', child: Text(lp.getText('weightlifting_room'))),
+                  DropdownMenuItem(value: 'hamam', child: Text(lp.getText('showers'))),
+                  DropdownMenuItem(value: 'transport', child: Text(lp.getText('transport'))),
+                ],
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedProgramType = val);
+                },
+              ),
               const SizedBox(height: 16),
               _buildTextField(_programDescController, lp.getText('program_description'), Icons.description, maxLines: 3),
               const SizedBox(height: 16),
@@ -397,7 +413,7 @@ class _AdminDocumentsViewState extends State<AdminDocumentsView> with SingleTick
               ],
               const SizedBox(height: 24),
               _buildSubmitButton(
-                onPressed: (_programTitleController.text.isEmpty || _isUploading) ? null : _saveProgram,
+                onPressed: (_isUploading) ? null : _saveProgram,
                 text: _isProgramEditMode ? lp.getText('edit_program') : lp.getText('send_program'),
                 isDark: isDark,
               ),
