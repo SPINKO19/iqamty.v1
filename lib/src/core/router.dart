@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../components/app_sidebar.dart';
@@ -31,8 +32,6 @@ import '../views/create_request_screen.dart';
 import '../views/register_screen.dart';
 import '../views/banned_screen.dart';
 import '../views/no_residence_screen.dart';
-import '../views/placeholder_screen.dart';
-import '../views/admin_placeholder_view.dart';
 import '../views/admin_dining_config_view.dart';
 import '../views/gym_view.dart';
 import '../views/weightlifting_view.dart';
@@ -214,8 +213,8 @@ class AppRouter {
             ),
             GoRoute(path: '/admin/documents', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDocumentsView())),
             GoRoute(path: '/admin/transport', pageBuilder: (context, state) => const NoTransitionPage(child: AdminTransportView())),
-            GoRoute(path: '/admin/resources', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Resources'))),
-            GoRoute(path: '/admin/dining', pageBuilder: (context, state) => const NoTransitionPage(child: AdminPlaceholderView(title: 'Dining Config'))),
+            GoRoute(path: '/admin/resources', pageBuilder: (context, state) => const NoTransitionPage(child: Scaffold(body: Center(child: Text('Resources - Coming Soon'))))),
+            GoRoute(path: '/admin/dining', pageBuilder: (context, state) => const NoTransitionPage(child: Scaffold(body: Center(child: Text('Dining Config - Coming Soon'))))),
             GoRoute(path: '/admin/dining-config', pageBuilder: (context, state) => const NoTransitionPage(child: AdminDiningConfigView())),
             GoRoute(path: '/admin/workers', pageBuilder: (context, state) => const NoTransitionPage(child: AdminWorkersView())),
             GoRoute(path: '/admin/notifications', pageBuilder: (context, state) => const NoTransitionPage(child: NotificationsView())),

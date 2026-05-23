@@ -219,6 +219,18 @@ class FirestoreService extends ChangeNotifier {
         .map((doc) => doc.data()?['isRestaurantOpen'] ?? true);
   }
 
+  Stream<String> streamResidenceStatus(String? residenceId) {
+    if (_db == null || residenceId == null || residenceId.isEmpty) return Stream.value('active');
+    return _db!
+        .collection('residences')
+        .doc(residenceId)
+        .snapshots()
+        .map((doc) {
+          if (!doc.exists) return 'pending_setup';
+          return doc.data()?['status'] ?? 'pending_setup';
+        });
+  }
+
   Future<void> toggleRestaurantStatus(String residenceId, bool isOpen) async {
     if (_db == null || residenceId.isEmpty) return; // Prevent empty doc path crash
     await _db!.collection('residences').doc(residenceId).update({

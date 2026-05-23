@@ -27,143 +27,160 @@ class HomeScreen extends StatelessWidget {
 
     final String residenceId = auth.currentResidenceId ?? '';
     
-    return Scaffold(
-      backgroundColor: context.appBackground,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Header Modern Design
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                _buildHeaderSection(context, student, lp, isDark, auth),
-              ],
-            ),
-          ),
+    return StreamBuilder<String>(
+      stream: firestore.streamResidenceStatus(residenceId),
+      initialData: 'active',
+      builder: (context, statusSnapshot) {
+        final status = statusSnapshot.data ?? 'active';
+        final isPending = status == 'pending_setup';
 
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                const SizedBox(height: 24),
-
-                // Quick Actions Grid
-                _buildSectionHeader(context, lp.getText('quick_actions_title'), lp),
-                const SizedBox(height: 16),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final crossAxisCount = constraints.maxWidth > 800 ? 4 : 2;
-                    return GridView.count(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: constraints.maxWidth > 800 ? 1.5 : 1.25,
-                      children: [
-                        _QuickActionCard(
-                          title: lp.getText('complaints'),
-                          subtitle: lp.getText('report_problem'),
-                          icon: Icons.report_problem_rounded,
-                          color: const Color(0xFFEF4444),
-                          isDark: isDark,
-                          onTap: () => context.push('/complaints'),
-                        ),
-                        _QuickActionCard(
-                          title: lp.getText('restoration'),
-                          subtitle: lp.getText('menu_of_the_day'),
-                          icon: Icons.restaurant_rounded,
-                          color: const Color(0xFF10B981), 
-                          isDark: isDark,
-                          onTap: () => context.push('/dining'),
-                        ),
-                        _QuickActionCard(
-                          title: lp.getText('transport'),
-                          subtitle: lp.getText('technical_services'),
-                          icon: Icons.directions_bus_outlined,
-                          color: const Color(0xFF3B82F6),
-                          isDark: isDark,
-                          onTap: () => context.push('/transport'),
-                        ),
-                        _QuickActionCard(
-                          title: lp.getText('documents_and_programs'),
-                          subtitle: lp.getText('docs_and_certs'),
-                          icon: Icons.description_rounded,
-                          color: const Color(0xFF8B5CF6),
-                          isDark: isDark,
-                          onTap: () => context.push('/documents'),
-                        ),
-                      ],
-                    );
-                  },
+        return Scaffold(
+          backgroundColor: context.appBackground,
+          body: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Header Modern Design
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    _buildHeaderSection(context, student, lp, isDark, auth),
+                  ],
                 ),
+              ),
 
-                const SizedBox(height: 36),
-
-                // Announcements Section
-                _buildSectionHeader(context, lp.getText('recent_announcements'), lp, onPressed: () => context.push('/community')),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 280,
-                  child: StreamBuilder<List<Announcement>>(
-                    stream: firestore.getAnnouncements(residenceId: residenceId),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) return const SizedBox.shrink(); // Hide if error
-                      final announcements = snapshot.data ?? [];
-                      if (announcements.isEmpty) {
-                        return _buildEmptyState(context, Icons.campaign_rounded, lp.getText('no_announcements'), isDark);
-                      }
-                      return ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: announcements.length,
-                        separatorBuilder: (context, index) => const SizedBox(width: 16),
-                        itemBuilder: (context, index) => _AnnouncementCard(announcement: announcements[index], isDark: isDark),
-                      );
-                    },
+              if (isPending)
+                SliverPadding(
+                  padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 20.0),
+                  sliver: SliverToBoxAdapter(
+                    child: _buildPendingSetupBanner(context, lp, isDark),
                   ),
                 ),
 
-                const SizedBox(height: 36),
+              SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      const SizedBox(height: 24),
 
-                // Recent Activity
-                _buildSectionHeader(context, lp.getText('recent_activity') == 'recent_activity' ? 'Activité récente' : lp.getText('recent_activity'), lp),
-                const SizedBox(height: 16),
-                StreamBuilder<List<ActivityItem>>(
-                  stream: firestore.getRecentActivity(student?.matricule ?? auth.currentUserData?['uid'] ?? '', residenceId: residenceId),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError) return const Center(child: Text('Erreur d\'activité'));
-                    final activities = snapshot.data ?? [];
-                    if (activities.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        child: Center(
-                          child: Text(
-                            lp.getText('no_data') == 'no_data' ? 'Aucune activité récente.' : lp.getText('no_data'),
-                            style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13),
-                          ),
+                      // Quick Actions Grid
+                      _buildSectionHeader(context, lp.getText('quick_actions_title'), lp),
+                      const SizedBox(height: 16),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final crossAxisCount = constraints.maxWidth > 800 ? 4 : 2;
+                          return GridView.count(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisCount: crossAxisCount,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: constraints.maxWidth > 800 ? 1.5 : 1.25,
+                            children: [
+                              _QuickActionCard(
+                                title: lp.getText('complaints'),
+                                subtitle: lp.getText('report_problem'),
+                                icon: Icons.report_problem_rounded,
+                                color: const Color(0xFFEF4444),
+                                isDark: isDark,
+                                onTap: () => context.push('/complaints'),
+                              ),
+                              _QuickActionCard(
+                                title: lp.getText('restoration'),
+                                subtitle: lp.getText('menu_of_the_day'),
+                                icon: Icons.restaurant_rounded,
+                                color: const Color(0xFF10B981), 
+                                isDark: isDark,
+                                onTap: () => context.push('/dining'),
+                              ),
+                              _QuickActionCard(
+                                title: lp.getText('transport'),
+                                subtitle: lp.getText('technical_services'),
+                                icon: Icons.directions_bus_outlined,
+                                color: const Color(0xFF3B82F6),
+                                isDark: isDark,
+                                onTap: () => context.push('/transport'),
+                              ),
+                              _QuickActionCard(
+                                title: lp.getText('documents_and_programs'),
+                                subtitle: lp.getText('docs_and_certs'),
+                                icon: Icons.description_rounded,
+                                color: const Color(0xFF8B5CF6),
+                                isDark: isDark,
+                                onTap: () => context.push('/documents'),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 36),
+
+                      // Announcements Section
+                      _buildSectionHeader(context, lp.getText('recent_announcements'), lp, onPressed: () => context.push('/community')),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 280,
+                        child: StreamBuilder<List<Announcement>>(
+                          stream: firestore.getAnnouncements(residenceId: residenceId),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasError) return const SizedBox.shrink(); // Hide if error
+                            final announcements = snapshot.data ?? [];
+                            if (announcements.isEmpty) {
+                              return _buildEmptyState(context, Icons.campaign_rounded, lp.getText('no_announcements'), isDark);
+                            }
+                            return ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: announcements.length,
+                              separatorBuilder: (context, index) => const SizedBox(width: 16),
+                              itemBuilder: (context, index) => _AnnouncementCard(announcement: announcements[index], isDark: isDark),
+                            );
+                          },
                         ),
-                      );
-                    }
-                    
-                    return ListView.separated(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: activities.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 16),
-                      itemBuilder: (context, index) => _ActivityListItem(item: activities[index], isDark: isDark),
-                    );
-                  },
+                      ),
+
+                      const SizedBox(height: 36),
+
+                      // Recent Activity
+                      _buildSectionHeader(context, lp.getText('recent_activity') == 'recent_activity' ? 'Activité récente' : lp.getText('recent_activity'), lp),
+                      const SizedBox(height: 16),
+                      StreamBuilder<List<ActivityItem>>(
+                        stream: firestore.getRecentActivity(student?.matricule ?? auth.currentUserData?['uid'] ?? '', residenceId: residenceId),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) return const Center(child: Text('Erreur d\'activité'));
+                          final activities = snapshot.data ?? [];
+                          if (activities.isEmpty) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              child: Center(
+                                child: Text(
+                                  lp.getText('no_data') == 'no_data' ? 'Aucune activité récente.' : lp.getText('no_data'),
+                                  style: GoogleFonts.inter(color: context.appTextSecondary, fontSize: 13),
+                                ),
+                              ),
+                            );
+                          }
+                          
+                          return ListView.separated(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: activities.length,
+                            separatorBuilder: (context, index) => const SizedBox(height: 16),
+                            itemBuilder: (context, index) => _ActivityListItem(item: activities[index], isDark: isDark),
+                          );
+                        },
+                      ),
+                      
+                      const SizedBox(height: 80), 
+                    ]),
+                  ),
                 ),
-                
-                const SizedBox(height: 80), 
-              ]),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -430,6 +447,99 @@ class HomeScreen extends StatelessWidget {
               color: context.appTextSecondary,
               fontSize: 14,
               fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingSetupBanner(BuildContext context, LanguageProvider lp, bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark 
+            ? Colors.amber.withValues(alpha: 0.08) 
+            : Colors.amber.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark 
+              ? Colors.amber.withValues(alpha: 0.2) 
+              : Colors.amber.withValues(alpha: 0.35),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Icon
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.admin_panel_settings_rounded,
+              size: 22,
+              color: Colors.amber[700],
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Text content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        lp.getText('no_admin_registered') == 'no_admin_registered' 
+                            ? 'Aucun administrateur assigné' 
+                            : lp.getText('no_admin_registered'),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.amber[800] ?? Colors.amber,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        lp.getText('setup_pending') == 'setup_pending' ? 'En attente' : lp.getText('setup_pending'),
+                        style: GoogleFonts.inter(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.amber[700],
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  lp.getText('no_admin_banner_desc') == 'no_admin_banner_desc'
+                      ? 'Votre résidence n\'a pas encore d\'administrateur. Vous pouvez utiliser la communauté et les fonctionnalités de base en attendant.'
+                      : lp.getText('no_admin_banner_desc'),
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    height: 1.4,
+                    color: isDark 
+                        ? Colors.amber.withValues(alpha: 0.7) 
+                        : Colors.amber[900]?.withValues(alpha: 0.65) ?? Colors.amber,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

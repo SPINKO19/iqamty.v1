@@ -468,11 +468,6 @@ class AuthService extends ChangeNotifier {
   /// Normalizes a raw residence name to a stable slug (lowercase, no diacritics, no spaces).
   String _normalizeResidenceName(String raw) {
     String cleanRaw = raw;
-    
-    // Alias mapping to preserve residence ID for the renamed Amizour residence
-    if (cleanRaw.toLowerCase().contains('kherraz abdelmadjid')) {
-      cleanRaw = 'rue amizour 2'; 
-    }
 
     // Remove diacritics, lowercase, collapse spaces/dashes/underscores to single dash
     final clean = removeDiacritics(cleanRaw.toLowerCase())
