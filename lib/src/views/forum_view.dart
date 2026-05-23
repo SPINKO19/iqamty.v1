@@ -14,6 +14,8 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/storage_service.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
+import '../services/cloudinary_service.dart';
 import 'package:go_router/go_router.dart';
 
 extension StringExtension on String {
@@ -1523,13 +1525,13 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
   final _titleController = TextEditingController();
   final List<TextEditingController> _pollOptControllers = [TextEditingController(), TextEditingController()];
   bool _isLoading = false;
-  File? _selectedImage;
+  XFile? _selectedImage;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (image != null) {
-      setState(() => _selectedImage = File(image.path));
+      setState(() => _selectedImage = image);
     }
   }
 
@@ -1552,7 +1554,7 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
 
     String? imageUrl;
     if (_selectedImage != null) {
-      imageUrl = await context.read<StorageService>().uploadForumImage(_selectedImage!, authData?['uid'] ?? 'unknown');
+      imageUrl = await CloudinaryService.uploadImage(_selectedImage!);
     }
 
     if (widget.postType == 'announcement') {
@@ -1640,7 +1642,9 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.file(_selectedImage!, height: 150, width: double.infinity, fit: BoxFit.cover),
+                  child: kIsWeb
+                      ? Image.network(_selectedImage!.path, height: 150, width: double.infinity, fit: BoxFit.cover)
+                      : Image.file(File(_selectedImage!.path), height: 150, width: double.infinity, fit: BoxFit.cover),
                 ),
                 Positioned(
                   top: 8,
