@@ -657,7 +657,7 @@ class _LoginScreenState extends State<LoginScreen> {
               icon: Icons.android_rounded,
               label: lp.getText('download_android'),
               color: const Color(0xFF3DDC84),
-              onTap: () => launchUrl(Uri.parse('https://www.mediafire.com/file/cforxi7pezqmnui/Iqamty-v1/file')),
+              onTap: () => launchUrl(Uri.parse('https://www.mediafire.com/file/qfvh0d064fvxgt5/IQAMTY.apk/file')),
               isDark: isDark,
             ),
             const SizedBox(height: 12),
