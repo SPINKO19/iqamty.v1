@@ -982,63 +982,98 @@ class _PostCardState extends State<_PostCard> {
 
     if (!isAuthor && !isAdmin) return const SizedBox.shrink();
 
-    // Capture the service from the PARENT context so it survives dialog pops
-    final firestore = context.read<FirestoreService>();
-
-    return PopupMenuButton<String>(
+    return IconButton(
       icon: Icon(Icons.more_horiz_rounded, color: Colors.grey[500]),
-      onSelected: (val) {
-        final postId = widget.post.id;
-        if (postId == null || postId.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erreur: ID du post introuvable.'), backgroundColor: Colors.red),
-          );
-          return;
-        }
-        if (val == 'delete') {
-          _confirmDelete(firestore, postId);
-        } else if (val == 'pin') {
-          firestore.toggleAnnouncementPin(postId, !widget.post.isPinned).then((_) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(widget.post.isPinned ? 'Annonce dépinglée.' : 'Annonce épinglée.'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
-          }).catchError((e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
-              );
-            }
-          });
-        }
-      },
-      itemBuilder: (ctx) => [
-        if (isAdmin && widget.post.type == 'announcement')
-          PopupMenuItem(
-            value: 'pin',
-            child: Row(
+      onPressed: () => _showCardOptions(context),
+    );
+  }
+
+  void _showCardOptions(BuildContext context) {
+    final auth = context.read<AuthProvider>();
+    final isAdmin = auth.currentUserData?['role'] == 'administrator';
+    final firestore = context.read<FirestoreService>();
+    final postId = widget.post.id;
+
+    if (postId == null || postId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erreur: ID du post introuvable.'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return Container(
+          decoration: BoxDecoration(
+            color: ctx.appCard,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(widget.post.isPinned ? Icons.push_pin_outlined : Icons.push_pin_rounded, color: AppColors.primary, size: 18),
-                const SizedBox(width: 8),
-                Text(widget.post.isPinned ? 'Dépingler' : 'Epingler'),
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black12,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (isAdmin && widget.post.type == 'announcement')
+                  ListTile(
+                    leading: Icon(
+                      widget.post.isPinned ? Icons.push_pin_outlined : Icons.push_pin_rounded,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      widget.post.isPinned ? 'Dépingler' : 'Épingler',
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: ctx.appTextPrimary),
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      firestore.toggleAnnouncementPin(postId, !widget.post.isPinned).then((_) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(widget.post.isPinned ? 'Annonce dépinglée.' : 'Annonce épinglée.'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      }).catchError((e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      });
+                    },
+                  ),
+                ListTile(
+                  leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                  title: Text(
+                    'Supprimer',
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _confirmDelete(firestore, postId);
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
               ],
             ),
           ),
-        const PopupMenuItem(
-          value: 'delete',
-          child: Row(
-            children: [
-              Icon(Icons.delete_outline, color: Colors.red, size: 18),
-              SizedBox(width: 8),
-              Text('Supprimer', style: TextStyle(color: Colors.red)),
-            ],
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 

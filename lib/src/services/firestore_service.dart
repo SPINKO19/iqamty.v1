@@ -127,7 +127,7 @@ class FirestoreService extends ChangeNotifier {
         .where('date', isEqualTo: dateStr)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Meal.fromJson(doc.data()..['id'] = doc.id))
+            .map((doc) => Meal.fromJson(docToMap(doc)))
             .where((m) => _checkResidenceMatch(m.residenceId, residenceId, allowGlobal: false))
             .toList());
   }
@@ -147,7 +147,7 @@ class FirestoreService extends ChangeNotifier {
         .where('date', isLessThanOrEqualTo: endOfWeek)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Meal.fromJson(doc.data()..['id'] = doc.id))
+            .map((doc) => Meal.fromJson(docToMap(doc)))
             .where((m) => _checkResidenceMatch(m.residenceId, residenceId, allowGlobal: false))
             .toList());
   }
@@ -451,8 +451,7 @@ class FirestoreService extends ChangeNotifier {
         .snapshots()
         .map((snapshot) {
       final list = snapshot.docs
-          .map((doc) => Complaint.fromJson(
-              doc.data() as Map<String, dynamic>..['id'] = doc.id))
+          .map((doc) => Complaint.fromJson(docToMap(doc)))
           .where((c) => _checkResidenceMatch(c.residenceId, residenceId, allowGlobal: false))
           .toList();
       list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
@@ -481,8 +480,7 @@ class FirestoreService extends ChangeNotifier {
         .snapshots()
         .map((snapshot) {
       final list = snapshot.docs
-          .map((doc) => ServiceRequest.fromJson(
-              doc.data() as Map<String, dynamic>..['id'] = doc.id))
+          .map((doc) => ServiceRequest.fromJson(docToMap(doc)))
           .where((r) => _checkResidenceMatch(r.residenceId, residenceId, allowGlobal: false))
           .toList();
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -620,7 +618,6 @@ class FirestoreService extends ChangeNotifier {
     await _db!.collection('users').doc(userId).delete();
   }
 
-  // Get all requests for admin (all users)
   Stream<List<ServiceRequest>> getAllRequests({String? residenceId}) {
     if (_db == null) return Stream.value([]);
     
@@ -628,7 +625,7 @@ class FirestoreService extends ChangeNotifier {
     // and avoid Firestore composite index requirements.
     return _db!.collection('requests').snapshots().map((snapshot) {
       final list = snapshot.docs
-          .map((doc) => ServiceRequest.fromJson(doc.data()..['id'] = doc.id))
+          .map((doc) => ServiceRequest.fromJson(docToMap(doc)))
           .where((r) => _checkResidenceMatch(r.residenceId, residenceId, allowGlobal: false))
           .toList();
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -770,7 +767,7 @@ class FirestoreService extends ChangeNotifier {
     if (_db == null) return Stream.value([]);
     return _db!.collection('transport').snapshots().map((snapshot) {
       return snapshot.docs
-          .map((doc) => TransportSchedule.fromJson(doc.data()..['id'] = doc.id))
+          .map((doc) => TransportSchedule.fromJson(docToMap(doc)))
           .where((s) => _checkResidenceMatch(s.residenceId, residenceId, allowGlobal: true))
           .toList();
     });
@@ -798,7 +795,7 @@ class FirestoreService extends ChangeNotifier {
     // and avoid Firestore composite index requirements.
     return _db!.collection('complaints').snapshots().map((snapshot) {
       final list = snapshot.docs
-          .map((doc) => Complaint.fromJson(doc.data()..['id'] = doc.id))
+          .map((doc) => Complaint.fromJson(docToMap(doc)))
           .where((c) => _checkResidenceMatch(c.residenceId, residenceId, allowGlobal: false))
           .toList();
       list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
@@ -814,7 +811,7 @@ class FirestoreService extends ChangeNotifier {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Complaint.fromJson(doc.data()..['id'] = doc.id))
+            .map((doc) => Complaint.fromJson(docToMap(doc)))
             .toList());
   }
 
@@ -1009,7 +1006,7 @@ class FirestoreService extends ChangeNotifier {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => ChatMessage.fromJson(doc.data()..['id'] = doc.id))
+            .map((doc) => ChatMessage.fromJson(docToMap(doc)))
             .toList());
   }
 
@@ -1052,7 +1049,7 @@ class FirestoreService extends ChangeNotifier {
     // is partially missing or mismatched during dev, and to avoid index requirements.
     return _db!.collection('chats').snapshots().map((snap) {
       final allChats =
-          snap.docs.map((doc) => doc.data()..['id'] = doc.id).toList();
+          snap.docs.map((doc) => docToMap(doc)).toList();
 
       if (residenceId == null || residenceId.isEmpty) return allChats;
 
@@ -1229,7 +1226,7 @@ class FirestoreService extends ChangeNotifier {
         .orderBy('createdAt')
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => ForumReply.fromJson(doc.data()..['id'] = doc.id))
+            .map((doc) => ForumReply.fromJson(docToMap(doc)))
             .toList());
   }
 
