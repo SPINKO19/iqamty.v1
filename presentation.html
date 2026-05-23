@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Iqamty - Présentation du Projet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: 16in 9in;
+      margin: 0;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #121212;
+      color: #E2E8F0;
+      overflow-x: hidden;
+      -webkit-print-color-adjust: exact;
+    }
+    .slide {
+      width: 16in;
+      height: 9in;
+      page-break-after: always;
+      position: relative;
+      padding: 1.2in 1.5in;
+      background: radial-gradient(circle at 10% 20%, #121212 0%, #1A1A1A 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+    
+    /* Logo styling in top right - using actual logo image */
+    .logo-container {
+      position: absolute;
+      top: 0.5in;
+      right: 1in;
+      display: flex;
+      align-items: center;
+    }
+    .logo-container img.logo-img {
+      height: 0.55in;
+      filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.3));
+    }
+    .logo-container .separator {
+      height: 0.35in;
+      width: 2px;
+      background-color: #334155;
+      margin: 0 15px;
+    }
+    .logo-container .context-label {
+      font-size: 0.22in;
+      font-weight: 400;
+      color: #64748B;
+      text-transform: lowercase;
+    }
+
+    /* Slide Titles */
+    h1.slide-title {
+      font-size: 0.65in;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 0.4in;
+      position: relative;
+      border-bottom: 2px solid rgba(16, 185, 129, 0.2);
+      width: 100%;
+      padding-bottom: 15px;
+    }
+    h1.slide-title span {
+      color: #10B981;
+    }
+
+    /* Slide 1: Cover */
+    .cover-slide {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 0;
+    }
+    .cover-logo {
+      height: 3.2in;
+      margin-bottom: 30px;
+      filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.4));
+    }
+    .cover-brand {
+      font-size: 1.4in;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1;
+    }
+    .cover-brand span {
+      color: #10B981;
+    }
+    .cover-divider {
+      width: 5in;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #10B981, transparent);
+      margin: 25px 0;
+    }
+    .cover-tagline {
+      font-size: 0.42in;
+      font-weight: 400;
+      color: #94A3B8;
+    }
+    .cover-tagline span {
+      color: #10B981;
+      font-weight: 600;
+    }
+    .cover-decor {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 1.2in;
+      background: #1E293B;
+      clip-path: polygon(0 100%, 100% 100%, 100% 40%, 0 0);
+      opacity: 0.2;
+    }
+
+    /* Slide 2: Team Members with actual photos & names in order */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-gap: 0.4in;
+      width: 100%;
+      margin-top: 0.1in;
+    }
+    .team-card {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      border-radius: 12px;
+      padding: 0.25in 0.3in;
+      text-align: center;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(4px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .team-avatar {
+      width: 1.1in;
+      height: 1.1in;
+      border-radius: 50%;
+      border: 3px solid #10B981;
+      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+    }
+    .team-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .team-card h3 {
+      font-size: 0.28in;
+      color: #FFFFFF;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .team-card p {
+      font-size: 0.2in;
+      color: #10B981;
+      font-weight: 400;
+    }
+
+    /* Slide 3: Plan (Agenda) */
+    .plan-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-gap: 20px;
+      width: 100%;
+      margin-top: 0.2in;
+    }
+    .plan-item {
+      display: flex;
+      align-items: center;
+      background: rgba(30, 41, 59, 0.3);
+      padding: 20px 30px;
+      border-radius: 10px;
+      border: 1px solid rgba(16, 185, 129, 0.1);
+      border-left: 6px solid #10B981;
+      font-size: 0.26in;
+      font-weight: 600;
+      color: #FFFFFF;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .plan-item span {
+      background: #10B981;
+      color: #121212;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 20px;
+      font-size: 0.22in;
+      font-weight: 700;
+    }
+
+    /* Slide 4: About / Slide 5: Problem */
+    .split-layout {
+      display: flex;
+      width: 100%;
+      height: 5.5in;
+      align-items: center;
+      gap: 1in;
+    }
+    .left-text {
+      flex: 1.2;
+      font-size: 0.32in;
+      line-height: 1.6;
+      color: #94A3B8;
+    }
+    .right-accent {
+      flex: 0.8;
+      border-left: 6px solid #10B981;
+      padding-left: 0.4in;
+      height: 60%;
+      display: flex;
+      align-items: center;
+      font-size: 0.35in;
+      font-weight: 600;
+      color: #FFFFFF;
+      line-height: 1.4;
+      background: rgba(16, 185, 129, 0.05);
+      border-radius: 0 12px 12px 0;
+      padding-right: 20px;
+    }
+
+    /* Slide 6: Solution */
+    .solution-box {
+      width: 100%;
+      height: 4.5in;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 0 1.5in;
+      position: relative;
+    }
+    .solution-line {
+      width: 100%;
+      height: 2px;
+      background: rgba(16, 185, 129, 0.2);
+      margin: 40px 0;
+      position: relative;
+    }
+    .solution-line::before, .solution-line::after {
+      content: '✦';
+      position: absolute;
+      top: -12px;
+      color: #10B981;
+      font-size: 0.24in;
+    }
+    .solution-line::before { left: 15%; }
+    .solution-line::after { right: 15%; }
+    .solution-text {
+      font-size: 0.36in;
+      line-height: 1.6;
+      color: #94A3B8;
+      font-weight: 400;
+    }
+    .solution-text strong {
+      color: #FFFFFF;
+      font-weight: 600;
+      border-bottom: 2px solid #10B981;
+    }
+
+    /* Product Portals / Screens Layout */
+    .portal-layout {
+      display: flex;
+      width: 100%;
+      height: 5.5in;
+      gap: 0.8in;
+      align-items: center;
+    }
+    .portal-info {
+      flex: 1.1;
+    }
+    .portal-info h2 {
+      font-size: 0.45in;
+      color: #10B981;
+      margin-bottom: 25px;
+    }
+    .portal-info p {
+      font-size: 0.28in;
+      line-height: 1.6;
+      color: #94A3B8;
+      margin-bottom: 20px;
+    }
+    .portal-bullets {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .portal-bullets li {
+      font-size: 0.24in;
+      color: #E2E8F0;
+      display: flex;
+      align-items: center;
+    }
+    .portal-bullets li::before {
+      content: '✔';
+      color: #10B981;
+      margin-right: 15px;
+      font-size: 0.24in;
+    }
+    .portal-media {
+      flex: 0.9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      position: relative;
+    }
+    .phone-frame {
+      width: 2.7in;
+      height: 5.2in;
+      border: 12px solid #1E293B;
+      border-radius: 36px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 20px rgba(16, 185, 129, 0.2);
+      background-color: #121212;
+    }
+    .phone-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .browser-frame {
+      width: 5.5in;
+      height: 3.8in;
+      border: 8px solid #1E293B;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 20px rgba(16, 185, 129, 0.15);
+      background-color: #121212;
+    }
+    .browser-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Diagrams Layout */
+    .diagram-layout {
+      display: flex;
+      width: 100%;
+      height: 5.5in;
+      gap: 0.8in;
+      align-items: stretch;
+    }
+    .diagram-label-column {
+      flex: 0.3;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+    .capsule-button {
+      background-color: #1E293B;
+      border: 2px solid #10B981;
+      color: #FFFFFF;
+      padding: 15px 30px;
+      border-radius: 30px;
+      font-size: 0.24in;
+      font-weight: 600;
+      display: inline-block;
+      text-align: center;
+      margin-top: 0.2in;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+    }
+    .diagram-visual-column {
+      flex: 0.7;
+      background: #1A1A1A;
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      border-radius: 12px;
+      padding: 0.3in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+    }
+    .diagram-visual-column svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Slide 11: Technologies */
+    .tech-row {
+      display: flex;
+      width: 100%;
+      gap: 0.25in;
+      margin-top: 0.2in;
+    }
+    .tech-box {
+      flex: 1;
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      border-radius: 10px;
+      padding: 0.4in 0.3in;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      height: 4.8in;
+    }
+    .tech-box-title {
+      font-size: 0.22in;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 25px;
+      min-height: 0.8in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 2px dashed rgba(16, 185, 129, 0.15);
+      padding-bottom: 10px;
+    }
+    .tech-box-content {
+      font-size: 0.24in;
+      color: #10B981;
+      font-weight: 600;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      justify-content: center;
+      flex-grow: 1;
+    }
+
+    /* Slide 12: Demonstration Steps Style */
+    .demo-steps-row {
+      display: flex;
+      width: 100%;
+      gap: 0.3in;
+      margin-top: 0.1in;
+    }
+    .demo-step-card {
+      flex: 1;
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      border-radius: 20px;
+      padding: 0.45in 0.35in;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+    .step-badge {
+      background-color: #10B981;
+      color: #121212;
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 0.18in;
+      font-weight: 700;
+      margin-bottom: 0.35in;
+      letter-spacing: 1px;
+    }
+    .step-icon {
+      color: #10B981;
+      margin-bottom: 0.3in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-title {
+      font-size: 0.36in;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 0.25in;
+    }
+    .step-desc {
+      font-size: 0.23in;
+      line-height: 1.5;
+      color: #94A3B8;
+      margin-bottom: 0.3in;
+    }
+    .step-desc span.highlight {
+      color: #10B981;
+      font-weight: 600;
+    }
+    .step-footer-info {
+      font-size: 0.19in;
+      line-height: 1.4;
+      color: #64748B;
+      margin-top: auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 15px;
+      width: 100%;
+    }
+    .demo-realtime-caption {
+      width: 100%;
+      text-align: center;
+      font-size: 0.25in;
+      color: #E2E8F0;
+      margin-top: 0.35in;
+    }
+    .demo-realtime-caption span.highlight {
+      color: #10B981;
+      font-weight: 600;
+    }
+
+    /* Slide 13: Conclusion Style matching target design */
+    .conclusion-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3in;
+      width: 100%;
+      margin-top: 0.1in;
+    }
+    .conclusion-card {
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      border-left: 6px solid #10B981;
+      border-radius: 16px;
+      padding: 0.35in 0.4in;
+      display: flex;
+      gap: 0.35in;
+      align-items: flex-start;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+    }
+    .conclusion-card-icon {
+      color: #10B981;
+      background: rgba(16, 185, 129, 0.08);
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .conclusion-card-content {
+      flex: 1;
+    }
+    .conclusion-card-title {
+      font-size: 0.34in;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 12px;
+    }
+    .conclusion-card-desc {
+      font-size: 0.24in;
+      line-height: 1.6;
+      color: #94A3B8;
+    }
+    .conclusion-card-desc span.highlight {
+      color: #10B981;
+      font-weight: 600;
+    }
+    .thanks-footer {
+      width: 100%;
+      text-align: center;
+      font-size: 0.34in;
+      font-weight: 700;
+      color: #10B981;
+      margin-top: 0.35in;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Slide 1: Cover -->
+  <div class="slide cover-slide">
+    <img src="assets/images/logo.png" alt="Iqamty Logo" class="cover-logo">
+    <div class="cover-brand"><span>I</span>qamty</div>
+    <div class="cover-divider"></div>
+    <div class="cover-tagline">Leave <span>your mark</span>, Inspire the future.</div>
+    <div class="cover-decor"></div>
+  </div>
+
+  <!-- Slide 2: Team Members with actual photos & names in order -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">membres</span>
+    </div>
+    <h1 class="slide-title">Our best team <span>members</span></h1>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar">
+          <img src="assets/images/member_zeghad.jpg" alt="Zeghad Fares">
+        </div>
+        <h3>Zeghad Fares</h3>
+        <p>Project Leader & Architect</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">
+          <img src="assets/images/member_rekaik.jpg" alt="Rekaik Hocine">
+        </div>
+        <h3>Rekaik Hocine</h3>
+        <p>Frontend Developer</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">
+          <img src="assets/images/member_amiour.png" alt="Amiour Hamza">
+        </div>
+        <h3>Amiour Hamza</h3>
+        <p>Backend Developer</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">
+          <img src="assets/images/member_laamroui.png" alt="Sofian Laamroui">
+        </div>
+        <h3>Sofian Laamroui</h3>
+        <p>Mobile Developer</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">
+          <img src="assets/images/member_korichi.jpg" alt="Chmsdine Korichi">
+        </div>
+        <h3>Chmsdine Korichi</h3>
+        <p>UI/UX Designer</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">
+          <img src="assets/images/member_wassim.jpg" alt="Wassim">
+        </div>
+        <h3>Wassim</h3>
+        <p>QA Engineer & Presenter</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: Plan de Présentation -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">plan</span>
+    </div>
+    <h1 class="slide-title">Plan de <span>Présentation</span></h1>
+    <div class="plan-list">
+      <div class="plan-item"><span>1</span> Contexte & Problématique</div>
+      <div class="plan-item"><span>2</span> Solution Iqamty OS</div>
+      <div class="plan-item"><span>3</span> Exigences Fonctionnelles (Portails)</div>
+      <div class="plan-item"><span>4</span> Architecture & Multi-Tenancy</div>
+      <div class="plan-item"><span>5</span> Outils Techniques & Technologies</div>
+      <div class="plan-item"><span>6</span> Démonstration Pratique en Direct</div>
+    </div>
+  </div>
+
+  <!-- Slide 4: About Iqamty -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">à propos</span>
+    </div>
+    <h1 class="slide-title">About <span>Iqamty</span></h1>
+    <div class="split-layout">
+      <div class="left-text">
+        Iqamty est un système d'exploitation universitaire intelligent conçu pour numériser, unifier et optimiser les flux logistiques quotidiens au sein des résidences universitaires. Notre mission est de connecter les résidents étudiants, l'administration centrale et les équipes d'intervention technique au sein d'une seule et unique plateforme web et mobile réactive.
+      </div>
+      <div class="right-accent">
+        Un écosystème connecté pour transformer l'expérience de la vie universitaire en résidence.
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 5: Problem Statement -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">problématique</span>
+    </div>
+    <h1 class="slide-title">What Problem Are We <span>Solving?</span></h1>
+    <div class="split-layout">
+      <div class="left-text">
+        Comment pouvons-nous surmonter la lenteur et le gaspillage liés aux systèmes papier traditionnels au sein des résidences étudiantes, et optimiser la réactivité de la restauration, de la logistique de transport et des interventions techniques ?
+      </div>
+      <div class="right-accent">
+        Éliminer le gaspillage de nourriture, les rapports de panne écrits à la main et les retards de transport non communiqués.
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Solution -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">solution</span>
+    </div>
+    <h1 class="slide-title">Solution</h1>
+    <div class="solution-box">
+      <div class="solution-text">
+        <strong>Iqamty</strong> résout cette problématique en offrant une suite d'applications multiplateformes en temps réel : réservation dynamique des repas par <strong>QR Code</strong>, signalement instantané des pannes avec <strong>photos</strong>, et assignation en direct aux ouvriers.
+      </div>
+      <div class="solution-line"></div>
+    </div>
+  </div>
+
+  <!-- Slide 7: Portail Étudiant -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">portail</span>
+    </div>
+    <h1 class="slide-title">Portail <span>Étudiant</span></h1>
+    <div class="portal-layout">
+      <div class="portal-info">
+        <h2>L'Application Mobile Étudiant</h2>
+        <p>Une interface utilisateur intuitive conçue pour moderniser le quotidien des résidents :</p>
+        <ul class="portal-bullets">
+          <li>Réservation instantanée de repas et génération de QR code d'accès au réfectoire.</li>
+          <li>Signalement de panne instantané en photographiant directement le problème.</li>
+          <li>Forums d'échange locaux et notifications urgentes diffusées par l'administration.</li>
+        </ul>
+      </div>
+      <div class="portal-media">
+        <div class="phone-frame">
+          <img src="assets/images/screenshot_student.png" alt="Student App Mobile Screen">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 8: Portail Administrateur -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">portail</span>
+    </div>
+    <h1 class="slide-title">Portail <span>Administrateur</span></h1>
+    <div class="portal-layout">
+      <div class="portal-info">
+        <h2>Le Tableau de Bord Web Administrateur</h2>
+        <p>Une console centrale permettant de superviser les opérations du campus :</p>
+        <ul class="portal-bullets">
+          <li>Planification dynamique du menu hebdomadaire de restauration.</li>
+          <li>Suivi en temps réel des statistiques et de l'état des pannes signalées.</li>
+          <li>Affectation immédiate des tâches de maintenance aux techniciens disponibles.</li>
+        </ul>
+      </div>
+      <div class="portal-media">
+        <div class="browser-frame">
+          <img src="assets/images/screenshot_admin.png" alt="Admin Web Dashboard Screen">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 9: Portail Technicien -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">portail</span>
+    </div>
+    <h1 class="slide-title">Portail <span>Technicien</span></h1>
+    <div class="portal-layout">
+      <div class="portal-info">
+        <h2>L'Application Mobile Worker</h2>
+        <p>Un outil mobile pratique dédié aux ouvriers et agents d'intervention :</p>
+        <ul class="portal-bullets">
+          <li>Réception instantanée des tâches de maintenance assignées.</li>
+          <li>Détails complets de la panne : localisation (bloc/chambre) et photo justificative.</li>
+          <li>Changement de statut (En cours / Résolue) et rapports techniques de clôture.</li>
+        </ul>
+      </div>
+      <div class="portal-media">
+        <div class="phone-frame">
+          <img src="assets/images/screenshot_worker.png" alt="Worker App Mobile Screen">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 10: Use Case Diagram -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">diagrammes</span>
+    </div>
+    <h1 class="slide-title">Diagrammes : <span>Cas d'Utilisation</span></h1>
+    <div class="diagram-layout">
+      <div class="diagram-label-column">
+        <div class="capsule-button">Use Case Diagram</div>
+      </div>
+      <div class="diagram-visual-column">
+        <svg viewBox="0 0 800 450">
+          <rect x="250" y="30" width="300" height="390" rx="10" fill="none" stroke="#334155" stroke-width="2"/>
+          <text x="400" y="55" font-size="18" fill="#94A3B8" text-anchor="middle" font-weight="600">Système Iqamty</text>
+          
+          <!-- Actor 1 -->
+          <circle cx="100" cy="180" r="15" fill="#10B981"/>
+          <line x1="100" y1="195" x2="100" y2="245" stroke="#FFFFFF" stroke-width="3"/>
+          <line x1="75" y1="215" x2="125" y2="215" stroke="#FFFFFF" stroke-width="3"/>
+          <line x1="100" y1="245" x2="80" y2="295" stroke="#FFFFFF" stroke-width="3"/>
+          <line x1="100" y1="245" x2="120" y2="295" stroke="#FFFFFF" stroke-width="3"/>
+          <text x="100" y="325" font-size="18" fill="#FFFFFF" font-weight="600" text-anchor="middle">Étudiant</text>
+
+          <!-- Actor 2 -->
+          <circle cx="700" cy="180" r="15" fill="#10B981"/>
+          <line x1="700" y1="195" x2="700" y2="245" stroke="#FFFFFF" stroke-width="3"/>
+          <line x1="675" y1="215" x2="725" y2="215" stroke="#FFFFFF" stroke-width="3"/>
+          <line x1="700" y1="245" x2="680" y2="295" stroke="#FFFFFF" stroke-width="3"/>
+          <line x1="700" y1="245" x2="720" y2="295" stroke="#FFFFFF" stroke-width="3"/>
+          <text x="700" y="325" font-size="18" fill="#FFFFFF" font-weight="600" text-anchor="middle">Administrateur</text>
+
+          <rect x="310" y="80" width="180" height="45" rx="20" fill="rgba(16, 185, 129, 0.1)" stroke="#10B981" stroke-width="2"/>
+          <text x="400" y="108" font-size="14" fill="#E2E8F0" text-anchor="middle" font-weight="600">S'authentifier (WebEtu)</text>
+          
+          <rect x="310" y="150" width="180" height="45" rx="20" fill="rgba(16, 185, 129, 0.1)" stroke="#10B981" stroke-width="2"/>
+          <text x="400" y="178" font-size="14" fill="#E2E8F0" text-anchor="middle" font-weight="600">Réserver un repas</text>
+
+          <rect x="310" y="220" width="180" height="45" rx="20" fill="rgba(16, 185, 129, 0.1)" stroke="#10B981" stroke-width="2"/>
+          <text x="400" y="248" font-size="14" fill="#E2E8F0" text-anchor="middle" font-weight="600">Signaler une panne</text>
+
+          <rect x="310" y="290" width="180" height="45" rx="20" fill="rgba(16, 185, 129, 0.1)" stroke="#10B981" stroke-width="2"/>
+          <text x="400" y="318" font-size="14" fill="#E2E8F0" text-anchor="middle" font-weight="600">Gérer les résidents</text>
+
+          <rect x="310" y="360" width="180" height="45" rx="20" fill="rgba(16, 185, 129, 0.1)" stroke="#10B981" stroke-width="2"/>
+          <text x="400" y="388" font-size="14" fill="#E2E8F0" text-anchor="middle" font-weight="600">Assigner techniciens</text>
+
+          <line x1="140" y1="210" x2="310" y2="102" stroke="#64748B" stroke-width="1.5"/>
+          <line x1="140" y1="220" x2="310" y2="172" stroke="#64748B" stroke-width="1.5"/>
+          <line x1="140" y1="230" x2="310" y2="242" stroke="#64748B" stroke-width="1.5"/>
+
+          <line x1="660" y1="210" x2="490" y2="102" stroke="#64748B" stroke-width="1.5"/>
+          <line x1="660" y1="225" x2="490" y2="312" stroke="#64748B" stroke-width="1.5"/>
+          <line x1="660" y1="235" x2="490" y2="382" stroke="#64748B" stroke-width="1.5"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 11: Sequence Diagram -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">diagrammes</span>
+    </div>
+    <h1 class="slide-title">Diagrammes : <span>Séquence</span></h1>
+    <div class="diagram-layout">
+      <div class="diagram-label-column">
+        <div class="capsule-button">Sequence Diagram (Authentication)</div>
+      </div>
+      <div class="diagram-visual-column">
+        <svg viewBox="0 0 800 450">
+          <text x="100" y="40" font-size="14" font-weight="600" fill="#E2E8F0" text-anchor="middle">Utilisateur</text>
+          <line x1="100" y1="50" x2="100" y2="400" stroke="#334155" stroke-width="1.5" stroke-dasharray="4"/>
+          
+          <text x="300" y="40" font-size="14" font-weight="600" fill="#E2E8F0" text-anchor="middle">Interface Mobile</text>
+          <line x1="300" y1="50" x2="300" y2="400" stroke="#334155" stroke-width="1.5" stroke-dasharray="4"/>
+
+          <text x="500" y="40" font-size="14" font-weight="600" fill="#E2E8F0" text-anchor="middle">API WebEtu</text>
+          <line x1="500" y1="50" x2="500" y2="400" stroke="#334155" stroke-width="1.5" stroke-dasharray="4"/>
+
+          <text x="700" y="40" font-size="14" font-weight="600" fill="#E2E8F0" text-anchor="middle">Cloud Firestore</text>
+          <line x1="700" y1="50" x2="700" y2="400" stroke="#334155" stroke-width="1.5" stroke-dasharray="4"/>
+
+          <line x1="100" y1="90" x2="300" y2="90" stroke="#10B981" stroke-width="2"/>
+          <polygon points="300,90 292,85 292,95" fill="#10B981"/>
+          <text x="200" y="80" font-size="12" fill="#94A3B8" text-anchor="middle">Saisit matricule & pass</text>
+
+          <line x1="300" y1="140" x2="500" y2="140" stroke="#10B981" stroke-width="2"/>
+          <polygon points="500,140 492,135 492,145" fill="#10B981"/>
+          <text x="400" y="130" font-size="12" fill="#94A3B8" text-anchor="middle">Envoie requête auth</text>
+
+          <line x1="500" y1="190" x2="500" y2="230" stroke="#10B981" stroke-width="2"/>
+          <line x1="500" y1="230" x2="530" y2="230" stroke="#10B981" stroke-width="2"/>
+          <line x1="530" y1="230" x2="530" y2="210" stroke="#10B981" stroke-width="2"/>
+          <line x1="530" y1="210" x2="500" y2="210" stroke="#10B981" stroke-width="2"/>
+          <text x="540" y="225" font-size="12" fill="#94A3B8" text-anchor="start">Vérifie identité</text>
+
+          <line x1="500" y1="280" x2="300" y2="280" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="3"/>
+          <polygon points="300,280 308,276 308,284" fill="#94A3B8"/>
+          <text x="400" y="270" font-size="12" fill="#94A3B8" text-anchor="middle">Retourne profil étudiant</text>
+
+          <line x1="300" y1="330" x2="700" y2="330" stroke="#10B981" stroke-width="2"/>
+          <polygon points="700,330 692,325 692,335" fill="#10B981"/>
+          <text x="500" y="320" font-size="12" fill="#94A3B8" text-anchor="middle">Sauvegarde & hash SHA-256 local</text>
+
+          <line x1="300" y1="380" x2="100" y2="380" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="3"/>
+          <polygon points="100,380 108,376 108,384" fill="#94A3B8"/>
+          <text x="200" y="370" font-size="12" fill="#94A3B8" text-anchor="middle">Affiche accueil connecté</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 10: System Architecture & Multi-Tenancy -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">architecture</span>
+    </div>
+    <h1 class="slide-title">Architecture & <span>Multi-Tenancy</span></h1>
+    <div class="diagram-layout">
+      <div class="diagram-label-column">
+        <div class="capsule-button">System Architecture</div>
+      </div>
+      <div class="diagram-visual-column">
+        <svg viewBox="0 0 800 450">
+          <rect x="50" y="60" width="180" height="80" rx="8" fill="rgba(16, 185, 129, 0.05)" stroke="#10B981" stroke-width="2"/>
+          <text x="140" y="100" font-size="14" fill="#FFFFFF" font-weight="600" text-anchor="middle">App Étudiant (Flutter)</text>
+          <text x="140" y="120" font-size="11" fill="#94A3B8" text-anchor="middle">Android & iOS</text>
+
+          <rect x="50" y="180" width="180" height="80" rx="8" fill="rgba(16, 185, 129, 0.05)" stroke="#10B981" stroke-width="2"/>
+          <text x="140" y="220" font-size="14" fill="#FFFFFF" font-weight="600" text-anchor="middle">App Ouvrier (Flutter)</text>
+          <text x="140" y="240" font-size="11" fill="#94A3B8" text-anchor="middle">Android mobile</text>
+
+          <rect x="50" y="300" width="180" height="80" rx="8" fill="rgba(16, 185, 129, 0.05)" stroke="#10B981" stroke-width="2"/>
+          <text x="140" y="340" font-size="14" fill="#FFFFFF" font-weight="600" text-anchor="middle">Portal Web Admin</text>
+          <text x="140" y="360" font-size="11" fill="#94A3B8" text-anchor="middle">Dashboard (Vite/React)</text>
+
+          <rect x="330" y="180" width="160" height="80" rx="8" fill="rgba(52, 211, 153, 0.08)" stroke="#34D399" stroke-width="2"/>
+          <text x="410" y="215" font-size="14" fill="#34D399" font-weight="600" text-anchor="middle">Filtre Multi-Tenancy</text>
+          <text x="410" y="235" font-size="12" fill="#E2E8F0" font-weight="600" text-anchor="middle">residenceId Segment</text>
+
+          <rect x="580" y="180" width="180" height="80" rx="8" fill="rgba(241, 196, 15, 0.05)" stroke="#F1C40F" stroke-width="2"/>
+          <text x="670" y="220" font-size="14" fill="#F1C40F" font-weight="600" text-anchor="middle">Cloud Firestore</text>
+          <text x="670" y="240" font-size="11" fill="#94A3B8" text-anchor="middle">Realtime Cloud DB</text>
+
+          <line x1="230" y1="100" x2="330" y2="200" stroke="#64748B" stroke-width="1.5"/>
+          <polygon points="330,200 321,196 325,205" fill="#64748B"/>
+
+          <line x1="230" y1="220" x2="330" y2="220" stroke="#64748B" stroke-width="1.5"/>
+          <polygon points="330,220 322,216 322,224" fill="#64748B"/>
+
+          <line x1="230" y1="340" x2="330" y2="240" stroke="#64748B" stroke-width="1.5"/>
+          <polygon points="330,240 325,235 321,244" fill="#64748B"/>
+
+          <line x1="490" y1="220" x2="580" y2="220" stroke="#64748B" stroke-width="2"/>
+          <polygon points="580,220 572,215 572,225" fill="#64748B"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 11: Technologies -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">technologies</span>
+    </div>
+    <h1 class="slide-title">Technologies</h1>
+    <div class="tech-row">
+      <div class="tech-box">
+        <div class="tech-box-title">User Interface (UI/UX) & Identity</div>
+        <div class="tech-box-content">
+          <div>Figma</div>
+          <div>Glassmorphism Design</div>
+        </div>
+      </div>
+      <div class="tech-box">
+        <div class="tech-box-title">Frontend App Development</div>
+        <div class="tech-box-content">
+          <div>Flutter & Dart</div>
+          <div>Android SDK</div>
+        </div>
+      </div>
+      <div class="tech-box">
+        <div class="tech-box-title">Backend Development</div>
+        <div class="tech-box-content">
+          <div>Firebase Authentication</div>
+          <div>Cloudinary Media CDN</div>
+        </div>
+      </div>
+      <div class="tech-box">
+        <div class="tech-box-title">Database & Cache</div>
+        <div class="tech-box-content">
+          <div>Cloud Firestore</div>
+          <div>SharedPreferences Cache</div>
+        </div>
+      </div>
+      <div class="tech-box">
+        <div class="tech-box-title">Project Management</div>
+        <div class="tech-box-content">
+          <div>GitHub</div>
+          <div>Git Version Control</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 12: DÉMONSTRATION PRATIQUE -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">démo</span>
+    </div>
+    <h1 class="slide-title">DÉMONSTRATION <span>PRATIQUE</span></h1>
+    <div class="demo-steps-row">
+      <div class="demo-step-card">
+        <div class="step-badge">STEP 1</div>
+        <div class="step-icon">
+          <!-- Mobile Phone SVG -->
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+        </div>
+        <div class="step-title">Student App</div>
+        <div class="step-desc">
+          Student submits maintenance request <span class="highlight">"Fuite d'eau"</span> with a photo of the leaking pipe from Chambre 204.
+        </div>
+        <div class="step-footer-info">
+          Ticket created instantly with geolocation, timestamp, and photo evidence attached.
+        </div>
+      </div>
+      
+      <div class="demo-step-card">
+        <div class="step-badge">STEP 2</div>
+        <div class="step-icon">
+          <!-- Computer Monitor SVG -->
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        </div>
+        <div class="step-title">Admin Dashboard</div>
+        <div class="step-desc">
+          Admin receives the ticket in real time, reviews the photo, and <span class="highlight">assigns to available worker</span> Karim.
+        </div>
+        <div class="step-footer-info">
+          Worker availability, skill matching, and workload balancing automated.
+        </div>
+      </div>
+      
+      <div class="demo-step-card">
+        <div class="step-badge">STEP 3</div>
+        <div class="step-icon">
+          <!-- Check Circle SVG -->
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <div class="step-title">Worker App</div>
+        <div class="step-desc">
+          Karim receives push notification, fixes the leak, and marks the task as <span class="highlight">Resolved</span>.
+        </div>
+        <div class="step-footer-info">
+          Student and admin notified instantly. Full audit trail preserved.
+        </div>
+      </div>
+    </div>
+    <div class="demo-realtime-caption">
+      <span class="highlight">Live real-time sync</span>: Student submits → Admin assigns → Worker resolves — all within seconds, with <strong>zero paper, zero delays</strong>.
+    </div>
+  </div>
+
+  <!-- Slide 13: CONCLUSION & PERSPECTIVES -->
+  <div class="slide">
+    <div class="logo-container">
+      <img src="assets/images/logo.png" alt="Iqamty Logo" class="logo-img">
+      <div class="separator"></div>
+      <span class="context-label">fin</span>
+    </div>
+    <h1 class="slide-title">CONCLUSION & <span>PERSPECTIVES</span></h1>
+    <div class="conclusion-list">
+      <div class="conclusion-card">
+        <div class="conclusion-card-icon">
+          <!-- Trophy SVG -->
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"></path><path d="M12 2a6 6 0 0 1 6 6v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z"></path></svg>
+        </div>
+        <div class="conclusion-card-content">
+          <div class="conclusion-card-title">Achievements</div>
+          <div class="conclusion-card-desc">
+            Iqamty OS achieves a <span class="highlight">zero-paper operational workflow</span> for university residences. All six core modules — meal reservation, maintenance ticketing, news forum, direct chat, worker assignment, and broadcast alerts — are fully operational and cross-synchronized via Cloud Firestore. The system has been tested across all three user roles with successful end-to-end task resolution.
+          </div>
+        </div>
+      </div>
+      
+      <div class="conclusion-card">
+        <div class="conclusion-card-icon">
+          <!-- Rocket SVG -->
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 3.42-2 3.42s2.16-.5 3.42-2c1.24-1.46 1.34-3.87 1.34-3.87s-2.41.1-3.87 1.34z"></path><path d="M10 10l-5.5 5.5c-.78.78-.78 2.05 0 2.83l1.17 1.17c.78.78 2.05.78 2.83 0L14 14"></path><path d="M14 4l-4 4c-.78.78-.78 2.05 0 2.83l1.17 1.17c.78.78 2.05.78 2.83 0l4-4"></path><path d="M9 15l-1.5 1.5"></path><path d="M15 9l-1.5 1.5"></path><path d="M9 9l1.5-1.5"></path><path d="M15 15l1.5-1.5"></path><path d="M20 4c-3.18.31-7.85 2.37-10 6-2.15 3.63-1.63 7.68-1.63 7.68s4.05.52 7.68-1.63c3.63-2.15 5.69-6.82 6-10 0 0-1 .05-2.05.95z"></path></svg>
+        </div>
+        <div class="conclusion-card-content">
+          <div class="conclusion-card-title">Future Horizons</div>
+          <div class="conclusion-card-desc">
+            Future roadmap includes <span class="highlight">AI-powered meal demand forecasting</span> using historical consumption data, <span class="highlight">GPS real-time navettes tracking</span> for students, biometric QR authentication for enhanced security, and deep integration with the national <strong>WebEtu</strong> academic portal for unified student identity management.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="thanks-footer">
+      شكراً — Thank You — Merci
+    </div>
+  </div>
+
+</body>
+</html>

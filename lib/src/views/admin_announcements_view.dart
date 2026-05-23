@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
@@ -227,7 +229,12 @@ class _AdminFeedTab extends StatelessWidget {
                            width: 80,
                            decoration: BoxDecoration(
                              borderRadius: BorderRadius.circular(12),
-                             image: DecorationImage(image: NetworkImage(selectedImages[index].path), fit: BoxFit.cover),
+                             image: DecorationImage(
+                               image: kIsWeb 
+                                   ? NetworkImage(selectedImages[index].path)
+                                   : FileImage(File(selectedImages[index].path)) as ImageProvider,
+                               fit: BoxFit.cover,
+                             ),
                            ),
                            child: Align(
                              alignment: Alignment.topRight,
