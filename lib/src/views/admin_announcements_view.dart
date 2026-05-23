@@ -480,7 +480,31 @@ class _AdminAnnouncementCard extends StatelessWidget {
                 ),
                 IconButton(
                   icon: Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 22),
-                  onPressed: () => _confirmDelete(context, () => context.read<FirestoreService>().deleteAnnouncement(ann.id!)),
+                  onPressed: () {
+                    final id = ann.id;
+                    if (id == null || id.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Erreur: ID de l\'annonce introuvable.'), backgroundColor: Colors.red),
+                      );
+                      return;
+                    }
+                    _confirmDelete(context, () async {
+                      try {
+                        await context.read<FirestoreService>().deleteAnnouncement(id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Annonce supprimée.'), backgroundColor: Colors.green),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      }
+                    });
+                  },
                 ),
               ],
             ),
@@ -522,7 +546,7 @@ class _AdminAnnouncementCard extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, VoidCallback onConfirm) {
+  void _confirmDelete(BuildContext context, Future<void> Function() onConfirm) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -581,7 +605,31 @@ class _AdminForumCard extends StatelessWidget {
                 ),
                 IconButton(
                   icon: Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 22),
-                  onPressed: () => _confirmDelete(context, () => context.read<FirestoreService>().deleteForumPost(post.id!)),
+                  onPressed: () {
+                    final id = post.id;
+                    if (id == null || id.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Erreur: ID du post introuvable.'), backgroundColor: Colors.red),
+                      );
+                      return;
+                    }
+                    _confirmDelete(context, () async {
+                      try {
+                        await context.read<FirestoreService>().deleteForumPost(id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Post supprimé.'), backgroundColor: Colors.green),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      }
+                    });
+                  },
                 ),
               ],
             ),
@@ -665,7 +713,7 @@ class _AdminForumCard extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, VoidCallback onConfirm) {
+  void _confirmDelete(BuildContext context, Future<void> Function() onConfirm) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

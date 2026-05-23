@@ -78,8 +78,17 @@ class WorkerDashboard extends StatelessWidget {
                 if (c.status == Status.resolved) return false;
                 // Exclude complaints submitted by this worker
                 if (c.userId == userId) return false;
-                if (department == 'Sécurité' && c.category == 'Sécurité') return true;
-                return true;
+                
+                // Show if explicitly assigned to this worker by admin
+                if (c.assignedWorkerId == userId) return true;
+
+                // Direct routing: Security urgent complaints go directly to security workers
+                if (c.isUrgent && (c.category == 'Sécurité' || c.category == 'Security')) {
+                  if (department == 'Sécurité' || department == 'Security' || department == null) return true;
+                }
+
+                // Otherwise, hide from worker (admin will assign)
+                return false;
               }).toList();
               
               // Sort urgent first

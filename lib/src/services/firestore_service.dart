@@ -50,12 +50,20 @@ class FirestoreService extends ChangeNotifier {
   }
 
   Future<void> deleteAnnouncement(String announcementId) async {
+    if (kDebugMode) print("FirestoreService: deleteAnnouncement called with id='$announcementId'");
     if (_db == null) throw Exception("Firestore not initialized");
-    await _db!.collection('announcements').doc(announcementId).delete();
+    try {
+      await _db!.collection('announcements').doc(announcementId).delete();
+      if (kDebugMode) print("FirestoreService: deleteAnnouncement SUCCESS for id='$announcementId'");
+    } catch (e) {
+      if (kDebugMode) print("FirestoreService: deleteAnnouncement ERROR: $e");
+      rethrow;
+    }
   }
 
   Map<String, dynamic> docToMap(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final raw = doc.data() as Map<String, dynamic>? ?? {};
+    final data = Map<String, dynamic>.from(raw);
     data['id'] = doc.id;
     return data;
   }
@@ -69,7 +77,11 @@ class FirestoreService extends ChangeNotifier {
         .snapshots()
         .map((snapshot) {
       final list = snapshot.docs
-          .map((doc) => Announcement.fromJson(doc.data()..['id'] = doc.id))
+          .map((doc) {
+            final data = Map<String, dynamic>.from(doc.data());
+            data['id'] = doc.id;
+            return Announcement.fromJson(data);
+          })
           .where((a) => _checkResidenceMatch(a.residenceId, residenceId, allowGlobal: true))
           .toList();
 
@@ -478,7 +490,7 @@ class FirestoreService extends ChangeNotifier {
     });
   }
 
-  Stream<List<ActivityItem>> getRecentActivity(String userId, {String? residenceId}) {
+  Stream<List<ActivityItem>> getRecentActivity(String userId, {String? residenceId, bool isGlobal = false}) {
     final controller = StreamController<List<ActivityItem>>.broadcast();
     List<ServiceRequest> lastRequests = [];
     List<Complaint> lastComplaints = [];
@@ -511,11 +523,14 @@ class FirestoreService extends ChangeNotifier {
       }
     }
 
-    final s1 = getMyRequests(userId, residenceId: residenceId).listen((data) {
+    final reqStream = isGlobal ? getAllRequests(residenceId: residenceId) : getMyRequests(userId, residenceId: residenceId);
+    final compStream = isGlobal ? getAllComplaints(residenceId: residenceId) : getMyComplaints(userId, residenceId: residenceId);
+
+    final s1 = reqStream.listen((data) {
       lastRequests = data;
       emit();
     });
-    final s2 = getMyComplaints(userId, residenceId: residenceId).listen((data) {
+    final s2 = compStream.listen((data) {
       lastComplaints = data;
       emit();
     });
@@ -1073,7 +1088,11 @@ class FirestoreService extends ChangeNotifier {
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
-          .map((doc) => ForumPost.fromJson(doc.data()..['id'] = doc.id))
+          .map((doc) {
+            final data = Map<String, dynamic>.from(doc.data());
+            data['id'] = doc.id;
+            return ForumPost.fromJson(data);
+          })
           .where((post) {
             final matchesType = type == null || post.type == type;
             final matchesResidence = residenceId == null ||
@@ -1098,8 +1117,15 @@ class FirestoreService extends ChangeNotifier {
   }
 
   Future<void> deleteForumPost(String postId) async {
+    if (kDebugMode) print("FirestoreService: deleteForumPost called with id='$postId'");
     if (_db == null) throw Exception("Firestore not initialized");
-    await _db!.collection('forum').doc(postId).delete();
+    try {
+      await _db!.collection('forum').doc(postId).delete();
+      if (kDebugMode) print("FirestoreService: deleteForumPost SUCCESS for id='$postId'");
+    } catch (e) {
+      if (kDebugMode) print("FirestoreService: deleteForumPost ERROR: $e");
+      rethrow;
+    }
   }
 
   Future<void> addReaction(String postId, String userId, String reactionType, {String collection = 'forum'}) async {

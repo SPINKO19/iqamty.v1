@@ -146,7 +146,11 @@ class HomeScreen extends StatelessWidget {
                       _buildSectionHeader(context, lp.getText('recent_activity') == 'recent_activity' ? 'Activité récente' : lp.getText('recent_activity'), lp),
                       const SizedBox(height: 16),
                       StreamBuilder<List<ActivityItem>>(
-                        stream: firestore.getRecentActivity(student?.matricule ?? auth.currentUserData?['uid'] ?? '', residenceId: residenceId),
+                        stream: firestore.getRecentActivity(
+                          student?.matricule ?? auth.currentUserData?['uid'] ?? '', 
+                          residenceId: residenceId,
+                          isGlobal: auth.currentUserData?['role'] == 'administrator',
+                        ),
                         builder: (context, snapshot) {
                           if (snapshot.hasError) return const Center(child: Text('Erreur d\'activité'));
                           final activities = snapshot.data ?? [];

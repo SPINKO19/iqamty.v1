@@ -982,13 +982,38 @@ class _PostCardState extends State<_PostCard> {
 
     if (!isAuthor && !isAdmin) return const SizedBox.shrink();
 
+    // Capture the service from the PARENT context so it survives dialog pops
+    final firestore = context.read<FirestoreService>();
+
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_horiz_rounded, color: Colors.grey[500]),
       onSelected: (val) {
+        final postId = widget.post.id;
+        if (postId == null || postId.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Erreur: ID du post introuvable.'), backgroundColor: Colors.red),
+          );
+          return;
+        }
         if (val == 'delete') {
-          _confirmDelete();
+          _confirmDelete(firestore, postId);
         } else if (val == 'pin') {
-          context.read<FirestoreService>().toggleAnnouncementPin(widget.post.id!, !widget.post.isPinned);
+          firestore.toggleAnnouncementPin(postId, !widget.post.isPinned).then((_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(widget.post.isPinned ? 'Annonce dépinglée.' : 'Annonce épinglée.'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          }).catchError((e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+              );
+            }
+          });
         }
       },
       itemBuilder: (ctx) => [
@@ -1017,28 +1042,38 @@ class _PostCardState extends State<_PostCard> {
     );
   }
 
-  void _confirmDelete() {
+  void _confirmDelete(FirestoreService firestore, String postId) {
     final lp = context.read<LanguageProvider>();
+    final parentContext = context; // capture parent context before dialog
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Supprimer ?'),
         content: const Text('Voulez-vous vraiment supprimer ce contenu ?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Annuler')),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              if (widget.post.type == 'announcement') {
-                context
-                    .read<FirestoreService>()
-                    .deleteAnnouncement(widget.post.id!);
-              } else {
-                context
-                    .read<FirestoreService>()
-                    .deleteForumPost(widget.post.id!);
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              try {
+                if (widget.post.type == 'announcement') {
+                  await firestore.deleteAnnouncement(postId);
+                } else {
+                  await firestore.deleteForumPost(postId);
+                }
+                if (mounted) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                    const SnackBar(content: Text('Contenu supprimé.'), backgroundColor: Colors.green),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                    SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+                  );
+                }
               }
             },
             child: Text(lp.getText('delete_btn'),
@@ -1485,19 +1520,31 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
       imageUrl = await context.read<StorageService>().uploadForumImage(_selectedImage!, authData?['uid'] ?? 'unknown');
     }
 
-    final post = ForumPost(
-      type: widget.postType,
-      title: widget.postType == 'announcement' ? _titleController.text.trim() : '',
-      content: content,
-      authorId: authData?['uid'] ?? 'unknown',
-      authorName: authData?['displayName'] ?? 'Utilisateur',
-      createdAt: DateTime.now(),
-      pollOptions: opts,
-      attachments: imageUrl != null ? [imageUrl] : null,
-      residenceId: context.read<AuthProvider>().currentResidenceId,
-    );
+    if (widget.postType == 'announcement') {
+      final announcement = Announcement(
+        title: _titleController.text.trim(),
+        content: content,
+        timestamp: DateTime.now(),
+        imageUrls: imageUrl != null ? [imageUrl] : [],
+        residenceId: context.read<AuthProvider>().currentResidenceId,
+        urgency: 'normal',
+      );
+      await context.read<FirestoreService>().addAnnouncement(announcement, residenceId: context.read<AuthProvider>().currentResidenceId);
+    } else {
+      final post = ForumPost(
+        type: widget.postType,
+        title: '',
+        content: content,
+        authorId: authData?['uid'] ?? 'unknown',
+        authorName: authData?['displayName'] ?? 'Utilisateur',
+        createdAt: DateTime.now(),
+        pollOptions: opts,
+        attachments: imageUrl != null ? [imageUrl] : null,
+        residenceId: context.read<AuthProvider>().currentResidenceId,
+      );
+      await context.read<FirestoreService>().addForumPost(post, residenceId: context.read<AuthProvider>().currentResidenceId);
+    }
 
-    await context.read<FirestoreService>().addForumPost(post, residenceId: context.read<AuthProvider>().currentResidenceId);
     if(mounted) {
        setState(() => _isLoading = false);
        Navigator.pop(context);
