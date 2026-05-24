@@ -131,7 +131,9 @@ class AuthService extends ChangeNotifier {
         final data = doc.data();
         if (data != null) {
           if (kDebugMode) print('Real-time update for $docId: isBanned=${data['isBanned']}');
-          _userData = data;
+          _userData = Map<String, dynamic>.from(data);
+          _userData!['id'] = doc.id;
+          _userData!['uid'] ??= doc.id;
           _persistUserData(_userData!);
           notifyListeners(); 
         }

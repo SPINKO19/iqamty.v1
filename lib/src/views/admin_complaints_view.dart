@@ -356,7 +356,7 @@ class _AssignWorkerSheet extends StatelessWidget {
                       onTap: () async {
                         await firestore.assignComplaintToWorker(
                           complaintId: complaintId,
-                          workerId: worker['uid'] ?? worker['id'],
+                          workerId: worker['id'] ?? worker['uid'] ?? '',
                         );
                         if (context.mounted) Navigator.pop(context);
                       },

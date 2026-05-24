@@ -74,25 +74,31 @@ class WorkerDashboard extends StatelessWidget {
               final allComplaints = complaintSnapshot.data ?? [];
               
               final department = auth.currentUserData?['department'];
-              final pendingComplaints = allComplaints.where((c) {
+              final myAssignedComplaints = allComplaints.where((c) {
+                return c.status != Status.resolved && c.assignedWorkerId == userId;
+              }).toList();
+
+              final globalComplaints = allComplaints.where((c) {
                 if (c.status == Status.resolved) return false;
-                // Exclude complaints submitted by this worker
                 if (c.userId == userId) return false;
-                
-                // Show if explicitly assigned to this worker by admin
-                if (c.assignedWorkerId == userId) return true;
+                if (c.assignedWorkerId == userId) return false;
 
                 // Direct routing: Security urgent complaints go directly to security workers
                 if (c.isUrgent && (c.category == 'Sécurité' || c.category == 'Security')) {
                   if (department == 'Sécurité' || department == 'Security' || department == null) return true;
                 }
 
-                // Otherwise, hide from worker (admin will assign)
                 return false;
               }).toList();
               
               // Sort urgent first
-              pendingComplaints.sort((a, b) {
+              globalComplaints.sort((a, b) {
+                if (a.isUrgent && !b.isUrgent) return -1;
+                if (!a.isUrgent && b.isUrgent) return 1;
+                return b.timestamp.compareTo(a.timestamp);
+              });
+              
+              myAssignedComplaints.sort((a, b) {
                 if (a.isUrgent && !b.isUrgent) return -1;
                 if (!a.isUrgent && b.isUrgent) return 1;
                 return b.timestamp.compareTo(a.timestamp);
@@ -111,14 +117,14 @@ class WorkerDashboard extends StatelessWidget {
                       style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5),
                     ),
                     const SizedBox(height: 16),
-                    _buildWorkerStats(context, lp, tasks, allComplaints, pendingComplaints, firestore),
+                    _buildWorkerStats(context, lp, tasks, allComplaints, myAssignedComplaints, globalComplaints, firestore),
                     const SizedBox(height: 32),
                     Text(
                       lp.getText('my_assigned_tasks') == 'my_assigned_tasks' ? 'Mes tâches assignées' : lp.getText('my_assigned_tasks'),
                       style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: context.appTextPrimary, letterSpacing: -0.5),
                     ),
                     const SizedBox(height: 16),
-                    if (tasks.isEmpty)
+                    if (tasks.isEmpty && myAssignedComplaints.isEmpty)
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 40),
@@ -128,24 +134,38 @@ class WorkerDashboard extends StatelessWidget {
                           ),
                         ),
                       )
-                    else
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: tasks.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 16),
-                        itemBuilder: (context, index) {
-                          final task = tasks[index];
-                          Color statusColor = _kGreen;
-                          if (task.priority.toLowerCase() == 'haute' || task.priority.toLowerCase() == 'high') statusColor = Colors.red;
-                          if (task.status.toLowerCase() == 'completed' || task.status.toLowerCase() == 'resolved') statusColor = const Color(0xFF10B981);
-                          if (task.status.toLowerCase() == 'pending') statusColor = const Color(0xFFF4A261);
-                          
-                          return _buildTaskCard(context, task, statusColor, firestore);
-                        },
-                      ),
+                    else ...[
+                      if (tasks.isNotEmpty)
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: tasks.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            final task = tasks[index];
+                            Color statusColor = _kGreen;
+                            if (task.priority.toLowerCase() == 'haute' || task.priority.toLowerCase() == 'high') statusColor = Colors.red;
+                            if (task.status.toLowerCase() == 'completed' || task.status.toLowerCase() == 'resolved') statusColor = const Color(0xFF10B981);
+                            if (task.status.toLowerCase() == 'pending') statusColor = const Color(0xFFF4A261);
+                            
+                            return _buildTaskCard(context, task, statusColor, firestore);
+                          },
+                        ),
+                      if (tasks.isNotEmpty && myAssignedComplaints.isNotEmpty)
+                        const SizedBox(height: 16),
+                      if (myAssignedComplaints.isNotEmpty)
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: myAssignedComplaints.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            return _buildComplaintCard(context, myAssignedComplaints[index], firestore);
+                          },
+                        ),
+                    ],
                     
-                    if (pendingComplaints.isNotEmpty) ...[
+                    if (globalComplaints.isNotEmpty) ...[
                       const SizedBox(height: 32),
                       Text(
                         'Réclamations globales (À gérer)',
@@ -155,10 +175,10 @@ class WorkerDashboard extends StatelessWidget {
                       ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: pendingComplaints.length,
+                        itemCount: globalComplaints.length,
                         separatorBuilder: (context, index) => const SizedBox(height: 16),
                         itemBuilder: (context, index) {
-                          return _buildComplaintCard(context, pendingComplaints[index], firestore);
+                          return _buildComplaintCard(context, globalComplaints[index], firestore);
                         },
                       ),
                     ],
@@ -173,11 +193,19 @@ class WorkerDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildWorkerStats(BuildContext context, LanguageProvider lp, List<ServiceRequest> tasks, List<Complaint> allComplaints, List<Complaint> pendingComplaints, FirestoreService firestore) {
+  Widget _buildWorkerStats(
+    BuildContext context, 
+    LanguageProvider lp, 
+    List<ServiceRequest> tasks, 
+    List<Complaint> allComplaints, 
+    List<Complaint> myAssignedComplaints, 
+    List<Complaint> globalComplaints, 
+    FirestoreService firestore
+  ) {
     final doneTasks = tasks.where((t) => t.status.toLowerCase() == 'completed' || t.status.toLowerCase() == 'resolved' || t.status.toLowerCase() == 'done').toList();
     final doneComplaints = allComplaints.where((c) => c.status == Status.resolved).toList();
     
-    final toDo = tasks.length - doneTasks.length + pendingComplaints.length;
+    final toDo = (tasks.length - doneTasks.length) + myAssignedComplaints.length + globalComplaints.length;
 
     return Row(
       children: [
