@@ -78,6 +78,17 @@ graph TD
 
 To optimize cloud read costs while maintaining strict data silos, Iqamty uses a **Hybrid Stream-Filtering Architecture**. The cloud database performs the initial broad query, while the client layer applies real-time tenant mapping before it reaches the UI.
 
+### ⚠️ Limitation Technique : Restrictions CORS & Géographiques (Progres API)
+
+Lors du développement et du déploiement, l'écosystème a fait face à deux contraintes réseau majeures concernant l'**API Progres (WebEtu)** :
+1. **Blocage Géographique** : Les serveurs de l'API Progres rejettent les requêtes HTTP provenant d'adresses IP hors d'Algérie (ce qui inclut les serveurs Cloud de Firebase Hosting).
+2. **Politique CORS (Cross-Origin Resource Sharing)** : Le navigateur bloque les requêtes directes vers l'API Progres depuis une application web tierce hébergée.
+
+**Solution d'Architecture :**
+* **Inscription & Première Connexion** : Doit être effectuée depuis l'**application mobile (Android APK)** ou via une **exécution web locale** (qui contourne les politiques CORS du navigateur).
+* **Mécanisme de Cache Firestore** : Une fois qu'un étudiant s'est connecté une première fois sur mobile/local, ses informations de profil et de hachage de mot de passe sont enregistrées de manière sécurisée dans la base Firestore.
+* **Connexion Web Ultérieure** : L'étudiant peut ensuite se connecter sur le site web hébergé sans problème. L'authentification s'effectue alors via Firestore, sans avoir besoin d'interroger directement l'API Progres externe.
+
 ---
 
 ## 🗄️ Database Schema
@@ -144,8 +155,9 @@ Permet de réserver des repas, signaler des pannes, discuter avec l'administrati
   * Lors de l'exécution locale du projet (mode Debug), un panneau intitulé **"DEV QUICK ACCESS"** s'affiche en bas de la page de connexion. Cliquez simplement sur **"Enter as Student"** pour vous connecter instantanément.
 * **Option B (Accès Démo sur le Web)** :
   * Sur la version web hébergée, cliquez sur le bouton **"Accès Démo Étudiant"** sur la page de connexion pour injecter instantanément un profil étudiant de test.
-* **Option C (Intégration Progres / WebEtu)** :
-  * Utilisez vos identifiants WebEtu réels de l'ESTIN. Le système interroge l'API officielle Progres en temps réel pour vous authentifier et auto-provisionner votre compte.
+* **Option C (Intégration Progres / WebEtu - Sous conditions)** :
+  * Utilisez vos identifiants WebEtu réels de l'ESTIN.
+  * *Important : En raison des restrictions géographiques de l'API Progres, la première connexion/inscription d'un nouvel étudiant doit être effectuée via l'application mobile (APK) ou en exécution locale. Une fois cette première connexion réussie, vous pourrez vous connecter normalement sur la version web hébergée.*
 
 ---
 
