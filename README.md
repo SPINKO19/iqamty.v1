@@ -86,10 +86,11 @@ Lors du développement et du déploiement, l'écosystème a fait face à deux co
 
 *Note Historique d'Intégration :* L'intégration de l'application web fonctionnait initialement de manière fluide grâce à un proxy intermédiaire sécurisé développé par l'équipe et déployé sur **Vercel**. Cependant, la semaine précédant les examens finaux, la sécurité de l'API Progres a été considérablement renforcée (durcissement du pare-feu et filtrage géographique strict), bloquant ainsi l'accès depuis des hébergements cloud externes comme Vercel.
 
-**Solution d'Architecture Actuelle (Fallback) :**
+**Solution d'Architecture Actuelle (Fallback) & Perspectives d'Hébergement :**
 * **Inscription & Première Connexion** : Doit être effectuée depuis l'**application mobile (Android APK)** ou via une **exécution web locale** (qui contourne les politiques CORS du navigateur).
 * **Mécanisme de Cache Firestore** : Une fois qu'un étudiant s'est connecté une première fois sur mobile/local, ses informations de profil et de hachage de mot de passe sont enregistrées de manière sécurisée dans la base Firestore.
 * **Connexion Web Ultérieure** : L'étudiant peut ensuite se connecter sur le site web hébergé sans problème. L'authentification s'effectue alors via Firestore, sans avoir besoin d'interroger directement l'API Progres externe.
+* **Perspective de Déploiement (Hébergement Local en Algérie)** : À l'avenir, pour contourner définitivement ces restrictions géographiques et restaurer l'accès web direct sans étape intermédiaire, le proxy de l'API pourra être hébergé chez un fournisseur local en Algérie (comme le **Datacenter de l'ESTIN** ou le cloud national **Hawiyat**). Disposant d'IP algériennes et faisant partie du réseau académique autorisé, ces infrastructures ne subiront pas le filtrage géographique de l'API Progres.
 
 ---
 
