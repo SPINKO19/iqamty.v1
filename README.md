@@ -114,6 +114,60 @@ Iqamty utilizes a premium, custom design system built entirely from scratch. Ins
 
 ---
 
+## 🚀 Guide d'Exécution et de Test (Évaluation Académique)
+
+Pour faciliter l'évaluation du projet par le jury, l'application est disponible en direct sur le web et peut également être exécutée localement.
+
+### 🌐 1. Accès Direct en Ligne
+Vous pouvez tester l'ensemble de la plateforme (Étudiant, Admin, Ouvrier) directement depuis votre navigateur sans aucune installation :
+* **Lien de la Démo Web** : [https://iqamty-estin-pp.web.app](https://iqamty-estin-pp.web.app)
+
+---
+
+### 🔑 2. Identifiants de Test Pré-configurés
+Pour explorer les différents portails et rôles, veuillez utiliser les comptes de test suivants :
+
+#### 🛡️ A. Espace Administrateur (Admin Portal)
+Permet de configurer le restaurant, de publier des annonces et d'assigner les tâches aux ouvriers.
+* **Identifiant** : `admin1`
+* **Mot de passe** : `admin1`
+
+#### 🛠️ B. Espace Ouvrier (Worker Dashboard)
+Permet de visualiser les tâches de maintenance assignées par l'administration et de mettre à jour leur statut.
+* **Identifiant** : `worker1`
+* **Mot de passe** : `worker1`
+
+#### 🎓 C. Espace Étudiant (Student Portal)
+Permet de réserver des repas, signaler des pannes, discuter avec l'administration et publier sur le forum.
+* **Option A (Panneau de Test Local - Recommandée)** :
+  * Lors de l'exécution locale du projet (mode Debug), un panneau intitulé **"DEV QUICK ACCESS"** s'affiche en bas de la page de connexion. Cliquez simplement sur **"Enter as Student"** pour vous connecter instantanément.
+* **Option B (Accès Démo sur le Web)** :
+  * Sur la version web hébergée, cliquez sur le bouton **"Accès Démo Étudiant"** sur la page de connexion pour injecter instantanément un profil étudiant de test.
+* **Option C (Intégration Progres / WebEtu)** :
+  * Utilisez vos identifiants WebEtu réels de l'ESTIN. Le système interroge l'API officielle Progres en temps réel pour vous authentifier et auto-provisionner votre compte.
+
+---
+
+### 💻 3. Exécution Locale du Projet
+Si vous souhaitez exécuter le projet localement à partir du code source :
+
+#### Prérequis :
+* **Flutter SDK** : Version 3.4.0 ou supérieure installé et configuré.
+* **Navigateur Chrome** ou un émulateur Android/iOS fonctionnel.
+
+#### Étapes d'exécution :
+1. Ouvrez un terminal dans le répertoire racine du code source (`3_Code_Source/` ou `iqamty.v1/`).
+2. Récupérez les dépendances du projet :
+   ```bash
+   flutter pub get
+   ```
+3. Lancez l'application (sur Chrome par défaut pour tester la version multi-plateforme) :
+   ```bash
+   flutter run -d chrome
+   ```
+
+---
+
 <div align="center">
   <b>Built to elevate the student living experience.</b><br>
   <sub>All rights reserved. Proprietary software.</sub>
