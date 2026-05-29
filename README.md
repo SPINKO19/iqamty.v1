@@ -156,9 +156,7 @@ Permet de visualiser les tâches de maintenance assignées par l'administration 
 Permet de réserver des repas, signaler des pannes, discuter avec l'administration et publier sur le forum.
 * **Option A (Panneau de Test Local - Recommandée)** :
   * Lors de l'exécution locale du projet (mode Debug), un panneau intitulé **"DEV QUICK ACCESS"** s'affiche en bas de la page de connexion. Cliquez simplement sur **"Enter as Student"** pour vous connecter instantanément.
-* **Option B (Accès Démo sur le Web)** :
-  * Sur la version web hébergée, cliquez sur le bouton **"Accès Démo Étudiant"** sur la page de connexion pour injecter instantanément un profil étudiant de test.
-* **Option C (Intégration Progres / WebEtu - Sous conditions)** :
+* **Option B (Intégration Progres / WebEtu - Sous conditions)** :
   * Utilisez vos identifiants WebEtu réels de l'ESTIN.
   * *Important : En raison des restrictions géographiques de l'API Progres, la première connexion/inscription d'un nouvel étudiant doit être effectuée via l'application mobile (APK) ou en exécution locale. Une fois cette première connexion réussie, vous pourrez vous connecter normalement sur la version web hébergée.*
 
