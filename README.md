@@ -118,9 +118,10 @@ Iqamty utilizes a premium, custom design system built entirely from scratch. Ins
 
 Pour faciliter l'évaluation du projet par le jury, l'application est disponible en direct sur le web et peut également être exécutée localement.
 
-### 🌐 1. Accès Direct en Ligne
+### 🌐 1. Accès Direct en Ligne & Installation
 Vous pouvez tester l'ensemble de la plateforme (Étudiant, Admin, Ouvrier) directement depuis votre navigateur sans aucune installation :
 * **Lien de la Démo Web** : [https://iqamty-estin-pp.web.app](https://iqamty-estin-pp.web.app)
+* **Installation sur Mobile (Android APK)** : Vous pouvez également installer l'application mobile en téléchargeant l'APK directement depuis le bouton d'installation présent sur l'interface du site web.
 
 ---
 
