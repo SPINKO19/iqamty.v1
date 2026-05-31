@@ -130,6 +130,8 @@ Iqamty utilizes a premium, custom design system built entirely from scratch. Ins
 
 ## 🚀 Guide d'Exécution et de Test (Évaluation Académique)
 
+* **Dépôt Git Officiel du Projet** : [https://github.com/SPINKO19/iqamty.v1](https://github.com/SPINKO19/iqamty.v1)
+
 Pour faciliter l'évaluation du projet par le jury, l'application est disponible en direct sur le web et peut également être exécutée localement.
 
 ### 🌐 1. Accès Direct en Ligne & Installation
