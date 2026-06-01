@@ -135,7 +135,7 @@ Iqamty utilizes a premium, custom design system built entirely from scratch. Ins
 Pour faciliter l'évaluation du projet par le jury, l'application est disponible en direct sur le web et peut également être exécutée localement.
 
 ### 🌐 1. Accès Direct en Ligne & Installation
-Vous pouvez tester l'ensemble de la plateforme (Étudiant, Admin, Ouvrier) directement depuis votre navigateur sans aucune installation :
+Vous pouvez tester l'ensemble de la plateforme (Étudiant, Admin, Oسuvrier) directement depuis votre navigateur sans aucune installation :
 * **Lien de la Démo Web** : [https://iqamty-estin-pp.web.app](https://iqamty-estin-pp.web.app)
 * **Installation sur Mobile (Android APK)** : Vous pouvez également installer l'application mobile en téléchargeant l'APK directement depuis le bouton d'installation présent sur l'interface du site web.
 
@@ -146,13 +146,13 @@ Pour explorer les différents portails et rôles, veuillez utiliser les comptes 
 
 #### 🛡️ A. Espace Administrateur (Admin Portal)
 Permet de configurer le restaurant, de publier des annonces et d'assigner les tâches aux ouvriers.
-* **Identifiant** : `admin1`
-* **Mot de passe** : `admin1`
+* **Identifiant** : `admin2`
+* **Mot de passe** : `admin2`
 
 #### 🛠️ B. Espace Ouvrier (Worker Dashboard)
 Permet de visualiser les tâches de maintenance assignées par l'administration et de mettre à jour leur statut.
-* **Identifiant** : `worker1`
-* **Mot de passe** : `worker1`
+* **Identifiant** : `worker2`
+* **Mot de passe** : `worker2`
 
 #### 🎓 C. Espace Étudiant (Student Portal)
 Permet de réserver des repas, signaler des pannes, discuter avec l'administration et publier sur le forum.
@@ -160,6 +160,7 @@ Permet de réserver des repas, signaler des pannes, discuter avec l'administrati
   * Lors de l'exécution locale du projet (mode Debug), un panneau intitulé **"DEV QUICK ACCESS"** s'affiche en bas de la page de connexion. Cliquez simplement sur **"Enter as Student"** pour vous connecter instantanément.
 * **Option B (Intégration Progres / WebEtu - Sous conditions)** :
   * Utilisez vos identifiants WebEtu réels de l'ESTIN.
+  * *(Note : Des identifiants WebEtu de test réels supplémentaires peuvent être fournis au jury sur simple demande auprès de l'équipe).*
   * *Important : En raison des restrictions géographiques de l'API Progres, la première connexion/inscription d'un nouvel étudiant doit être effectuée via l'application mobile (APK) ou en exécution locale. Une fois cette première connexion réussie, vous pourrez vous connecter normalement sur la version web hébergée.*
 
 ---
