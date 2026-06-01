@@ -185,6 +185,27 @@ Si vous souhaitez exécuter le projet localement à partir du code source :
 
 ---
 
+## 🗺️ Carte du Code Source (GitHub File Map)
+
+Pour faciliter l'évaluation de notre code sur GitHub, voici la cartographie des principaux fichiers du projet :
+
+* **[lib/main.dart](https://github.com/SPINKO19/iqamty.v1/blob/main/lib/main.dart)** : Point d'entrée de l'application (initialisation Firebase, thèmes et routage).
+* **[lib/src/models/](https://github.com/SPINKO19/iqamty.v1/tree/main/lib/src/models)** : Couche de données.
+  * **[types.dart](https://github.com/SPINKO19/iqamty.v1/blob/main/lib/src/models/types.dart)** : Contient les définitions des objets clés (`Complaint`, `Meal`, `ForumPost`, `ChatMessage`, `PollOption`).
+  * **[student_model.dart](https://github.com/SPINKO19/iqamty.v1/blob/main/lib/src/models/student_model.dart)** : Profil de l'étudiant synchronisé.
+* **[lib/src/services/](https://github.com/SPINKO19/iqamty.v1/tree/main/lib/src/services)** : Services d'infrastructure.
+  * **[auth_service.dart](https://github.com/SPINKO19/iqamty.v1/blob/main/lib/src/services/auth_service.dart)** : Gestion de l'authentification et de l'intégration avec l'API Progres.
+  * **[firestore_service.dart](https://github.com/SPINKO19/iqamty.v1/blob/main/lib/src/services/firestore_service.dart)** : Requêtes, transactions et flux en temps réel (NoSQL).
+* **[lib/src/providers/](https://github.com/SPINKO19/iqamty.v1/tree/main/lib/src/providers)** : Gestion d'état (Provider).
+  * **[auth_provider.dart](https://github.com/SPINKO19/iqamty.v1/blob/main/lib/src/providers/auth_provider.dart)** : État utilisateur global de la session.
+* **[lib/src/views/](https://github.com/SPINKO19/iqamty.v1/tree/main/lib/src/views)** : Interfaces et Écrans.
+  * **[login_screen.dart](https://github.com/SPINKO19/iqamty.v1/blob/main/lib/src/views/login_screen.dart)** : Écran de connexion multi-rôle responsive.
+  * **[admin_dashboard.dart](https://github.com/SPINKO19/iqamty.v1/blob/main/lib/src/views/admin_dashboard.dart)** : Console d'administration de la résidence.
+  * **[worker_dashboard.dart](https://github.com/SPINKO19/iqamty.v1/blob/main/lib/src/views/worker_dashboard.dart)** : Tableau de bord de gestion des tâches pour les ouvriers.
+  * **[home_screen.dart](https://github.com/SPINKO19/iqamty.v1/blob/main/lib/src/views/home_screen.dart)** : Portail principal des résidents (étudiants).
+
+---
+
 <div align="center">
   <b>Built to elevate the student living experience.</b><br>
   <sub>All rights reserved. Proprietary software.</sub>

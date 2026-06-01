@@ -63,3 +63,12 @@ temp_*.dart
 flutter_01.png
 local_proxy.js
 test_proxies.js
+
+# Firestore Dumps
+users_dump.json
+
+# Academic documents
+*.pdf
+
+# Submission archives
+*.zip
