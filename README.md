@@ -160,7 +160,7 @@ Permet de réserver des repas, signaler des pannes, discuter avec l'administrati
   * Lors de l'exécution locale du projet (mode Debug), un panneau intitulé **"DEV QUICK ACCESS"** s'affiche en bas de la page de connexion. Cliquez simplement sur **"Enter as Student"** pour vous connecter instantanément.
 * **Option B (Intégration Progres / WebEtu - Sous conditions)** :
   * Utilisez vos identifiants WebEtu réels de l'ESTIN.
-  * *(Note : Des identifiants WebEtu de test réels supplémentaires peuvent être fournis au jury sur simple demande auprès de l'équipe).*
+    Si tu veux, je peux t'envoyer mes identifiants.
   * *Important : En raison des restrictions géographiques de l'API Progres, la première connexion/inscription d'un nouvel étudiant doit être effectuée via l'application mobile (APK) ou en exécution locale. Une fois cette première connexion réussie, vous pourrez vous connecter normalement sur la version web hébergée.*
 
 ---
